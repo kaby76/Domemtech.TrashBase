@@ -1,0 +1,1 @@
+# Domemtech.TrashBase
