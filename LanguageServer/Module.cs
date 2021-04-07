@@ -883,110 +883,112 @@
 
         public TextEdit[] Reformat(Document doc)
         {
-            ParsingResults ref_pd = ParsingResultsFactory.Create(doc);
-            string code = doc.Code;
-            string corpus_location = Options.Option.GetString("CorpusLocation");
-            if (corpus_location == null)
-            {
-                TextEdit[] result = new TextEdit[] { };
-                return result;
-            }
+            TextEdit[] result = new TextEdit[] { };
+            return result;
+            //ParsingResults ref_pd = ParsingResultsFactory.Create(doc);
+            //string code = doc.Code;
+            //string corpus_location = Options.Option.GetString("CorpusLocation");
+            //if (corpus_location == null)
+            //{
+            //    TextEdit[] result = new TextEdit[] { };
+            //    return result;
+            //}
 
-            string ffn = doc.FullPath;
-            if (ffn == null)
-            {
-                TextEdit[] result = new TextEdit[] { };
-                return result;
-            }
-            var grammar_description = LanguageServer.ParserDescriptionFactory.Create(doc);
-            if (grammar_description == null)
-            {
-                TextEdit[] result = new TextEdit[] { };
-                return result;
-            }
-            org.antlr.codebuff.Tool.unformatted_input = code;
-            try
-            {
-                string result = org.antlr.codebuff.Tool.Main(
-                    new object[]
-                    {
-                "-g", grammar_description.Name,
-                "-lexer", grammar_description.Lexer,
-                "-parser", grammar_description.Parser,
-                "-rule", grammar_description.StartRule,
-                "-files", grammar_description.FileExtension,
-                "-corpus", corpus_location,
-                "-inoutstring",
-                ""
-                    });
-                List<TextEdit> edits = new List<TextEdit>();
-                Diff_match_patch diff = new Diff_match_patch();
-                List<Diff> diffs = diff.Diff_main(code, result);
-                List<Patch> patch = diff.Patch_make(diffs);
-                //patch.Reverse();
+            //string ffn = doc.FullPath;
+            //if (ffn == null)
+            //{
+            //    TextEdit[] result = new TextEdit[] { };
+            //    return result;
+            //}
+            //var grammar_description = LanguageServer.ParserDescriptionFactory.Create(doc);
+            //if (grammar_description == null)
+            //{
+            //    TextEdit[] result = new TextEdit[] { };
+            //    return result;
+            //}
+            //org.antlr.codebuff.Tool.unformatted_input = code;
+            //try
+            //{
+            //    string result = org.antlr.codebuff.Tool.Main(
+            //        new object[]
+            //        {
+            //    "-g", grammar_description.Name,
+            //    "-lexer", grammar_description.Lexer,
+            //    "-parser", grammar_description.Parser,
+            //    "-rule", grammar_description.StartRule,
+            //    "-files", grammar_description.FileExtension,
+            //    "-corpus", corpus_location,
+            //    "-inoutstring",
+            //    ""
+            //        });
+            //    List<TextEdit> edits = new List<TextEdit>();
+            //    Diff_match_patch diff = new Diff_match_patch();
+            //    List<Diff> diffs = diff.Diff_main(code, result);
+            //    List<Patch> patch = diff.Patch_make(diffs);
+            //    //patch.Reverse();
 
-                // Start edit session.
-                int times = 0;
-                int delta = 0;
-                foreach (Patch p in patch)
-                {
-                    times++;
-                    int start = p.start1 - delta;
+            //    // Start edit session.
+            //    int times = 0;
+            //    int delta = 0;
+            //    foreach (Patch p in patch)
+            //    {
+            //        times++;
+            //        int start = p.start1 - delta;
 
-                    int offset = 0;
-                    foreach (Diff ed in p.diffs)
-                    {
-                        if (ed.operation == Operation.EQUAL)
-                        {
-                            //// Let's verify that.
-                            int len = ed.text.Length;
-                            //var tokenSpan = new SnapshotSpan(buffer.CurrentSnapshot,
-                            //  new Span(start + offset, len));
-                            //var tt = tokenSpan.GetText();
-                            //if (ed.text != tt)
-                            //{ }
-                            offset = offset + len;
-                        }
-                        else if (ed.operation == Operation.DELETE)
-                        {
-                            int len = ed.text.Length;
-                            //var tokenSpan = new SnapshotSpan(buffer.CurrentSnapshot,
-                            //  new Span(start + offset, len));
-                            //var tt = tokenSpan.GetText();
-                            //if (ed.text != tt)
-                            //{ }
-                            TextEdit edit = new TextEdit()
-                            {
-                                range = new Workspaces.Range(
-                                    new Workspaces.Index(start + offset),
-                                    new Workspaces.Index(start + offset + len)),
-                                NewText = ""
-                            };
-                            offset = offset + len;
-                            edits.Add(edit);
-                        }
-                        else if (ed.operation == Operation.INSERT)
-                        {
-                            int len = ed.text.Length;
-                            TextEdit edit = new TextEdit()
-                            {
-                                range = new Workspaces.Range(
-                                    new Workspaces.Index(start + offset),
-                                    new Workspaces.Index(start + offset)),
-                                NewText = ed.text
-                            };
-                            edits.Add(edit);
-                        }
-                    }
-                    delta = delta + (p.length2 - p.length1);
-                }
-                return edits.ToArray();
-            }
-            catch (Exception)
-            {
-                TextEdit[] result = new TextEdit[] { };
-                return result;
-            }
+            //        int offset = 0;
+            //        foreach (Diff ed in p.diffs)
+            //        {
+            //            if (ed.operation == Operation.EQUAL)
+            //            {
+            //                //// Let's verify that.
+            //                int len = ed.text.Length;
+            //                //var tokenSpan = new SnapshotSpan(buffer.CurrentSnapshot,
+            //                //  new Span(start + offset, len));
+            //                //var tt = tokenSpan.GetText();
+            //                //if (ed.text != tt)
+            //                //{ }
+            //                offset = offset + len;
+            //            }
+            //            else if (ed.operation == Operation.DELETE)
+            //            {
+            //                int len = ed.text.Length;
+            //                //var tokenSpan = new SnapshotSpan(buffer.CurrentSnapshot,
+            //                //  new Span(start + offset, len));
+            //                //var tt = tokenSpan.GetText();
+            //                //if (ed.text != tt)
+            //                //{ }
+            //                TextEdit edit = new TextEdit()
+            //                {
+            //                    range = new Workspaces.Range(
+            //                        new Workspaces.Index(start + offset),
+            //                        new Workspaces.Index(start + offset + len)),
+            //                    NewText = ""
+            //                };
+            //                offset = offset + len;
+            //                edits.Add(edit);
+            //            }
+            //            else if (ed.operation == Operation.INSERT)
+            //            {
+            //                int len = ed.text.Length;
+            //                TextEdit edit = new TextEdit()
+            //                {
+            //                    range = new Workspaces.Range(
+            //                        new Workspaces.Index(start + offset),
+            //                        new Workspaces.Index(start + offset)),
+            //                    NewText = ed.text
+            //                };
+            //                edits.Add(edit);
+            //            }
+            //        }
+            //        delta = delta + (p.length2 - p.length1);
+            //    }
+            //    return edits.ToArray();
+            //}
+            //catch (Exception)
+            //{
+            //    TextEdit[] result = new TextEdit[] { };
+            //    return result;
+            //}
         }
 
         public Dictionary<string, TextEdit[]> Rename(int index, string new_text, Document doc)

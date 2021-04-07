@@ -55,13 +55,14 @@
 
 	<ItemGroup>
 		<PackageReference Include="Antlr4.Runtime.Standard" Version="4.9.1" />
-                <PackageReference Include="Antlr4BuildTasks" Version="8.12">
+<!--                <PackageReference Include="Antlr4BuildTasks" Version="8.12">
                     <PrivateAssets>all</PrivateAssets>
-                </PackageReference>
+                </PackageReference> -->
     <PackageReference Include="AntlrTreeEditing" Version="2.3" />
     <PackageReference Include="Domemtech.Symtab" Version="0.0.1" />
-    <PackageReference Include="cs-codebuff" Version="3.0.0" />
-		<PackageReference Include="Microsoft.CodeAnalysis.Common" Version="3.8.0" />
+  <!--  <PackageReference Include="cs-codebuff" Version="3.0.0" />
+-->
+    <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="3.8.0" />
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.8.0" />
 	</ItemGroup>
 
