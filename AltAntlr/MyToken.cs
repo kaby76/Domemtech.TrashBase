@@ -14,5 +14,26 @@
         public int StopIndex { get; set; }
         public ITokenSource TokenSource { get; set; }
         public ICharStream InputStream { get; set; }
+
+        public override string ToString()
+        {
+            string channelStr = string.Empty;
+            if (Channel > 0)
+            {
+                channelStr = ",channel=" + Channel;
+            }
+            string txt = Text;
+            if (txt != null)
+            {
+                txt = txt.Replace("\n", "\\n");
+                txt = txt.Replace("\r", "\\r");
+                txt = txt.Replace("\t", "\\t");
+            }
+            else
+            {
+                txt = "<no text>";
+            }
+            return "[@" + TokenIndex + "," + StartIndex + ":" + StopIndex + "='" + txt + "',<" + Type + ">" + channelStr + "," + Line + ":" + Column + "]";
+        }
     }
 }
