@@ -803,7 +803,7 @@
                 HashSet<ParsingResults> new_to_do = new HashSet<ParsingResults>();
                 foreach (Document document in Workspaces.DFSContainer.DFS(workspace))
                 {
-                    if (document.GetParseTree() != null && !document.Changed) continue;
+                    if (document.ParseTree != null && !document.Changed) continue;
                     string file_name = document.FullPath;
                     if (file_name == null) continue;
                     Container parent = document.Parent;

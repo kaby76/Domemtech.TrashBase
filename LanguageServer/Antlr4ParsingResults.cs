@@ -844,8 +844,8 @@
             }
             if (parser_error_listener.had_error || lexer_error_listener.had_error || (bail_error_handler != null && bail_error_handler.had_error))
                 System.Console.Error.WriteLine("Error in parse of " + ffn);
-            else
-                System.Console.Error.WriteLine("Parse completed of " + ffn);
+            //else
+            //    System.Console.Error.WriteLine("Parse completed of " + ffn);
             pd.TokStream = cts;
             pd.Parser = parser;
             pd.Lexer = lexer;

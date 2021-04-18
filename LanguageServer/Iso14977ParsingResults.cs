@@ -829,7 +829,7 @@
                 }
                 else
                 {
-                    System.Console.Error.WriteLine("Parse completed of " + ffn);
+                    //System.Console.Error.WriteLine("Parse completed of " + ffn);
                 }
                 MyTokenStream out_token_stream2 = new MyTokenStream();
                 out_token_stream2.Text = code;
@@ -923,7 +923,7 @@
                 }
                 else
                 {
-                    System.Console.Error.WriteLine("Parse completed of " + ffn);
+                    //System.Console.Error.WriteLine("Parse completed of " + ffn);
                 }
                 MyTokenStream out_token_stream3 = new MyTokenStream();
                 out_token_stream3.Text = code;
@@ -1086,7 +1086,7 @@
                 }
                 else
                 {
-                    System.Console.Error.WriteLine("Parse completed of " + ffn);
+                    //System.Console.Error.WriteLine("Parse completed of " + ffn);
                 }
 
                 pd.TokStream = cts;

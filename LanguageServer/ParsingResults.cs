@@ -339,6 +339,7 @@
             bool bail = QuietAfter == 0;
             gd.Parse(this, bail);
 
+            document.ParseTree = ParseTree;
             AllNodes = DFSVisitor.DFS(ParseTree as ParserRuleContext);
             Comments = gd.ExtractComments(code);
             Defs = new Dictionary<TerminalNodeImpl, int>();

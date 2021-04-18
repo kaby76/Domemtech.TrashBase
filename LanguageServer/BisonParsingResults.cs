@@ -1046,7 +1046,7 @@
             }
             else
             {
-                System.Console.Error.WriteLine("Parse completed of " + ffn);
+                //System.Console.Error.WriteLine("Parse completed of " + ffn);
             }
 
             pd.TokStream = cts;

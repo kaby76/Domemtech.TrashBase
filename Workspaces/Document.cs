@@ -13,7 +13,11 @@
         private readonly Dictionary<string, bool> _lazy_evaluated = new Dictionary<string, bool>();
         private string _parse_as;
 
-        public bool Changed { get; set; }
+        public bool Changed
+        {
+            get;
+            set;
+        }
         public string Code
         {
             get
@@ -37,6 +41,7 @@
                     return;
                 }
                 Changed = true;
+                ParseTree = null;
                 Indices = null;
                 _contents = value;
             }
@@ -86,9 +91,9 @@
             return null;
         }
 
-        public IParseTree GetParseTree()
+        public IParseTree ParseTree
         {
-            return null;
+            get; set;
         }
 
         public string GetProperty(string name)
