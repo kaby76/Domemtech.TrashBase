@@ -93,7 +93,7 @@
 
         public override IToken Emit()
         {
-            if ((Type == ANTLRv4Lexer.OPTIONS || Type == ANTLRv4Lexer.TOKENS || Type == ANTLRv4Lexer.CHANNELS)
+            if ((Type == ANTLRv4Lexer.OPTIONS || Type == ANTLRv4Lexer.TOKENS_SPEC || Type == ANTLRv4Lexer.CHANNELS)
                   && CurrentRuleType == TokenConstants.InvalidType)
             { // enter prequel construct ending with an RBRACE
                 CurrentRuleType = PREQUEL_CONSTRUCT;

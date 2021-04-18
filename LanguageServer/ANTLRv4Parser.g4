@@ -75,7 +75,7 @@ prequelConstruct
 // Options - things that affect analysis and/or code generation
 
 optionsSpec
-   : OPTIONS LBRACE (option SEMI)* RBRACE
+   : OPTIONS (option SEMI)* RBRACE
    ;
 
 option
@@ -105,11 +105,12 @@ delegateGrammar
 // Tokens & Channels
 
 tokensSpec
-   : TOKENS LBRACE idList? RBRACE
+   : TOKENS_SPEC idList? RBRACE
+   | TOKENS_SPEC RBRACE
    ;
 
 channelsSpec
-   : CHANNELS LBRACE idList? RBRACE
+   : CHANNELS idList? RBRACE
    ;
 
 idList
@@ -400,5 +401,6 @@ elementOption
 identifier
    : RULE_REF
    | TOKEN_REF
+   | OPTIONS	// This is an allowed identifier in 4.9.2, tsqlparser.g4.
    ;
 

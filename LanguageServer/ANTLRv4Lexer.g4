@@ -113,17 +113,11 @@ BEGIN_ACTION
 // they would be ambiguous with the keyword vs some other identifier.  OPTIONS,
 // TOKENS, & CHANNELS blocks are handled idiomatically in dedicated lexical modes.
 
-OPTIONS
-   : 'options' -> pushMode (Options)
-   ;
+OPTIONS      : 'options'  WSNLCHARS* '{'  ;
+TOKENS_SPEC  : 'tokens'   WSNLCHARS* '{'  ;
+CHANNELS     : 'channels' WSNLCHARS* '{'  ;
 
-TOKENS
-   : 'tokens' -> pushMode (Tokens)
-   ;
-
-CHANNELS
-   : 'channels' -> pushMode (Channels)
-   ;
+fragment WSNLCHARS : ' ' | '\t' | '\f' | '\n' | '\r' ;
 
 IMPORT
    : 'import'
