@@ -19,6 +19,7 @@
     using NWayDiff;
     using org.w3c.dom;
     using Microsoft.CodeAnalysis.Operations;
+    using System.Collections.Immutable;
 
     public class Transform
     {
@@ -6385,6 +6386,68 @@ and not(lexerRuleBlock//ebnfSuffix)
                     string pre = code.Substring(previous, r.Start.Value - previous);
                     sb.Append(pre);
                     sb.Append(new_text);
+                    previous = r.End.Value + 1;
+                }
+                string rest = code.Substring(previous);
+                sb.Append(rest);
+                string new_code = sb.ToString();
+                if (new_code != f.Code)
+                {
+                    result.Add(document.FullPath, new_code);
+                }
+            }
+            return result;
+        }
+
+        public static Dictionary<string, string> Rename(Dictionary<string, string> rename_list, Document document)
+        {
+            Dictionary<string, string> result = new Dictionary<string, string>();
+
+            // Check if initial file is a grammar.
+            if (!(ParsingResultsFactory.Create(document) is ParsingResults pd_parser))
+                throw new LanguageServerException("A grammar file is not selected. Please select one first.");
+
+            ExtractGrammarType egt = new ExtractGrammarType();
+            ParseTreeWalker.Default.Walk(egt, pd_parser.ParseTree);
+            bool is_grammar = egt.Type == ExtractGrammarType.GrammarType.Parser
+                              || egt.Type == ExtractGrammarType.GrammarType.Combined
+                              || egt.Type == ExtractGrammarType.GrammarType.Lexer;
+            if (!is_grammar)
+            {
+                throw new LanguageServerException("A grammar file is not selected. Please select one first.");
+            }
+
+            Dictionary<string, IEnumerable<Location>> locs_to_change = new Dictionary<string, IEnumerable<Location>>();
+            var all_locs = new List<Location>();
+            foreach (var pair in rename_list)
+            {
+                var old_name = pair.Key;
+                var new_name = pair.Value;
+                IEnumerable<Location> locs = new Module().FindRefsAndDefs(old_name, document);
+                // Save rename locations for later application.
+                locs_to_change[old_name] = locs;
+                all_locs.AddRange(locs);
+            }
+
+            var sorted_all_locs = all_locs.OrderByDescending(p => p.Range.Start.Value).ToList();
+            var x1 = sorted_all_locs.Select(r => r.Uri).ToList();
+            var documents = x1.Distinct().ToList();
+            foreach (Document f in documents)
+            {
+                string fn = f.FullPath;
+                IOrderedEnumerable<Location> per_file_changes = sorted_all_locs.Where(z => z.Uri == f).OrderBy(q => q.Range.Start.Value);
+                StringBuilder sb = new StringBuilder();
+                int previous = 0;
+                string code = f.Code;
+                foreach (Location l in per_file_changes)
+                {
+                    Document d = l.Uri;
+                    string xx = d.FullPath;
+                    var r = l.Range;
+                    string old = code.Substring(r.Start.Value, 1 + r.End.Value - r.Start.Value);
+                    string pre = code.Substring(previous, r.Start.Value - previous);
+                    sb.Append(pre);
+                    sb.Append(rename_list[old]);
                     previous = r.End.Value + 1;
                 }
                 string rest = code.Substring(previous);

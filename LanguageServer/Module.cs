@@ -677,6 +677,83 @@
             return result;
         }
 
+        public IEnumerable<Location> FindRefsAndDefs(string name, Document doc)
+        {
+            List<Location> result = new List<Location>();
+            var workspace = doc.Workspace;
+
+            ParsingResults ref_pd = ParsingResultsFactory.Create(doc);
+            if (ref_pd.ParseTree == null)
+            {
+                Compile(workspace);
+            }
+
+            IList<CombinedScopeSymbol> list_value =
+                ref_pd.Attributes.Where(p =>
+                {
+                    IParseTree x = p.Key;
+                    IList<CombinedScopeSymbol> y = p.Value;
+                    if (x is TerminalNodeImpl term)
+                    {
+                        return term.Symbol != null && term.Symbol.Text == name;
+                    }
+                    else return false;
+                }).Select(p => p.Value).SelectMany(p => p).ToList();
+
+            List<Domemtech.Symtab.ISymbol> found_defs = null;
+            Domemtech.Symtab.ISymbol found_ref = null;
+            foreach (Domemtech.Symtab.CombinedScopeSymbol value in list_value)
+            {
+                if (value == null)
+                {
+                    continue;
+                }
+
+                Domemtech.Symtab.ISymbol @ref = value as Domemtech.Symtab.ISymbol;
+                if (@ref == null)
+                {
+                    continue;
+                }
+
+                if (@ref.Token == null)
+                {
+                    continue;
+                }
+
+                found_ref = @ref;
+                List<Domemtech.Symtab.ISymbol> defs = @ref.resolve();
+                if (defs == null)
+                {
+                    continue;
+                }
+                found_defs = defs;
+                break;
+            }
+            if (found_defs != null)
+            {
+                foreach (var def in found_defs)
+                {
+                    result.Add(
+                        new Location()
+                        {
+                            Range = new Workspaces.Range(def.Token.First().StartIndex, def.Token.First().StopIndex),
+                            Uri = workspace.FindDocument(def.file)
+                        });
+                    var dd = def as BaseSymbol;
+                    foreach (var r in dd.Refs)
+                    {
+                        result.Add(
+                            new Location()
+                            {
+                                Range = new Workspaces.Range(r.Token.First().StartIndex, r.Token.First().StopIndex),
+                                Uri = workspace.FindDocument(r.file)
+                            });
+                    }
+                }
+            }
+            return result;
+        }
+
         public IEnumerable<Location> GetDefs(Document doc)
         {
             List<Location> result = new List<Location>();
