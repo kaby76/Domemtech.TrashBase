@@ -6455,7 +6455,7 @@ and not(lexerRuleBlock//ebnfSuffix)
                 string new_code = sb.ToString();
                 if (new_code != f.Code)
                 {
-                    result.Add(document.FullPath, new_code);
+                    result.Add(fn, new_code);
                 }
             }
             return result;
