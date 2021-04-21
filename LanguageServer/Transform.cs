@@ -6434,13 +6434,19 @@ and not(lexerRuleBlock//ebnfSuffix)
 
             public int GetHashCode(object obj)
             {
-                var hc = obj.GetHashCode();
+                var o1 = obj as Location;
+                if (o1 == null)
+                    return obj.GetHashCode();
+                var hc = o1.Range.Start.Value;
                 return hc;
             }
 
             public int GetHashCode(Location obj)
             {
-                var hc = obj.GetHashCode();
+                var o1 = obj as Location;
+                if (o1 == null)
+                    return obj.GetHashCode();
+                var hc = o1.Range.Start.Value;
                 return hc;
             }
         }
