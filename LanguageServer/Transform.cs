@@ -20,6 +20,7 @@
     using org.w3c.dom;
     using Microsoft.CodeAnalysis.Operations;
     using System.Collections.Immutable;
+    using System.Collections;
 
     public class Transform
     {
@@ -6399,6 +6400,51 @@ and not(lexerRuleBlock//ebnfSuffix)
             return result;
         }
 
+        class LocationComparer : IEqualityComparer<Location>
+        {
+            public new bool Equals(object x, object y)
+            {
+                if (x == null || y == null)
+                    return false;
+                var x1 = x as Location;
+                var y1 = y as Location;
+                if (x1 == null || y1 == null)
+                    return false;
+                if (x1.Uri?.FullPath != y1.Uri?.FullPath)
+                    return false;
+                if (x1.Range.Start.Value != y1.Range.Start.Value)
+                    return false;
+                if (x1.Range.End.Value != y1.Range.End.Value)
+                    return false;
+                return true;
+            }
+
+            public bool Equals(Location x1, Location y1)
+            {
+                if (x1 == null || y1 == null)
+                    return false;
+                if (x1.Uri?.FullPath != y1.Uri?.FullPath)
+                    return false;
+                if (x1.Range.Start.Value != y1.Range.Start.Value)
+                    return false;
+                if (x1.Range.End.Value != y1.Range.End.Value)
+                    return false;
+                return true;
+            }
+
+            public int GetHashCode(object obj)
+            {
+                var hc = obj.GetHashCode();
+                return hc;
+            }
+
+            public int GetHashCode(Location obj)
+            {
+                var hc = obj.GetHashCode();
+                return hc;
+            }
+        }
+
         public static Dictionary<string, string> Rename(Dictionary<string, string> rename_list, Document document)
         {
             Dictionary<string, string> result = new Dictionary<string, string>();
@@ -6418,7 +6464,7 @@ and not(lexerRuleBlock//ebnfSuffix)
             }
 
             Dictionary<string, IEnumerable<Location>> locs_to_change = new Dictionary<string, IEnumerable<Location>>();
-            var all_locs = new List<Location>();
+            HashSet<Location> hs = new HashSet<Location>();
             foreach (var pair in rename_list)
             {
                 var old_name = pair.Key;
@@ -6426,9 +6472,10 @@ and not(lexerRuleBlock//ebnfSuffix)
                 IEnumerable<Location> locs = new Module().FindRefsAndDefs(old_name, document);
                 // Save rename locations for later application.
                 locs_to_change[old_name] = locs;
-                all_locs.AddRange(locs);
+                var nhs = hs.Union(locs, new LocationComparer()).ToHashSet();
+                hs = nhs;
             }
-
+            var all_locs = hs.ToList();
             var sorted_all_locs = all_locs.OrderByDescending(p => p.Range.Start.Value).ToList();
             var x1 = sorted_all_locs.Select(r => r.Uri).ToList();
             var documents = x1.Distinct().ToList();
