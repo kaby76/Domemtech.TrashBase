@@ -68,7 +68,7 @@
             int oldMode = CurrentMode;
             int newMode = PopMode();
             bool isActionWithinAction = ModeStack.Count > 0
-                && newMode == ANTLRv4Lexer.Actionx
+                && newMode == ANTLRv4Lexer.TargetLanguageAction
                 && oldMode == newMode;
 
             if (isActionWithinAction)
@@ -82,7 +82,7 @@
             if (insideOptionsBlock)
             {
                 Type = (ANTLRv4Lexer.BEGIN_ACTION);
-                PushMode(ANTLRv4Lexer.Actionx);
+                PushMode(ANTLRv4Lexer.TargetLanguageAction);
             }
             else
             {
@@ -93,7 +93,7 @@
 
         public override IToken Emit()
         {
-            if ((Type == ANTLRv4Lexer.OPTIONS || Type == ANTLRv4Lexer.TOKENS_SPEC || Type == ANTLRv4Lexer.CHANNELS)
+            if ((Type == ANTLRv4Lexer.OPTIONS || Type == ANTLRv4Lexer.TOKENS || Type == ANTLRv4Lexer.CHANNELS)
                   && CurrentRuleType == TokenConstants.InvalidType)
             { // enter prequel construct ending with an RBRACE
                 CurrentRuleType = PREQUEL_CONSTRUCT;

@@ -1232,10 +1232,6 @@
                 }
 
                 int grammar_type_index = 0;
-                if (root.DOC_COMMENT() != null)
-                {
-                    grammar_type_index++;
-                }
 
                 ANTLRv4Parser.GrammarDeclContext grammar_type_tree = root.grammarDecl();
                 ANTLRv4Parser.IdentifierContext id = grammar_type_tree.identifier();
@@ -1365,10 +1361,6 @@
             }
 
             int grammar_type_index = 0;
-            if (root.DOC_COMMENT() != null)
-            {
-                grammar_type_index++;
-            }
 
             ANTLRv4Parser.GrammarDeclContext grammar_type_tree = root.grammarDecl();
             ANTLRv4Parser.IdentifierContext id = grammar_type_tree.identifier();
@@ -1515,10 +1507,6 @@
                 }
 
                 int grammar_type_index = 0;
-                if (root.DOC_COMMENT() != null)
-                {
-                    grammar_type_index++;
-                }
 
                 ANTLRv4Parser.GrammarDeclContext grammar_type_tree = root.grammarDecl();
                 ANTLRv4Parser.IdentifierContext id = grammar_type_tree.identifier();
@@ -1647,10 +1635,6 @@
                 }
 
                 int grammar_type_index = 0;
-                if (root.DOC_COMMENT() != null)
-                {
-                    grammar_type_index++;
-                }
 
                 ANTLRv4Parser.GrammarDeclContext grammar_type_tree = root.grammarDecl();
                 ANTLRv4Parser.IdentifierContext id = grammar_type_tree.identifier();
