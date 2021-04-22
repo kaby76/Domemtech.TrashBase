@@ -7224,7 +7224,31 @@ and not(lexerRuleBlock//ebnfSuffix)
                 }
                 {
                     var nodes = engine.parseExpression(
-                            @"//parserRuleSpec/ruleReturns",
+                            @"//rulePrequel",
+                            new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
+                        .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree)
+                        .ToArray();
+                    foreach (var n in nodes) TreeEdits.Delete(n);
+                }
+                {
+                    var nodes = engine.parseExpression(
+                            @"//ruleReturns",
+                            new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
+                        .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree)
+                        .ToArray();
+                    foreach (var n in nodes) TreeEdits.Delete(n);
+                }
+                {
+                    var nodes = engine.parseExpression(
+                            @"//exceptionGroup",
+                            new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
+                        .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree)
+                        .ToArray();
+                    foreach (var n in nodes) TreeEdits.Delete(n);
+                }
+                {
+                    var nodes = engine.parseExpression(
+                            @"//throwsSpec",
                             new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
                         .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree)
                         .ToArray();
@@ -7233,14 +7257,6 @@ and not(lexerRuleBlock//ebnfSuffix)
                 {
                     var nodes = engine.parseExpression(
                             @"//prequelConstruct",
-                            new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
-                        .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree)
-                        .ToArray();
-                    foreach (var n in nodes) TreeEdits.Delete(n);
-                }
-                {
-                    var nodes = engine.parseExpression(
-                            @"//parserRuleSpec/ruleReturns",
                             new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
                         .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree)
                         .ToArray();
