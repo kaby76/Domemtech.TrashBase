@@ -7264,6 +7264,14 @@ and not(lexerRuleBlock//ebnfSuffix)
                 }
                 {
                     var nodes = engine.parseExpression(
+                            @"//elementOptions",
+                            new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
+                        .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree)
+                        .ToArray();
+                    foreach (var n in nodes) TreeEdits.Delete(n);
+                }
+                {
+                    var nodes = engine.parseExpression(
                             @"//actionBlock",
                             new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
                         .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree)
