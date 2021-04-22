@@ -18,8 +18,9 @@
         {
         }
 
-        public void Try(string ffn, string input, ref Dictionary<string, string> results)
+        public Dictionary<string, string> Try(string ffn, string input)
         {
+            Dictionary<string, string> results = new Dictionary<string, string>();
             var now = DateTime.Now.ToString();
             var errors = new StringBuilder();
             var str = new AntlrInputStream(input);
@@ -40,7 +41,7 @@
             if (elistener.had_error)
             {
                 results.Add(error_file_name, errors.ToString());
-                return;
+                return results;
             }
             else
             {
@@ -123,7 +124,7 @@
             var new_code = sb.ToString();
             results.Add(new_ffn, new_code);
             results.Add(ffn.Replace(suffix, ".txt"), errors.ToString());
+            return results;
         }
-
     }
 }

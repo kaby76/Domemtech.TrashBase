@@ -11,8 +11,9 @@
     {
         public BisonImport() { }
 
-        public void Try(string ffn, string input, ref Dictionary<string, string> results)
+        public Dictionary<string, string> Try(string ffn, string input)
         {
+            Dictionary<string, string> results = new Dictionary<string, string>();
             bool convert_undefined_to_terminals = true;
             string now = DateTime.Now.ToString();
             StringBuilder errors = new StringBuilder();
@@ -28,7 +29,7 @@
             if (elistener.had_error)
             {
                 results.Add(ffn.Replace(".y", ".txt"), errors.ToString());
-                return;
+                return results;
             }
             else
             {
@@ -231,6 +232,7 @@
             }
             results.Add(ffn.Replace(".y", ".g4"), sb.ToString());
             results.Add(ffn.Replace(".y", ".txt"), errors.ToString());
+            return results;
         }
     }
 }

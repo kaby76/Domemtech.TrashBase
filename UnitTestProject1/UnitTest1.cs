@@ -1527,9 +1527,8 @@ IDENTIFIER
     :   LETTER (LETTER|JavaIDDigit)*
     ;
 ");
-            var results = new Dictionary<string, string>();
             var imp = new LanguageServer.Antlr3Import();
-            imp.Try(document.FullPath, document.Code, ref results);
+            var results = imp.Try(document.FullPath, document.Code);
         }
 
         [TestMethod]
@@ -1538,9 +1537,8 @@ IDENTIFIER
             var cwd = Directory.GetCurrentDirectory();
             var ffn = cwd + "/" + "../../../../UnitTestProject1/ANTLRv3.g3";
             var code = System.IO.File.ReadAllText(ffn);
-            var results = new Dictionary<string, string>();
             var imp = new LanguageServer.Antlr3Import();
-            imp.Try(ffn, code, ref results);
+            var results = imp.Try(ffn, code);
             var gold = cwd + "/" + "../../../../UnitTestProject1/ANTLRv3.g4";
             var gold_code = System.IO.File.ReadAllText(gold);
             if (!results.Any()) throw new Exception();
@@ -1553,9 +1551,8 @@ IDENTIFIER
             var cwd = Directory.GetCurrentDirectory();
             var ffn = cwd + "/" + "../../../../UnitTestProject1/ANTLRv2.g2";
             var code = System.IO.File.ReadAllText(ffn);
-            var results = new Dictionary<string, string>();
             var imp = new LanguageServer.Antlr2Import();
-            imp.Try(ffn, code, ref results);
+            var results = imp.Try(ffn, code);
             var new_code = results.First().Value;
             //var gold = cwd + "/" + "../../../../UnitTestProject1/ANTLRv3.g4";
             //var gold_code = System.IO.File.ReadAllText(gold);
@@ -1569,9 +1566,8 @@ IDENTIFIER
             var cwd = Directory.GetCurrentDirectory();
             var ffn = cwd + "/" + "../../../../UnitTestProject1/calc.y";
             var code = System.IO.File.ReadAllText(ffn);
-            var results = new Dictionary<string, string>();
             var imp = new LanguageServer.BisonImport();
-            imp.Try(ffn, code, ref results);
+            var results = imp.Try(ffn, code);
             var new_code = results.ToList()[1].Value;
             //var gold = cwd + "/" + "../../../../UnitTestProject1/ANTLRv3.g4";
             //var gold_code = System.IO.File.ReadAllText(gold);

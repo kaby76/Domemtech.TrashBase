@@ -15,22 +15,22 @@
                 if (f.EndsWith(".y"))
                 {
                     var imp = new BisonImport();
-                    imp.Try(f, input, ref results);
+                    results = imp.Try(f, input);
                 }
                 else if (f.EndsWith(".ebnf"))
                 {
                     var imp = new W3CebnfImport();
-                    imp.Try(f, input, ref results);
+                    results = imp.Try(f, input);
                 }
                 else if (f.EndsWith(".g2"))
                 {
                     var imp = new Antlr2Import();
-                    imp.Try(f, input, ref results);
+                    results = imp.Try(f, input);
                 }
                 else if (f.EndsWith(".g3"))
                 {
                     var imp = new Antlr3Import();
-                    imp.Try(f, input, ref results);
+                    results = imp.Try(f, input);
                 }
             }
             return results;
