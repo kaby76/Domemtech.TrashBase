@@ -426,6 +426,44 @@
                     }
                 }
             }
+
+            using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext =
+                new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
+            {
+                org.eclipse.wst.xml.xpath2.processor.Engine engine = new org.eclipse.wst.xml.xpath2.processor.Engine();
+                {
+                    var nodes = engine.parseExpression(
+			            @"//parserRuleSpec",
+                        new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
+                    .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement))
+                    .ToArray();
+                    foreach (var n in nodes)
+                    {
+                        var elements = engine.parseExpression(
+                            @"ruleBlock/ruleAltList/labeledAlt/alternative/element[1]/atom/terminal/TOKEN_REF",
+                                new StaticContextBuilder()).evaluate(dynamicContext, new object[] { n })
+                            .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree as TerminalNodeImpl)
+                            .Select(x => x.GetText())
+                            .ToArray();
+                        // If there are more than 1 of any name, flag rule.
+                        if (elements.Distinct().Count() != elements.Count())
+                        {
+                            var rule_ref = (n.AntlrIParseTree as ANTLRv4Parser.ParserRuleSpecContext)?.RULE_REF() as TerminalNodeImpl; ;
+                            string name = rule_ref.GetText();
+                            string m = "Rule " + name + " contains some common left factors. Consider grouping.";
+                            result.Add(
+                                new DiagnosticInfo()
+                                {
+                                    Document = document.FullPath,
+                                    Severify = DiagnosticInfo.Severity.Info,
+                                    Start = rule_ref.Payload.StartIndex,
+                                    End = rule_ref.Payload.StopIndex,
+                                    Message = m
+                                });
+                        }
+                    }
+                }
+            }
             return result;
         }
     }
