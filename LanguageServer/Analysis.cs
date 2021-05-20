@@ -5,6 +5,7 @@
     using Antlr4.Runtime.Misc;
     using Antlr4.Runtime.Tree;
     using Microsoft.CodeAnalysis;
+    using org.eclipse.wst.xml.xpath2.processor.util;
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -324,6 +325,105 @@
                             End = ed,
                             Message = i
                         });
+                }
+            }
+
+            // Check for literals or sets that contain \uXXXX with further characters past that
+            // aren't other escapes. In other words, it gets confusing when you write '\u123456'.
+            // Did you mean '\u{123456}' or did you mean '\u1234' '56'?
+            var (tree, parser, lexer) = (pd_parser.ParseTree, pd_parser.Parser, pd_parser.Lexer);
+            using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext =
+                new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
+            {
+                org.eclipse.wst.xml.xpath2.processor.Engine engine = new org.eclipse.wst.xml.xpath2.processor.Engine();
+                {
+                    var nodes = engine.parseExpression(
+                        @"//STRING_LITERAL",
+                        new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
+                    .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree)
+                    .ToArray();
+                    foreach (var n in nodes)
+                    {
+                        var t = n as TerminalNodeImpl;
+                        var text = t.Payload.Text;
+                        for (int i = 0; i < text.Length; ++i)
+                        {
+                            if (text[i] == '\\')
+                            {
+                                if (i + 1 >= text.Length) continue;
+                                if (text[i + 1] == 'u')
+                                {
+                                    if (i + 2 >= text.Length) continue;
+                                    if (text[i + 2] == '{') continue;
+                                    if (i + 6 >= text.Length) continue;
+                                    if (text[i + 6] == '\\') continue;
+                                    else if (text[i + 6] == '\'') continue;
+                                    else
+                                    {
+                                        // String containing Unicode 4-byte quantity, but it's questionable.
+                                        string m = "Literal " + text + " looks unusual. Consider moving \\u's to end, or changing to code point \\u{XXXXXX} syntax.";
+                                        result.Add(
+                                            new DiagnosticInfo()
+                                            {
+                                                Document = document.FullPath,
+                                                Severify = DiagnosticInfo.Severity.Info,
+                                                Start = t.Payload.StartIndex,
+                                                End = t.Payload.StopIndex,
+                                                Message = m
+                                            });
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext =
+                new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
+            {
+                org.eclipse.wst.xml.xpath2.processor.Engine engine = new org.eclipse.wst.xml.xpath2.processor.Engine();
+                {
+                    var nodes = engine.parseExpression(
+                        @"//LEXER_CHAR_SET",
+                        new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
+                    .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree)
+                    .ToArray();
+                    foreach (var n in nodes)
+                    {
+                        var t = n as TerminalNodeImpl;
+                        var text = t.Payload.Text;
+                        for (int i = 0; i < text.Length; ++i)
+                        {
+                            if (text[i] == '\\')
+                            {
+                                if (i + 1 >= text.Length) continue;
+                                if (text[i + 1] == 'u')
+                                {
+                                    if (i + 2 >= text.Length) continue;
+                                    if (text[i + 2] == '{') continue;
+                                    if (i + 6 >= text.Length) continue;
+                                    if (text[i + 6] == '\\') continue;
+                                    else if (text[i + 6] == ']') continue;
+                                    else if (text[i + 6] == '-') continue;
+                                    else
+                                    {
+                                        // String containing Unicode 4-byte quantity, but it's questionable.
+                                        string m = "Literal " + text + " looks unusual. Consider moving \\u's to end, or changing to code point \\u{XXXXXX} syntax.";
+                                        result.Add(
+                                            new DiagnosticInfo()
+                                            {
+                                                Document = document.FullPath,
+                                                Severify = DiagnosticInfo.Severity.Info,
+                                                Start = t.Payload.StartIndex,
+                                                End = t.Payload.StopIndex,
+                                                Message = m
+                                            });
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
             return result;
