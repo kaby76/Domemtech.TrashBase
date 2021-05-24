@@ -10,11 +10,11 @@
 
     // https://www.w3.org/TR/REC-xml/#sec-notation
 
-    public class W3CebnfImport
+    public class ConvertW3Cebnf
 	{
 		string suffix = ".ebnf";
 		
-        public W3CebnfImport()
+        public ConvertW3Cebnf()
         {
         }
 

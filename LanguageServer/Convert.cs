@@ -2,7 +2,7 @@
 {
     using System.Collections.Generic;
 
-    public class Import
+    public class Convert
     {
 
         public static Dictionary<string, string> ImportGrammars(List<string> args)
@@ -14,22 +14,22 @@
                 var input = System.IO.File.ReadAllText(f);
                 if (f.EndsWith(".y"))
                 {
-                    var imp = new BisonImport();
+                    var imp = new ConvertBison();
                     results = imp.Try(f, input);
                 }
                 else if (f.EndsWith(".ebnf"))
                 {
-                    var imp = new W3CebnfImport();
+                    var imp = new ConvertW3Cebnf();
                     results = imp.Try(f, input);
                 }
                 else if (f.EndsWith(".g2"))
                 {
-                    var imp = new Antlr2Import();
+                    var imp = new ConvertAntlr2();
                     results = imp.Try(f, input);
                 }
                 else if (f.EndsWith(".g3"))
                 {
-                    var imp = new Antlr3Import();
+                    var imp = new ConvertAntlr3();
                     results = imp.Try(f, input);
                 }
             }

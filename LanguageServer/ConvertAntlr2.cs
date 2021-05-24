@@ -12,13 +12,13 @@
     using System.Text;
     using org.eclipse.wst.xml.xpath2.processor.util;
 
-    public class Antlr2Import
+    public class ConvertAntlr2
     {
         public bool StripLabelOperator { get; set; } = true; // "x:foobar" => "foobar"
         public bool StripActionBlocks { get; set; } = true; // "{ ... }" => ""
         public bool StripAssignmentOperator { get; set; } = true; // "x=foobar" => "foobar"
 
-        public Antlr2Import()
+        public ConvertAntlr2()
         {
         }
 

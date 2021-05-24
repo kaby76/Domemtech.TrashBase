@@ -4,7 +4,8 @@ using System.Text;
 
 namespace LanguageServer
 {
-    public static class Class1
+    public static class HashSetHelpers
+
     {
         public static HashSet<TSource> ToHashSet<TSource>(this IEnumerable<TSource> source) => source.ToHashSet(null);
 

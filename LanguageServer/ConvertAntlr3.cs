@@ -8,9 +8,9 @@
     using System.Text;
     using org.eclipse.wst.xml.xpath2.processor.util;
 
-    public class Antlr3Import
+    public class ConvertAntlr3
     {
-        public Antlr3Import() { }
+        public ConvertAntlr3() { }
 
         public Dictionary<string, string> Try(string ffn, string input)
         {

@@ -7,9 +7,9 @@
     using System.Linq;
     using System.Text;
 
-    public class BisonImport
+    public class ConvertBison
     {
-        public BisonImport() { }
+        public ConvertBison() { }
 
         public Dictionary<string, string> Try(string ffn, string input)
         {

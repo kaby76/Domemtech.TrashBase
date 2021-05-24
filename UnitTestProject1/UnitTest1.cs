@@ -1527,7 +1527,7 @@ IDENTIFIER
     :   LETTER (LETTER|JavaIDDigit)*
     ;
 ");
-            var imp = new LanguageServer.Antlr3Import();
+            var imp = new LanguageServer.ConvertAntlr3();
             var results = imp.Try(document.FullPath, document.Code);
         }
 
@@ -1537,7 +1537,7 @@ IDENTIFIER
             var cwd = Directory.GetCurrentDirectory();
             var ffn = cwd + "/" + "../../../../UnitTestProject1/ANTLRv3.g3";
             var code = System.IO.File.ReadAllText(ffn);
-            var imp = new LanguageServer.Antlr3Import();
+            var imp = new LanguageServer.ConvertAntlr3();
             var results = imp.Try(ffn, code);
             var gold = cwd + "/" + "../../../../UnitTestProject1/ANTLRv3.g4";
             var gold_code = System.IO.File.ReadAllText(gold);
@@ -1551,7 +1551,7 @@ IDENTIFIER
             var cwd = Directory.GetCurrentDirectory();
             var ffn = cwd + "/" + "../../../../UnitTestProject1/ANTLRv2.g2";
             var code = System.IO.File.ReadAllText(ffn);
-            var imp = new LanguageServer.Antlr2Import();
+            var imp = new LanguageServer.ConvertAntlr2();
             var results = imp.Try(ffn, code);
             var new_code = results.First().Value;
             //var gold = cwd + "/" + "../../../../UnitTestProject1/ANTLRv3.g4";
@@ -1566,7 +1566,7 @@ IDENTIFIER
             var cwd = Directory.GetCurrentDirectory();
             var ffn = cwd + "/" + "../../../../UnitTestProject1/calc.y";
             var code = System.IO.File.ReadAllText(ffn);
-            var imp = new LanguageServer.BisonImport();
+            var imp = new LanguageServer.ConvertBison();
             var results = imp.Try(ffn, code);
             var new_code = results.ToList()[1].Value;
             //var gold = cwd + "/" + "../../../../UnitTestProject1/ANTLRv3.g4";

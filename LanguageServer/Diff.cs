@@ -158,7 +158,7 @@ namespace LanguageServer
             }
             else if (length1 == 1)
             {
-                coords1 = Convert.ToString(start1 + 1);
+                coords1 = System.Convert.ToString(start1 + 1);
             }
             else
             {
@@ -170,7 +170,7 @@ namespace LanguageServer
             }
             else if (length2 == 1)
             {
-                coords2 = Convert.ToString(start2 + 1);
+                coords2 = System.Convert.ToString(start2 + 1);
             }
             else
             {
@@ -1725,7 +1725,7 @@ namespace LanguageServer
                         int n;
                         try
                         {
-                            n = Convert.ToInt32(param);
+                            n = System.Convert.ToInt32(param);
                         }
                         catch (FormatException e)
                         {
@@ -2585,7 +2585,7 @@ namespace LanguageServer
                 }
                 patch = new Patch();
                 patches.Add(patch);
-                patch.start1 = Convert.ToInt32(m.Groups[1].Value);
+                patch.start1 = System.Convert.ToInt32(m.Groups[1].Value);
                 if (m.Groups[2].Length == 0)
                 {
                     patch.start1--;
@@ -2598,10 +2598,10 @@ namespace LanguageServer
                 else
                 {
                     patch.start1--;
-                    patch.length1 = Convert.ToInt32(m.Groups[2].Value);
+                    patch.length1 = System.Convert.ToInt32(m.Groups[2].Value);
                 }
 
-                patch.start2 = Convert.ToInt32(m.Groups[3].Value);
+                patch.start2 = System.Convert.ToInt32(m.Groups[3].Value);
                 if (m.Groups[4].Length == 0)
                 {
                     patch.start2--;
@@ -2614,7 +2614,7 @@ namespace LanguageServer
                 else
                 {
                     patch.start2--;
-                    patch.length2 = Convert.ToInt32(m.Groups[4].Value);
+                    patch.length2 = System.Convert.ToInt32(m.Groups[4].Value);
                 }
                 textPointer++;
 
