@@ -262,6 +262,23 @@
                 }
             }
 
+            //// Convert "protected" to "fragment" for lexer symbols.
+            ////  Remove "protected" for parser symbols.
+            //{
+            //    using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext =
+            //        new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
+            //    {
+            //        org.eclipse.wst.xml.xpath2.processor.Engine engine =
+            //         new org.eclipse.wst.xml.xpath2.processor.Engine();
+            //        var nodes = engine.parseExpression(
+            //                @"//rule_[id/RULE_REF]/(PROTECTED | PUBLIC | PRIVATE)",
+            //                new StaticContextBuilder()).evaluate(
+            //                dynamicContext, new object[] { dynamicContext.Document })
+            //            .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree);
+            //        TreeEdits.Delete(nodes);
+            //    }
+            //}
+
             // Remove crap in "rule_ :
             // DOC_COMMENT? ((PROTECTED | PUBLIC | PRIVATE))? id
             // BANG? argActionBlock? (RETURNS argActionBlock)?
@@ -453,6 +470,10 @@
                 }
             }
 
+            // Get rid of labels.
+            // elementNoOptionSpec
+            // : (id EQUAL (id COLON) ? (rule_ref_or_keyword_as argActionBlock ? BANG ? | TOKEN_REF argActionBlock ?))
+            // | ((id COLON)? (rule_ref_or_keyword_as argActionBlock? BANG? | range | terminal_ | NOT(notTerminal | ebnf) | ebnf))
             if (StripLabelOperator)
             {
                 using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext =
@@ -461,13 +482,32 @@
                     org.eclipse.wst.xml.xpath2.processor.Engine engine =
                      new org.eclipse.wst.xml.xpath2.processor.Engine();
                     var nodes = engine.parseExpression(
-                            @"//elementNoOptionSpec
-                            /(id[following-sibling::COLON and not(following-sibling::id)]
-                              | COLON[preceding-sibling::id and not(preceding-sibling::COLON)])",
+                            @"//elementNoOptionSpec",
                             new StaticContextBuilder()).evaluate(
                             dynamicContext, new object[] { dynamicContext.Document })
                         .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree).ToList();
-                    foreach (var n in nodes) TreeEdits.Delete(n);
+                    foreach (var n in nodes)
+                    {
+                        for (int i = n.ChildCount-1; i >= 0; --i)
+                        {
+                            var c = n.GetChild(i);
+                            if (c is TerminalNodeImpl tni)
+                            {
+                                if (tni.Symbol.Type == ANTLRv2Parser.COLON)
+                                {
+                                    TreeEdits.Delete(tni);
+                                    c = n.GetChild(--i);
+                                    TreeEdits.Delete(c);
+                                }
+                                else if (tni.Symbol.Type == ANTLRv2Parser.EQUAL)
+                                {
+                                    TreeEdits.Delete(tni);
+                                    c = n.GetChild(--i);
+                                    TreeEdits.Delete(c);
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -523,23 +563,6 @@
                     }
                 }
             }
-
-            //// Convert "protected" to "fragment" for lexer symbols.
-            ////  Remove "protected" for parser symbols.
-            //{
-            //    using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext =
-            //        new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
-            //    {
-            //        org.eclipse.wst.xml.xpath2.processor.Engine engine =
-            //         new org.eclipse.wst.xml.xpath2.processor.Engine();
-            //        var nodes = engine.parseExpression(
-            //                @"//rule_[id/RULE_REF]/(PROTECTED | PUBLIC | PRIVATE)",
-            //                new StaticContextBuilder()).evaluate(
-            //                dynamicContext, new object[] { dynamicContext.Document })
-            //            .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree);
-            //        TreeEdits.Delete(nodes);
-            //    }
-            //}
 
             StringBuilder sb = new StringBuilder();
             TreeEdits.Reconstruct(sb, tree, text_before);
