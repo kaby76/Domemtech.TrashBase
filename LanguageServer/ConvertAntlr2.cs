@@ -11,6 +11,8 @@
     using System.Linq;
     using System.Text;
     using org.eclipse.wst.xml.xpath2.processor.util;
+    using Antlr4.Runtime.Misc;
+    using Workspaces;
 
     public class ConvertAntlr2
     {
@@ -24,6 +26,30 @@
 
         public Dictionary<string, string> Try(string ffn, string input)
         {
+            // Create a new .g4 doc with this text and apply substitutions.
+            Document document = Workspaces.Workspace.Instance.FindDocument("DUMMY.g2");
+            if (document == null)
+            {
+                document = new Workspaces.Document("DUMMY.g2");
+                document.Code = input;
+                Project project = Workspaces.Workspace.Instance.FindProject("Misc");
+                if (project == null)
+                {
+                    project = new Project("Misc", "Misc", "Misc");
+                    Workspaces.Workspace.Instance.AddChild(project);
+                }
+                project.AddDocument(document);
+            }
+            document.Changed = true;
+            _ = ParsingResultsFactory.Create(document);
+            var workspace = document.Workspace;
+            _ = new LanguageServer.Module().Compile(workspace);
+            var rename_list = new Dictionary<string, string>()
+                { { "grammar", "grammar_" }, { "tree", "tree_" } };
+            var res1 = LanguageServer.Transform.Rename(rename_list, document);
+
+            input = res1["DUMMY.g2"];
+
             Dictionary<string, string> results = new Dictionary<string, string>();
             var now = DateTime.Now.ToString();
             var errors = new StringBuilder();
@@ -110,18 +136,23 @@
                                 [id/*
                                         [
                                         text() = 'output'
+                                        or text() = 'ASTLabelType'
                                         or text() = 'backtrack'
                                         or text() = 'buildAST'
-                                        or text() = 'classHeaderSuffix'
-                                        or text() = 'memoize'
-                                        or text() = 'ASTLabelType'
-                                        or text() = 'rewrite'
-                                        or text() = 'k'
-                                        or text() = 'exportVocab'
-                                        or text() = 'testLiterals'
-                                        or text() = 'interactive'
                                         or text() = 'charVocabulary'
+                                        or text() = 'classHeaderSuffix'
+                                        or text() = 'codeGenBitsetTestThreshold'
+                                        or text() = 'codeGenMakeSwitchThreshold'
                                         or text() = 'defaultErrorHandler'
+                                        or text() = 'exportVocab'
+                                        or text() = 'generateAmbigWarnings'
+                                        or text() = 'interactive'
+                                        or text() = 'k'
+                                        or text() = 'memoize'
+                                        or text() = 'paraphrase'
+                                        or text() = 'rewrite'
+                                        or text() = 'testLiterals'
+                                        or text() = 'warnWhenFollowAmbig'
                                         ]]",
                         new StaticContextBuilder()).evaluate(
                         dynamicContext, new object[] { dynamicContext.Document })
@@ -146,16 +177,22 @@
                                 [id
                                     /(TOKEN_REF | RULE_REF)
                                         [text() = 'output'
-                                        or text() = 'backtrack'
-                                        or text() = 'memoize'
                                         or text() = 'ASTLabelType'
-                                        or text() = 'rewrite'
-                                        or text() = 'k'
-                                        or text() = 'exportVocab'
-                                        or text() = 'testLiterals'
-                                        or text() = 'interactive'
+                                        or text() = 'backtrack'
                                         or text() = 'charVocabulary'
+                                        or text() = 'classHeaderSuffix'
+                                        or text() = 'codeGenBitsetTestThreshold'
+                                        or text() = 'codeGenMakeSwitchThreshold'
                                         or text() = 'defaultErrorHandler'
+                                        or text() = 'exportVocab'
+                                        or text() = 'generateAmbigWarnings'
+                                        or text() = 'interactive'
+                                        or text() = 'k'
+                                        or text() = 'memoize'
+                                        or text() = 'paraphrase'
+                                        or text() = 'rewrite'
+                                        or text() = 'testLiterals'
+                                        or text() = 'warnWhenFollowAmbig'
                                         ]]",
                         new StaticContextBuilder()).evaluate(
                         dynamicContext, new object[] { dynamicContext.Document })
@@ -171,6 +208,140 @@
                     if (os.ChildCount == 3) TreeEdits.Delete(os);
                 }
             }
+
+            // Remove selectively crap in rule_
+            // DOC_COMMENT? ((PROTECTED | PUBLIC | PRIVATE))? id
+            // BANG? argActionBlock? (RETURNS argActionBlock)?
+            // throwsSpec? ruleOptionsSpec? ruleAction* COLON altList
+            // SEMI exceptionGroup?
+            using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext =
+                    new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
+            {
+                org.eclipse.wst.xml.xpath2.processor.Engine engine =
+                    new org.eclipse.wst.xml.xpath2.processor.Engine();
+                var nodes = engine.parseExpression(
+                        @"//rule_",
+                        new StaticContextBuilder()).evaluate(
+                        dynamicContext, new object[] { dynamicContext.Document })
+                    .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree);
+                foreach (var node in nodes)
+                {
+                    for (int i = node.ChildCount - 1; i >= 0; --i)
+                    {
+                        if (node.GetChild(i) is ParserRuleContext prc)
+                        {
+                            if (prc as ANTLRv2Parser.ExceptionGroupContext!= null)
+                            {
+                                TreeEdits.Delete(prc);
+                            }
+                            else if (prc as ANTLRv2Parser.RuleActionContext != null)
+                            {
+                                TreeEdits.Delete(prc);
+                            }
+                            else if (prc as ANTLRv2Parser.RuleOptionsSpecContext != null)
+                            {
+                                TreeEdits.Delete(prc);
+                            }
+                            else if (prc as ANTLRv2Parser.ThrowsSpecContext != null)
+                            {
+                                TreeEdits.Delete(prc);
+                            }
+                            else if (prc as ANTLRv2Parser.ArgActionBlockContext != null)
+                            {
+                                TreeEdits.Delete(prc);
+                            }
+                        }
+                        else if (node.GetChild(i) is TerminalNodeImpl tni)
+                        {
+                            if (tni.Symbol.Type == ANTLRv2Parser.RETURNS)
+                            {
+                                TreeEdits.Delete(tni);
+                            }
+                            else if (tni.Symbol.Type == ANTLRv2Parser.BANG)
+                            {
+                                TreeEdits.Delete(tni);
+                            }
+                            else if (tni.Symbol.Type == ANTLRv2Parser.PRIVATE)
+                            {
+                                TreeEdits.Delete(tni);
+                            }
+                            else if (tni.Symbol.Type == ANTLRv2Parser.PROTECTED)
+                            {
+                                TreeEdits.Delete(tni);
+                            }
+                            else if (tni.Symbol.Type == ANTLRv2Parser.PUBLIC)
+                            {
+                                TreeEdits.Delete(tni);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Remove syntactic predicates.
+            {
+                using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext =
+                    new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
+                {
+                    org.eclipse.wst.xml.xpath2.processor.Engine engine =
+                     new org.eclipse.wst.xml.xpath2.processor.Engine();
+                    var nodes = engine.parseExpression(
+                            @"//ebnf
+                            [SEMPREDOP]",
+                            new StaticContextBuilder()).evaluate(
+                            dynamicContext, new object[] { dynamicContext.Document })
+                        .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree);
+                    TreeEdits.Delete(nodes);
+                }
+            }
+
+
+            // Remove select crap from ebnf.
+            // ebnf : LPAREN(subruleOptionsSpec actionBlock ? COLON | actionBlock COLON) ? block RPAREN ((QM | STAR | PLUS) ? BANG ? | SEMPREDOP)
+            using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext =
+                    new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
+            {
+                org.eclipse.wst.xml.xpath2.processor.Engine engine =
+                    new org.eclipse.wst.xml.xpath2.processor.Engine();
+                var nodes = engine.parseExpression(
+                        @"//ebnf",
+                        new StaticContextBuilder()).evaluate(
+                        dynamicContext, new object[] { dynamicContext.Document })
+                    .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree);
+                foreach (var node in nodes)
+                {
+                    for (int i = node.ChildCount - 1; i >= 0; --i)
+                    {
+                        if (node.GetChild(i) is ParserRuleContext prc)
+                        {
+                            if (prc as ANTLRv2Parser.SubruleOptionsSpecContext != null)
+                            {
+                                TreeEdits.Delete(prc);
+                            }
+                            else if (prc as ANTLRv2Parser.ActionBlockContext != null)
+                            {
+                                TreeEdits.Delete(prc);
+                            }
+                        }
+                        else if (node.GetChild(i) is TerminalNodeImpl tni)
+                        {
+                            if (tni.Symbol.Type == ANTLRv2Parser.COLON)
+                            {
+                                TreeEdits.Delete(tni);
+                            }
+                            else if (tni.Symbol.Type == ANTLRv2Parser.BANG)
+                            {
+                                TreeEdits.Delete(tni);
+                            }
+                            else if (tni.Symbol.Type == ANTLRv2Parser.SEMPREDOP)
+                            {
+                                TreeEdits.Delete(tni);
+                            }
+                        }
+                    }
+                }
+            }
+
 
             // Parser and Lexer in One Definition
             using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext =
@@ -263,23 +434,6 @@
                 }
             }
 
-            // Remove syntactic predicates.
-            {
-                using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext =
-                    new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
-                {
-                    org.eclipse.wst.xml.xpath2.processor.Engine engine =
-                     new org.eclipse.wst.xml.xpath2.processor.Engine();
-                    var nodes = engine.parseExpression(
-                            @"//ebnf
-                            [SEMPREDOP]",
-                            new StaticContextBuilder()).evaluate(
-                            dynamicContext, new object[] { dynamicContext.Document })
-                        .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree);
-                    TreeEdits.Delete(nodes);
-                }
-            }
-
             // Convert double-quoted string literals to single quote.
             {
                 using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext =
@@ -316,28 +470,29 @@
                 }
             }
 
-            // Convert "protected" to "fragment" for lexer symbols.
-            //  Remove "protected" for parser symbols.
-            {
-                using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext =
-                    new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
-                {
-                    org.eclipse.wst.xml.xpath2.processor.Engine engine =
-                     new org.eclipse.wst.xml.xpath2.processor.Engine();
-                    var nodes = engine.parseExpression(
-                            @"//rule_[id/RULE_REF]/(PROTECTED | PUBLIC | PRIVATE)",
-                            new StaticContextBuilder()).evaluate(
-                            dynamicContext, new object[] { dynamicContext.Document })
-                        .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree);
-                    TreeEdits.Delete(nodes);
-                }
-            }
+            //// Convert "protected" to "fragment" for lexer symbols.
+            ////  Remove "protected" for parser symbols.
+            //{
+            //    using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext =
+            //        new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
+            //    {
+            //        org.eclipse.wst.xml.xpath2.processor.Engine engine =
+            //         new org.eclipse.wst.xml.xpath2.processor.Engine();
+            //        var nodes = engine.parseExpression(
+            //                @"//rule_[id/RULE_REF]/(PROTECTED | PUBLIC | PRIVATE)",
+            //                new StaticContextBuilder()).evaluate(
+            //                dynamicContext, new object[] { dynamicContext.Document })
+            //            .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree);
+            //        TreeEdits.Delete(nodes);
+            //    }
+            //}
 
             StringBuilder sb = new StringBuilder();
             TreeEdits.Reconstruct(sb, tree, text_before);
             var new_code = sb.ToString();
-            results.Add(new_ffn, new_code);
+
             results.Add(ffn.Replace(".g", ".txt"), errors.ToString());
+            results.Add(new_ffn, new_code);
             return results;
         }
     }

@@ -5,7 +5,7 @@
     public class Convert
     {
 
-        public static Dictionary<string, string> ImportGrammars(List<string> args)
+        public static Dictionary<string, string> RenameGrammars(List<string> args)
         {
             Dictionary<string, string> results = new Dictionary<string, string>();
             foreach (string f in args)

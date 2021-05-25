@@ -1,4 +1,8 @@
 
+clean:
+	rm -rf */obj */bin
+	rm -rf ${USERPROFILE}/.nuget/Domemtech.TrashBase
+
 build:
 	dotnet restore
 	dotnet build
