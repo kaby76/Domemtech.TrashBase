@@ -51,9 +51,11 @@
                 { { "grammar", "grammar_" }, { "tree", "tree_" } };
 
             var res1 = LanguageServer.Transform.Rename(rename_list, document);
-
-            // Get renamed symbol input.
-            input = res1["DUMMY.g2"];
+            if (res1.Any())
+            {
+                // Get renamed symbol input.
+                input = res1["DUMMY.g2"];
+            }
 
             Dictionary<string, string> results = new Dictionary<string, string>();
             var now = DateTime.Now.ToString();
@@ -214,21 +216,27 @@
                 {
                     TreeEdits.Delete(tokens_node);
                 }
-                // Find insertion point for new lexer rules.
-                var lexer_nodes = engine.parseExpression(
-                        @"//rule_[id/TOKEN_REF]",
-                        new StaticContextBuilder()).evaluate(
-                        dynamicContext, new object[] { dynamicContext.Document })
-                    .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree);
-                var insert = lexer_nodes?.First();
-                int number = 0;
-                foreach (string p in no_name_rules)
+                if (new_rules.Any() || no_name_rules.Any())
                 {
-                    TreeEdits.InsertBefore(insert, Environment.NewLine + "DUMMY_" + number++ + " : '" + p.Substring(1, p.Length-2) + "';" + Environment.NewLine);
-                }
-                foreach (var p in new_rules)
-                {
-                    TreeEdits.InsertBefore(insert, Environment.NewLine + p.Key + " : '" + p.Value.Substring(1, p.Value.Length - 2) + "';" + Environment.NewLine);
+                    // Find insertion point for new lexer rules.
+                    var lexer_nodes = engine.parseExpression(
+                            @"//rule_[id/TOKEN_REF]",
+                            new StaticContextBuilder()).evaluate(
+                            dynamicContext, new object[] { dynamicContext.Document })
+                        .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree);
+                    if (lexer_nodes.Any())
+                    {
+                        var insert = lexer_nodes?.First();
+                        int number = 0;
+                        foreach (string p in no_name_rules)
+                        {
+                            TreeEdits.InsertBefore(insert, Environment.NewLine + "DUMMY_" + number++ + " : '" + p.Substring(1, p.Length - 2) + "';" + Environment.NewLine);
+                        }
+                        foreach (var p in new_rules)
+                        {
+                            TreeEdits.InsertBefore(insert, Environment.NewLine + p.Key + " : '" + p.Value.Substring(1, p.Value.Length - 2) + "';" + Environment.NewLine);
+                        }
+                    }
                 }
             }
 
