@@ -85,3 +85,5 @@ Trash/test/Generated/
 Trash/Generated/
 VsCode/server/
 LanguageServer/.antlr/
+*.nupkg
+*.snupkg

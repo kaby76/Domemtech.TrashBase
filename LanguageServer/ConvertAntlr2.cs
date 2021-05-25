@@ -182,11 +182,11 @@
                         new StaticContextBuilder()).evaluate(
                         dynamicContext, new object[] { dynamicContext.Document })
                     .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree);
+                Dictionary<string, string> new_rules = new Dictionary<string, string>();
                 if (nodes.Any())
                 {
                     tokens_node = nodes.First().Parent;
                     // Note tokenEntry, e.g., 'A = "b";'.
-                    Dictionary<string, string> new_rules = new Dictionary<string, string>();
                     foreach (var n in nodes)
                     {
                         new_rules.Add(n.GetChild(0).GetText(), n.GetChild(2).GetText());
@@ -199,11 +199,11 @@
                       new StaticContextBuilder()).evaluate(
                       dynamicContext, new object[] { dynamicContext.Document })
                   .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree);
+                List<string> no_name_rules = new List<string>();
                 if (str_nodes.Any())
                 {
                     tokens_node = str_nodes.First().Parent;
                     // Note tokenEntry, e.g., 'A = "b";'.
-                    List<string> no_name_rules = new List<string>();
                     foreach (var n in str_nodes)
                     {
                         no_name_rules.Add(n.GetChild(0).GetText());
@@ -214,8 +214,23 @@
                 {
                     TreeEdits.Delete(tokens_node);
                 }
+                // Find insertion point for new lexer rules.
+                var lexer_nodes = engine.parseExpression(
+                        @"//rule_[id/TOKEN_REF]",
+                        new StaticContextBuilder()).evaluate(
+                        dynamicContext, new object[] { dynamicContext.Document })
+                    .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree);
+                var insert = lexer_nodes?.First();
+                int number = 0;
+                foreach (string p in no_name_rules)
+                {
+                    TreeEdits.InsertBefore(insert, Environment.NewLine + "DUMMY_" + number++ + " : '" + p.Substring(1, p.Length-2) + "';" + Environment.NewLine);
+                }
+                foreach (var p in new_rules)
+                {
+                    TreeEdits.InsertBefore(insert, Environment.NewLine + p.Key + " : '" + p.Value.Substring(1, p.Value.Length - 2) + "';" + Environment.NewLine);
+                }
             }
-
 
             // Delete all rule options. As far as I can tell, they have no equivalent in
             // Antlr4 except for maybe a few.
