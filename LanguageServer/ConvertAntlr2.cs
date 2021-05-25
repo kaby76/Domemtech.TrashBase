@@ -26,7 +26,10 @@
 
         public Dictionary<string, string> Try(string ffn, string input)
         {
-            // Create a new .g4 doc with this text and apply substitutions.
+            // Create a new .g2 doc with this text and apply substitutions.
+            // Antlr4 parses do not allow keywords as symbol names, so we have to do
+            // a rename first. (I might take care of this later, but order is relevant
+            // for now.)
             Document document = Workspaces.Workspace.Instance.FindDocument("DUMMY.g2");
             if (document == null)
             {
@@ -46,8 +49,10 @@
             _ = new LanguageServer.Module().Compile(workspace);
             var rename_list = new Dictionary<string, string>()
                 { { "grammar", "grammar_" }, { "tree", "tree_" } };
+
             var res1 = LanguageServer.Transform.Rename(rename_list, document);
 
+            // Get renamed symbol input.
             input = res1["DUMMY.g2"];
 
             Dictionary<string, string> results = new Dictionary<string, string>();
@@ -115,11 +120,8 @@
                 foreach (var n in nodes) TreeEdits.Delete(n);
             }
 
-            // Let's take care of options first. That's because we can't
-            // determine if this is a combined grammar or not.
-            // Remove unused options at top of grammar def.
-            // This specifically looks at the options at the top of the file,
-            // not rule-based options. That will be handled separately below.
+            // Let's take care of options first, nuking options that have no equivalent in
+            // Antlr4.
             using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext =
                     new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
             {
@@ -165,7 +167,58 @@
                 }
             }
 
-            // Delete rule options.
+            // Convert tokens { ... } string declarations into hardwired rules. I just don't
+            // understand why these were here, but thankfully Parr made them explicit rules that
+            // can be easily refactored for whatever reason.
+            using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext =
+                    new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
+            {
+                IParseTree tokens_node = null;
+                org.eclipse.wst.xml.xpath2.processor.Engine engine =
+                    new org.eclipse.wst.xml.xpath2.processor.Engine();
+                var nodes = engine.parseExpression(
+                        @"//tokenEntry
+                                [TOKEN_REF and EQUAL and STRING_LITERAL]",
+                        new StaticContextBuilder()).evaluate(
+                        dynamicContext, new object[] { dynamicContext.Document })
+                    .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree);
+                if (nodes.Any())
+                {
+                    tokens_node = nodes.First().Parent;
+                    // Note tokenEntry, e.g., 'A = "b";'.
+                    Dictionary<string, string> new_rules = new Dictionary<string, string>();
+                    foreach (var n in nodes)
+                    {
+                        new_rules.Add(n.GetChild(0).GetText(), n.GetChild(2).GetText());
+                    }
+                    TreeEdits.Delete(nodes);
+                }
+                var str_nodes = engine.parseExpression(
+                  @"//tokenEntry
+                         [STRING_LITERAL]",
+                      new StaticContextBuilder()).evaluate(
+                      dynamicContext, new object[] { dynamicContext.Document })
+                  .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree);
+                if (str_nodes.Any())
+                {
+                    tokens_node = str_nodes.First().Parent;
+                    // Note tokenEntry, e.g., 'A = "b";'.
+                    List<string> no_name_rules = new List<string>();
+                    foreach (var n in str_nodes)
+                    {
+                        no_name_rules.Add(n.GetChild(0).GetText());
+                    }
+                    TreeEdits.Delete(str_nodes);
+                }
+                if (tokens_node != null && tokens_node.ChildCount == 3)
+                {
+                    TreeEdits.Delete(tokens_node);
+                }
+            }
+
+
+            // Delete all rule options. As far as I can tell, they have no equivalent in
+            // Antlr4 except for maybe a few.
             using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext =
                     new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
             {
@@ -209,11 +262,11 @@
                 }
             }
 
-            // Remove selectively crap in rule_
+            // Remove crap in "rule_ :
             // DOC_COMMENT? ((PROTECTED | PUBLIC | PRIVATE))? id
             // BANG? argActionBlock? (RETURNS argActionBlock)?
             // throwsSpec? ruleOptionsSpec? ruleAction* COLON altList
-            // SEMI exceptionGroup?
+            // SEMI exceptionGroup?"
             using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext =
                     new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
             {
@@ -296,8 +349,9 @@
             }
 
 
-            // Remove select crap from ebnf.
-            // ebnf : LPAREN(subruleOptionsSpec actionBlock ? COLON | actionBlock COLON) ? block RPAREN ((QM | STAR | PLUS) ? BANG ? | SEMPREDOP)
+            // Remove crap in "ebnf :
+            // LPAREN(subruleOptionsSpec actionBlock ? COLON | actionBlock COLON) ? block
+            // RPAREN ((QM | STAR | PLUS) ? BANG ? | SEMPREDOP)"
             using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext =
                     new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
             {
