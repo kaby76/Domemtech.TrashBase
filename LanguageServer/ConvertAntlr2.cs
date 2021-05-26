@@ -13,6 +13,7 @@
     using org.eclipse.wst.xml.xpath2.processor.util;
     using Antlr4.Runtime.Misc;
     using Workspaces;
+    using Antlr4.Runtime.Atn;
 
     public class ConvertAntlr2
     {
@@ -26,6 +27,18 @@
 
         public Dictionary<string, string> Try(string ffn, string input)
         {
+            var error_file_name = ffn;
+            error_file_name = error_file_name.EndsWith(".g2")
+                ? (error_file_name.Substring(0, error_file_name.Length - 3) + ".txt") : error_file_name;
+            error_file_name = error_file_name.EndsWith(".g")
+                ? (error_file_name.Substring(0, error_file_name.Length - 2) + ".txt") : error_file_name;
+
+            var new_ffn = ffn;
+            new_ffn = new_ffn.EndsWith(".g2")
+                ? (new_ffn.Substring(0, new_ffn.Length - 3) + ".g4") : new_ffn;
+            new_ffn = new_ffn.EndsWith(".g")
+                ? (new_ffn.Substring(0, new_ffn.Length - 2) + ".g4") : new_ffn;
+
             // Create a temporary .g2 doc with this text and apply symbol renaming.
             // Antlr4 parses do not allow keywords as symbol names, so we have to do
             // a rename first.
@@ -67,18 +80,6 @@
             var elistener = new ErrorListener<IToken>(parser, lexer, 0);
             parser.AddErrorListener(elistener);
             var tree = parser.grammar_();
-            var error_file_name = ffn;
-            error_file_name = error_file_name.EndsWith(".g2")
-                ? (error_file_name.Substring(0, error_file_name.Length - 3) + ".txt") : error_file_name;
-            error_file_name = error_file_name.EndsWith(".g")
-                ? (error_file_name.Substring(0, error_file_name.Length - 2) + ".txt") : error_file_name;
-
-            var new_ffn = ffn;
-            new_ffn = new_ffn.EndsWith(".g2")
-                ? (new_ffn.Substring(0, new_ffn.Length - 3) + ".g4") : new_ffn;
-            new_ffn = new_ffn.EndsWith(".g")
-                ? (new_ffn.Substring(0, new_ffn.Length - 2) + ".g4") : new_ffn;
-
             if (elistener.had_error)
             {
                 results.Add(error_file_name, errors.ToString());
@@ -106,6 +107,55 @@
                         dynamicContext, new object[] { dynamicContext.Document })
                     .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree);
                 foreach (var n in nodes) TreeEdits.Delete(n);
+            }
+
+            // Find lexer and parser sections and reorder lexer after parser.
+            // Nuke tree grammar section and any other sections that we have more than one of.
+            using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext =
+                    new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
+            {
+                org.eclipse.wst.xml.xpath2.processor.Engine engine =
+                    new org.eclipse.wst.xml.xpath2.processor.Engine();
+                var parent = engine.parseExpression(
+                        @"//grammar_",
+                        new StaticContextBuilder()).evaluate(
+                        dynamicContext, new object[] { dynamicContext.Document })
+                    .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree).ToList();
+                var g = parent.First() as ANTLRv2Parser.Grammar_Context;
+                int lsi = -1;
+                int psi = -1;
+                List<IParseTree> nuke = new List<IParseTree>();
+                for (int i = 0; i < g.ChildCount; ++i)
+                {
+                    IParseTree s = g.children[i];
+                    var c = s as ANTLRv2Parser.ClassDefContext;
+                    if (c == null) continue;
+                    if (c.lexerSpec() != null)
+                    {
+                        if (lsi >= 0) nuke.Add(s);
+                        lsi = i;
+                    }
+                    else if (c.treeParserSpec() != null)
+                    {
+                        nuke.Add(s);
+                    }
+                    else if (c.parserSpec() != null)
+                    {
+                        if (psi >= 0) nuke.Add(s);
+                        psi = i;
+                    }
+                }
+                // Move grammar sections around.
+                if (lsi >= 0 && psi >= 0 && lsi < psi)
+                {
+                    var swap = g.children[psi];
+                    g.children[psi] = g.children[lsi];
+                    g.children[lsi] = swap;
+                }
+                foreach (var s in nuke)
+                {
+                    TreeEdits.Delete(s);
+                }
             }
 
             // Remove classDef action blocks for now.
