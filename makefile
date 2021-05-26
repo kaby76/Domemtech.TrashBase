@@ -1,9 +1,4 @@
 
-clean:
-	rm -rf */obj */bin
-	rm -rf ${USERPROFILE}/.nuget/packages/Domemtech.TrashBase
-	rm -f *.nupkg *.snupkg
-
 build:
 	dotnet restore
 	dotnet build
@@ -12,3 +7,9 @@ build:
 
 publish:
 	dotnet nuget push Domemtech.TrashBase.$version.nupkg --api-key $trashkey --source https://api.nuget.org/v3/index.json
+
+clean:
+	rm -rf */obj */bin
+	rm -rf ${USERPROFILE}/.nuget/packages/Domemtech.TrashBase
+	rm -f *.nupkg *.snupkg
+
