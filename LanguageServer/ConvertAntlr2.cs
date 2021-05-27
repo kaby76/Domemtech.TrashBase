@@ -496,8 +496,7 @@
                 }
             }
 
-
-            // Parser and Lexer in One Definition
+            // If one Parser and Lexer, combine
             using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext =
                     new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
             {
@@ -513,15 +512,10 @@
                         new StaticContextBuilder()).evaluate(
                         dynamicContext, new object[] { dynamicContext.Document })
                     .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree);
-                var tree_nodes = engine.parseExpression(
-                        @"//treeParserSpec",
-                        new StaticContextBuilder()).evaluate(
-                        dynamicContext, new object[] { dynamicContext.Document })
-                    .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree);
                 // Can this be a "combined" grammar? That can happen only if
                 // one parser and one lexer decl and no tree decl. Options for
                 // the lexer must be removed too.
-                if (parser_nodes.Count() == 1 && lexer_nodes.Count() == 1 && tree_nodes.Count() == 0)
+                if (parser_nodes.Count() == 1 && lexer_nodes.Count() == 1)
                 {
                     var lexerSpec = lexer_nodes.First() as ANTLRv2Parser.LexerSpecContext;
                     if (lexerSpec.lexerOptionsSpec() == null)
@@ -539,6 +533,50 @@
                     var s = parserSpec.superClass();
                     var new_sym = new TerminalNodeImpl(new CommonToken(ANTLRv4Lexer.GRAMMAR)
                     { Line = -1, Column = -1, Text = "grammar" });
+                    text_before.TryGetValue(c as TerminalNodeImpl, out string v);
+                    if (v != null)
+                        text_before.Add(new_sym, v);
+                    TreeEdits.Replace(c, (in IParseTree n, out bool cc) =>
+                    {
+                        cc = false;
+                        return new_sym;
+                    });
+                    TreeEdits.Delete(e);
+                    TreeEdits.Delete(p);
+                    TreeEdits.Delete(s);
+                } else if (parser_nodes.Count() == 1)
+                {
+                    // Cannot combine, but at least rewrite old declarations into new format.
+                    // Rewrite the parser spec.
+                    var parserSpec = parser_nodes.First() as ANTLRv2Parser.ParserSpecContext;
+                    var c = parserSpec.CLASS();
+                    var i = parserSpec.id();
+                    var e = parserSpec.EXTENDS();
+                    var p = parserSpec.PARSER();
+                    var s = parserSpec.superClass();
+                    var new_sym = new TerminalNodeImpl(new CommonToken(ANTLRv4Lexer.GRAMMAR)
+                    { Line = -1, Column = -1, Text = "parser grammar" });
+                    text_before.TryGetValue(c as TerminalNodeImpl, out string v);
+                    if (v != null)
+                        text_before.Add(new_sym, v);
+                    TreeEdits.Replace(c, (in IParseTree n, out bool cc) =>
+                    {
+                        cc = false;
+                        return new_sym;
+                    });
+                    TreeEdits.Delete(e);
+                    TreeEdits.Delete(p);
+                    TreeEdits.Delete(s);
+                } else if (lexer_nodes.Count() == 1)
+                {
+                    var lexerSpec = lexer_nodes.First() as ANTLRv2Parser.LexerSpecContext;
+                    var c = lexerSpec.CLASS();
+                    var i = lexerSpec.id();
+                    var e = lexerSpec.EXTENDS();
+                    var p = lexerSpec.LEXER();
+                    var s = lexerSpec.superClass();
+                    var new_sym = new TerminalNodeImpl(new CommonToken(ANTLRv4Lexer.GRAMMAR)
+                    { Line = -1, Column = -1, Text = "lexer grammar" });
                     text_before.TryGetValue(c as TerminalNodeImpl, out string v);
                     if (v != null)
                         text_before.Add(new_sym, v);
