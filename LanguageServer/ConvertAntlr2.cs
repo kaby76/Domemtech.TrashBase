@@ -172,8 +172,7 @@
                 foreach (var n in nodes) TreeEdits.Delete(n);
             }
 
-            // Let's take care of options first, nuking options that have no equivalent in
-            // Antlr4.
+            // Nuke options that have no equivalent in Antlr4.
             using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext =
                     new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
             {
@@ -196,6 +195,7 @@
                                         or text() = 'caseSensitive'
                                         or text() = 'caseSensitiveLiterals'
                                         or text() = 'charVocabulary'
+                                        or text() = 'classHeaderPrefix'
                                         or text() = 'classHeaderSuffix'
                                         or text() = 'codeGenBitsetTestThreshold'
                                         or text() = 'codeGenMakeSwitchThreshold'
@@ -232,8 +232,7 @@
                 org.eclipse.wst.xml.xpath2.processor.Engine engine =
                     new org.eclipse.wst.xml.xpath2.processor.Engine();
                 var nodes = engine.parseExpression(
-                        @"//tokenEntry
-                                [TOKEN_REF and EQUAL and STRING_LITERAL]",
+                        @"//tokenEntry[TOKEN_REF and EQUAL and STRING_LITERAL]",
                         new StaticContextBuilder()).evaluate(
                         dynamicContext, new object[] { dynamicContext.Document })
                     .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree);
@@ -248,8 +247,7 @@
                     TreeEdits.Delete(nodes);
                 }
                 var str_nodes = engine.parseExpression(
-                  @"//tokenEntry
-                         [STRING_LITERAL]",
+                  @"//tokenEntry[STRING_LITERAL]",
                       new StaticContextBuilder()).evaluate(
                       dynamicContext, new object[] { dynamicContext.Document })
                   .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree);
@@ -277,11 +275,42 @@
                         int number = 0;
                         foreach (string p in no_name_rules)
                         {
-                            TreeEdits.InsertBefore(insert, Environment.NewLine + "DUMMY_" + number++ + " : '" + p.Substring(1, p.Length - 2) + "';" + Environment.NewLine);
+                            // Convert "foobar" to 'foobar', taking care of single quote nonsense.
+                            var text = p;
+                            if (text.Length == 0) continue;
+                            if (text[0] == '"')
+                            {
+                                text = text.Substring(1, text.Length - 2);
+                                StringBuilder ss = new StringBuilder();
+                                ss.Append("'");
+                                foreach (var c in text)
+                                {
+                                    if (c == '\'') ss.Append("\\'");
+                                    else ss.Append(c);
+                                }
+                                ss.Append("'");
+                                text = ss.ToString();
+                            }
+                            TreeEdits.InsertBefore(insert, Environment.NewLine + "DUMMY_" + number++ + " : " + text + ";" + Environment.NewLine);
                         }
                         foreach (var p in new_rules)
                         {
-                            TreeEdits.InsertBefore(insert, Environment.NewLine + p.Key + " : '" + p.Value.Substring(1, p.Value.Length - 2) + "';" + Environment.NewLine);
+                            var text = p.Value;
+                            if (text.Length == 0) continue;
+                            if (text[0] == '"')
+                            {
+                                text = text.Substring(1, text.Length - 2);
+                                StringBuilder ss = new StringBuilder();
+                                ss.Append("'");
+                                foreach (var c in text)
+                                {
+                                    if (c == '\'') ss.Append("\\'");
+                                    else ss.Append(c);
+                                }
+                                ss.Append("'");
+                                text = ss.ToString();
+                            }
+                            TreeEdits.InsertBefore(insert, Environment.NewLine + p.Key + " : " + text + ";" + Environment.NewLine);
                         }
                     }
                 }
@@ -315,6 +344,7 @@
                                         or text() = 'caseSensitive'
                                         or text() = 'caseSensitiveLiterals'
                                         or text() = 'charVocabulary'
+                                        or text() = 'classHeaderPrefix'
                                         or text() = 'classHeaderSuffix'
                                         or text() = 'codeGenBitsetTestThreshold'
                                         or text() = 'codeGenMakeSwitchThreshold'
@@ -447,7 +477,6 @@
                     TreeEdits.Delete(nodes);
                 }
             }
-
 
             // Remove crap in "ebnf :
             // LPAREN(subruleOptionsSpec actionBlock ? COLON | actionBlock COLON) ? block
@@ -675,7 +704,7 @@
                         ss.Append("'");
                         foreach (var c in text)
                         {
-                            if (c == '"') ss.Append("\\");
+                            if (c == '\'') ss.Append("\\'");
                             else ss.Append(c);
                         }
                         ss.Append("'");
@@ -711,6 +740,20 @@
                     new org.eclipse.wst.xml.xpath2.processor.Engine();
                 var n2 = engine.parseExpression(
                         @"//argActionBlock",
+                        new StaticContextBuilder()).evaluate(
+                        dynamicContext, new object[] { dynamicContext.Document })
+                    .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree);
+                TreeEdits.Delete(n2);
+            }
+
+            // Remove unsupported elementOptionSpec for ASTs.
+            using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext =
+                    new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
+            {
+                org.eclipse.wst.xml.xpath2.processor.Engine engine =
+                    new org.eclipse.wst.xml.xpath2.processor.Engine();
+                var n2 = engine.parseExpression(
+                        @"//elementOptionSpec",
                         new StaticContextBuilder()).evaluate(
                         dynamicContext, new object[] { dynamicContext.Document })
                     .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree);
