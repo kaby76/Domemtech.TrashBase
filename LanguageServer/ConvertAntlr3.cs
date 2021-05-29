@@ -14,16 +14,6 @@
 
         public Dictionary<string, string> Try(string ffn, string input)
         {
-            Dictionary<string, string> results = new Dictionary<string, string>();
-            var now = DateTime.Now.ToString();
-            var errors = new StringBuilder();
-            var str = new AntlrInputStream(input);
-            var lexer = new ANTLRv3Lexer(str);
-            var tokens = new CommonTokenStream(lexer);
-            var parser = new ANTLRv3Parser(tokens);
-            var elistener = new ErrorListener<IToken>(parser, lexer, 0);
-            parser.AddErrorListener(elistener);
-            var tree = parser.grammarDef();
             var error_file_name = ffn;
             error_file_name = error_file_name.EndsWith(".g3")
                 ? (error_file_name.Substring(0, error_file_name.Length - 3) + ".txt") : error_file_name;
@@ -36,6 +26,17 @@
             new_ffn = new_ffn.EndsWith(".g")
                 ? (new_ffn.Substring(0, new_ffn.Length - 2) + ".g4") : new_ffn;
 
+            Dictionary<string, string> results = new Dictionary<string, string>();
+            var now = DateTime.Now.ToString();
+            var errors = new StringBuilder();
+            var str = new AntlrInputStream(input);
+            var lexer = new ANTLRv3Lexer(str);
+            var tokens = new CommonTokenStream(lexer);
+            var parser = new ANTLRv3Parser(tokens);
+            var elistener = new ErrorListener<IToken>(parser, lexer, 0);
+            parser.AddErrorListener(elistener);
+            var tree = parser.grammarDef();
+            
             if (elistener.had_error)
             {
                 results.Add(error_file_name, errors.ToString());
@@ -52,8 +53,6 @@
             var (text_before, other) = TreeEdits.TextToLeftOfLeaves(tokens, tree);
 
             // Remove unused options at top of grammar def.
-            // This specifically looks at the options at the top of the file,
-            // not rule-based options. That will be handled separately below.
             using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext =
                     new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
             {
@@ -120,7 +119,7 @@
                 }
             }
 
-            // Use new tokens{} syntax
+            // Use new tokens {} syntax
             using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext =
                     new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
             {
@@ -212,7 +211,7 @@
                 }
             }
 
-            // Note-- @rulecatch does not exist in Antlr3!
+            // Note-- @rulecatch does not exist in Antlr4!
             // Remove unnecessary rulecatch block (use BailErrorStrategy instead)
 
             // Remove unsupported rewrite syntax and AST operators
@@ -260,7 +259,7 @@
                 foreach (var n in n4) TreeEdits.Delete(n);
             }
 
-            // Scope not in Antlr4 (equivalent are locals).
+            // Scopes are not in Antlr4 (equivalent are locals).
             // For now nuke.
             using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext =
                     new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
@@ -272,10 +271,7 @@
                         new StaticContextBuilder()).evaluate(
                      dynamicContext, new object[] { dynamicContext.Document })
                      .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree);
-                if (rule_scope_spec.Any())
-                {
-                    foreach (var n in rule_scope_spec) TreeEdits.Delete(n);
-                }
+                foreach (var n in rule_scope_spec) TreeEdits.Delete(rule_scope_spec);
             }
 
             // labels in lexer rules are not supported in ANTLR 4.
@@ -446,8 +442,12 @@
             // input was renamed to _input in ANTLR 4.
             // Use the channel lexer command.
             {
-
             }
+
+            // Antlr4 cannot perform '~' of a lexer alt list or a lexer symbol
+            // that isn't a set.
+            // Rewrite lexer rules foobar : ~(a | b | c), a : [...]; b : [...]; c : [...];
+            // Unfold all lexer symbols on RHS inside ~-operator.
 
 
             StringBuilder sb = new StringBuilder();
