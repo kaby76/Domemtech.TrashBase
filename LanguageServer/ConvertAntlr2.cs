@@ -573,7 +573,15 @@
                     TreeEdits.Delete(e);
                     TreeEdits.Delete(p);
                     TreeEdits.Delete(s);
-                } else if (parser_nodes.Count() == 1)
+                    // Change name of combined grammar, if needed.
+                    var i_name = i.GetText();
+                    if (i_name.EndsWith("Parser"))
+                    {
+                        i_name = i_name.Substring(0, i_name.Length - "Parser".Length);
+                        TreeEdits.Replace(i, i_name);
+                    }
+                }
+                else if (parser_nodes.Count() == 1)
                 {
                     // Cannot combine, but at least rewrite old declarations into new format.
                     // Rewrite the parser spec.
