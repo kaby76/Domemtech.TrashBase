@@ -1323,10 +1323,10 @@
                 // Swap.
                 var s = document1;
                 document1 = document2;
-                document1 = s;
+                document2 = s;
                 var s1 = pd_parser1;
-                pd_parser2 = pd_parser1;
-                pd_parser1 = s1;
+                pd_parser1 = pd_parser2;
+                pd_parser2 = s1;
             }
 
             TableOfRules table1 = new TableOfRules(pd_parser1, document1);
