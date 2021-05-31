@@ -1228,7 +1228,7 @@
                 StringBuilder sb_lexer = new StringBuilder();
                 if (!(pd_parser.ParseTree is ANTLRv4Parser.GrammarSpecContext root))
                 {
-                    return null;
+                    return result;
                 }
 
                 int grammar_type_index = 0;
@@ -1275,7 +1275,7 @@
                 string current_dir = Path.GetDirectoryName(g4_file_path);
                 if (current_dir == null)
                 {
-                    return null;
+                    return result;
                 }
                 string orig_name = Path.GetFileNameWithoutExtension(g4_file_path);
                 string new_code_parser = sb_parser.ToString();
