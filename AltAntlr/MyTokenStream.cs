@@ -30,6 +30,12 @@
             n = 0;
         }
 
+        public virtual List<IToken> GetTokens
+        {
+            get { return tokens; }
+            set { tokens = value; }
+        }
+
         public virtual IToken Get(int i)
         {
             int bufferStartIndex = GetBufferStartIndex();

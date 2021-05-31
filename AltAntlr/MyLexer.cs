@@ -8,6 +8,9 @@
 
     public class MyLexer : Lexer, ITokenSource
     {
+        public IList<IToken> Tokens { get; set; }
+        public int CurrentToken { get; set; }
+
         public int Line => throw new NotImplementedException();
 
         public int Column => throw new NotImplementedException();
@@ -61,7 +64,9 @@
         [return: NotNull]
         public IToken NextToken()
         {
-            throw new NotImplementedException();
+            if (CurrentToken < Tokens.Count)
+                return Tokens[CurrentToken++];
+            throw new Exception("Reading past EOF.");
         }
 
         public MyLexer(ICharStream input) : base(input)
