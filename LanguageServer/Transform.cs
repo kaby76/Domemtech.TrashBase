@@ -755,7 +755,7 @@
 
             // Check if initial file is a grammar.
             if (!(ParsingResultsFactory.Create(document) is Antlr4ParsingResults pd_parser))
-                throw new LanguageServerException("A grammar file is not selected. Please select one first.");
+                return result;
             var workspace = document.Workspace;
             ExtractGrammarType egt = new ExtractGrammarType();
             ParseTreeWalker.Default.Walk(egt, pd_parser.ParseTree);
@@ -763,7 +763,7 @@
                 || egt.Type == ExtractGrammarType.GrammarType.Lexer;
             if (!is_grammar)
             {
-                throw new LanguageServerException("A lexer or combined grammar file is not selected. Please select one first.");
+                return result;
             }
 
             // Verify the defs for all LHS symbols.
@@ -791,15 +791,18 @@
                                                         /STRING_LITERAL",
                         new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
                     .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement)).ToArray();
+                if (dom_literals.Length == 0) return result;
+
                 var allowable_lexer_rules = engine.parseExpression(
-                        "../../../../../../../..",
+                        "../../../../../../../../TOKEN_REF",
                         new StaticContextBuilder()).evaluate(dynamicContext, dom_literals)
-                    .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree as ANTLRv4Parser.LexerRuleSpecContext).ToList();
+                    .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree).ToList();
                 for (int i = 0; i < allowable_lexer_rules.Count; ++i)
                 {
-                    if (nodes.Contains(allowable_lexer_rules[i].TOKEN_REF()))
-                        subs.Add(dom_literals[i].AntlrIParseTree.GetText(),
-                            allowable_lexer_rules[i].TOKEN_REF().GetText());
+                    var l = allowable_lexer_rules[i];
+                    var t = l.GetText();
+                    if (nodes.Contains(l))
+                        subs.Add(dom_literals[i].AntlrIParseTree.GetText(), t);
                 }
             }
 
