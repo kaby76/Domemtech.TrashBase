@@ -464,6 +464,99 @@
                     }
                 }
             }
+
+            {
+                ParsingResults pd = pd_parser;
+                //var pt = pd.ParseTree;
+
+                List<ANTLRv4Parser.AltListContext> altlists;
+                List<ANTLRv4Parser.ElementContext> elements;
+                List<ANTLRv4Parser.AltListContext> altlists2;
+                List<ANTLRv4Parser.ElementContext> elements2;
+                using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext = new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
+                {
+                    org.eclipse.wst.xml.xpath2.processor.Engine engine = new org.eclipse.wst.xml.xpath2.processor.Engine();
+
+                    altlists = engine.parseExpression(
+                        "//(altList | labeledAlt)/alternative/element/ebnf[not(child::blockSuffix)]/block/altList[not(@ChildCount > 1)]",
+                        new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
+                        .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree as ANTLRv4Parser.AltListContext).ToList();
+                    altlists2 = engine.parseExpression(
+                        "//(altList | labeledAlt)[not(@ChildCount > 1)]/alternative[not(@ChildCount > 1)]/element/ebnf[not(child::blockSuffix)]/block/altList[@ChildCount > 1]",
+                        new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
+                        .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree as ANTLRv4Parser.AltListContext).ToList();
+                    elements = altlists.Select(t => t.Parent.Parent.Parent as ANTLRv4Parser.ElementContext).ToList();
+                    elements2 = altlists2.Select(t => t.Parent.Parent.Parent as ANTLRv4Parser.ElementContext).ToList();
+                }
+
+                for (int j = 0; j < altlists.Count; ++j)
+                {
+                    // Remove {altlist}/../../.. (an element), which is the "i'th" child.
+                    var altlist = altlists[j];
+                    var element = elements[j];
+                    var parent_alternative = element?.Parent as ANTLRv4Parser.AlternativeContext;
+                    IParseTree p = null;
+                    for (p = element; p != null; p = p.Parent)
+                    {
+                        if (p as ANTLRv4Parser.ParserRuleSpecContext != null) break;
+                    }
+                    var rule_ref = (p as ANTLRv4Parser.ParserRuleSpecContext)?.RULE_REF() as TerminalNodeImpl; ;
+                    string name = rule_ref.GetText();
+                    string m = "Rule " + name + " contains useless parentheses. ";
+                    result.Add(
+                        new DiagnosticInfo()
+                        {
+                            Document = document.FullPath,
+                            Severify = DiagnosticInfo.Severity.Info,
+                            Start = rule_ref.Payload.StartIndex,
+                            End = rule_ref.Payload.StopIndex,
+                            Message = m
+                        });
+                    //int i = 0;
+                    //for (; i < parent_alternative.ChildCount;)
+                    //{
+                    //    if (parent_alternative.children[i] == element)
+                    //        break;
+                    //    ++i;
+                    //}
+                    //parent_alternative.children.RemoveAt(i);
+                    //parent_alternative.children.Insert(i, altlist);
+                }
+                for (int j = 0; j < altlists2.Count; ++j)
+                {
+                    // Remove {altlist}/../../.. (an element), which is the "i'th" child.
+                    var altlist = altlists2[j];
+                    var element = elements2[j];
+                    var parent_alternative = element?.Parent as ANTLRv4Parser.AlternativeContext;
+                    IParseTree p = null;
+                    for (p = element; p != null; p = p.Parent)
+                    {
+                        if (p as ANTLRv4Parser.ParserRuleSpecContext != null) break;
+                    }
+                    var rule_ref = (p as ANTLRv4Parser.ParserRuleSpecContext)?.RULE_REF() as TerminalNodeImpl; ;
+                    string name = rule_ref.GetText();
+                    string m = "Rule " + name + " contains useless parentheses. ";
+                    result.Add(
+                        new DiagnosticInfo()
+                        {
+                            Document = document.FullPath,
+                            Severify = DiagnosticInfo.Severity.Info,
+                            Start = rule_ref.Payload.StartIndex,
+                            End = rule_ref.Payload.StopIndex,
+                            Message = m
+                        });
+                    //int i = 0;
+                    //for (; i < parent_alternative.ChildCount;)
+                    //{
+                    //    if (parent_alternative.children[i] == element)
+                    //        break;
+                    //    ++i;
+                    //}
+                    //parent_alternative.children.RemoveAt(i);
+                    //parent_alternative.children.Insert(i, altlist);
+                }
+            }
+
             return result;
         }
     }
