@@ -14,7 +14,7 @@
     using System.Text;
     using Document = Workspaces.Document;
 
-    class NullableValue
+    public class NullableValue
     {
         public enum Value
         {
@@ -505,7 +505,7 @@
                 org.eclipse.wst.xml.xpath2.processor.Engine engine = new org.eclipse.wst.xml.xpath2.processor.Engine();
                 {
                     var nodes = engine.parseExpression(
-			            @"//parserRuleSpec",
+                        @"//parserRuleSpec",
                         new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
                     .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement))
                     .ToArray();
@@ -631,19 +631,36 @@
 
             {
                 ParsingResults pd = pd_parser;
-
-                Nullable(pd.ParseTree);
-
+                var d = Nullable(pd.ParseTree);
                 using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext = new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
                 {
                     org.eclipse.wst.xml.xpath2.processor.Engine engine = new org.eclipse.wst.xml.xpath2.processor.Engine();
                     var rules = engine.parseExpression(
                         "//parserRuleSpec/RULE_REF[text() = ../ruleBlock//RULE_REF/text()]",
                         new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
-                        .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree as ANTLRv4Parser.AltListContext).ToList();
+                        .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree).ToList();
+                    foreach (var rule in rules)
+                    {
+                        // detect if any of these are non-nullable
+                        if (rule is TerminalNodeImpl term)
+                        {
+                            var name = term.GetText();
+                            if (d.ContainsKey(name) && (d[name].V & (int)NullableValue.Value.Empty) == 0)
+                            {
+                                string m = "Rule " + name + " is recursive and not ever nullable.";
+                                result.Add(
+                                    new DiagnosticInfo()
+                                    {
+                                        Document = document.FullPath,
+                                        Severify = DiagnosticInfo.Severity.Info,
+                                        Start = term.Payload.StartIndex,
+                                        End = term.Payload.StopIndex,
+                                        Message = m
+                                    });
+                            }
+                        }
+                    }
                 }
-
-                // 
             }
             return result;
         }
@@ -665,7 +682,7 @@
             if (parent != null && !stack.Contains(parent)) stack.Push(parent);
         }
 
-        static void Nullable(IParseTree root)
+        static Dictionary<string, NullableValue> Nullable(IParseTree root)
         {
             Stack<IParseTree> stack = new Stack<IParseTree>();
             Dictionary<string, NullableValue> nullable_rule_ref = new Dictionary<string, NullableValue>();
@@ -691,88 +708,152 @@
             while (stack.Any())
             {
                 var v = stack.Pop();
-                try
+                if (v is TerminalNodeImpl tni)
                 {
-                    if (v is TerminalNodeImpl tni)
+                    if (tni.Symbol.Type == ANTLRv4Parser.RULE_REF
+                        || tni.Symbol.Type == ANTLRv4Parser.TOKEN_REF)
                     {
-                        if (tni.Symbol.Type == ANTLRv4Parser.RULE_REF
-                            || tni.Symbol.Type == ANTLRv4Parser.TOKEN_REF)
-                        {
-                            var s = v.GetText();
-                            if (nullable_rule_ref.ContainsKey(s))
-                                Assign(stack, v.Parent, nullable[v], nullable_rule_ref[s]);
-                        }
+                        var s = v.GetText();
+                        if (nullable_rule_ref.ContainsKey(s))
+                            Assign(stack, v.Parent, nullable[v], nullable_rule_ref[s]);
                         else
-                        {
                             Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.NonEmpty });
-                        }
                     }
-                    else if (v is ANTLRv4Parser.GrammarSpecContext
-                        || v is ANTLRv4Parser.GrammarDeclContext
-                        || v is ANTLRv4Parser.GrammarTypeContext
-                        || v is ANTLRv4Parser.PrequelConstructContext
-                        || v is ANTLRv4Parser.OptionsSpecContext
-                        || v is ANTLRv4Parser.OptionContext
-                        || v is ANTLRv4Parser.OptionValueContext
-                        || v is ANTLRv4Parser.DelegateGrammarsContext
-                        || v is ANTLRv4Parser.DelegateGrammarContext
-                        || v is ANTLRv4Parser.TokensSpecContext
-                        || v is ANTLRv4Parser.ChannelsSpecContext
-                        || v is ANTLRv4Parser.IdListContext
-                        || v is ANTLRv4Parser.Action_Context
-                        || v is ANTLRv4Parser.ActionScopeNameContext
-                        || v is ANTLRv4Parser.ActionBlockContext
-                        || v is ANTLRv4Parser.ArgActionBlockContext
-                        || v is ANTLRv4Parser.ModeSpecContext
-                        || v is ANTLRv4Parser.RulesContext
-                        || v is ANTLRv4Parser.ExceptionGroupContext
-                        || v is ANTLRv4Parser.ExceptionHandlerContext
-                        || v is ANTLRv4Parser.FinallyClauseContext
-                        || v is ANTLRv4Parser.RulePrequelContext
-                        || v is ANTLRv4Parser.RuleReturnsContext
-                        || v is ANTLRv4Parser.ThrowsSpecContext
-                        || v is ANTLRv4Parser.LocalsSpecContext
-                        || v is ANTLRv4Parser.RuleActionContext
-                        || v is ANTLRv4Parser.RuleModifiersContext
-                        || v is ANTLRv4Parser.RuleModifierContext
-                        || v is ANTLRv4Parser.LexerAtomContext
-                        || v is ANTLRv4Parser.AtomContext
-                        || v is ANTLRv4Parser.NotSetContext
-                        || v is ANTLRv4Parser.SetElementContext
-                        || v is ANTLRv4Parser.CharacterRangeContext
-                        || v is ANTLRv4Parser.TerminalContext
-                        || v is ANTLRv4Parser.ElementOptionsContext
-                        || v is ANTLRv4Parser.ElementOptionContext
-                        || v is ANTLRv4Parser.IdentifierContext
-                        || v is ANTLRv4Parser.LexerCommandsContext
-                        || v is ANTLRv4Parser.LexerCommandContext
-                        || v is ANTLRv4Parser.LexerCommandNameContext
-                        || v is ANTLRv4Parser.LexerCommandExprContext)
+                    else
+                    {
                         Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.NonEmpty });
+                    }
+                }
+                else if (v is ANTLRv4Parser.GrammarSpecContext
+                    || v is ANTLRv4Parser.GrammarDeclContext
+                    || v is ANTLRv4Parser.GrammarTypeContext
+                    || v is ANTLRv4Parser.PrequelConstructContext
+                    || v is ANTLRv4Parser.OptionsSpecContext
+                    || v is ANTLRv4Parser.OptionContext
+                    || v is ANTLRv4Parser.OptionValueContext
+                    || v is ANTLRv4Parser.DelegateGrammarsContext
+                    || v is ANTLRv4Parser.DelegateGrammarContext
+                    || v is ANTLRv4Parser.TokensSpecContext
+                    || v is ANTLRv4Parser.ChannelsSpecContext
+                    || v is ANTLRv4Parser.IdListContext
+                    || v is ANTLRv4Parser.Action_Context
+                    || v is ANTLRv4Parser.ActionScopeNameContext
+                    || v is ANTLRv4Parser.ActionBlockContext
+                    || v is ANTLRv4Parser.ArgActionBlockContext
+                    || v is ANTLRv4Parser.ModeSpecContext
+                    || v is ANTLRv4Parser.RulesContext
+                    || v is ANTLRv4Parser.ExceptionGroupContext
+                    || v is ANTLRv4Parser.ExceptionHandlerContext
+                    || v is ANTLRv4Parser.FinallyClauseContext
+                    || v is ANTLRv4Parser.RulePrequelContext
+                    || v is ANTLRv4Parser.RuleReturnsContext
+                    || v is ANTLRv4Parser.ThrowsSpecContext
+                    || v is ANTLRv4Parser.LocalsSpecContext
+                    || v is ANTLRv4Parser.RuleActionContext
+                    || v is ANTLRv4Parser.RuleModifiersContext
+                    || v is ANTLRv4Parser.RuleModifierContext
+                    || v is ANTLRv4Parser.LexerAtomContext
+                    || v is ANTLRv4Parser.AtomContext
+                    || v is ANTLRv4Parser.NotSetContext
+                    || v is ANTLRv4Parser.SetElementContext
+                    || v is ANTLRv4Parser.CharacterRangeContext
+                    || v is ANTLRv4Parser.TerminalContext
+                    || v is ANTLRv4Parser.ElementOptionsContext
+                    || v is ANTLRv4Parser.ElementOptionContext
+                    || v is ANTLRv4Parser.IdentifierContext
+                    || v is ANTLRv4Parser.LexerCommandsContext
+                    || v is ANTLRv4Parser.LexerCommandContext
+                    || v is ANTLRv4Parser.LexerCommandNameContext
+                    || v is ANTLRv4Parser.LexerCommandExprContext)
+                    Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.NonEmpty });
 
-                    else if (v is ANTLRv4Parser.RuleSpecContext)
+                else if (v is ANTLRv4Parser.RuleSpecContext)
+                {
+                    Assign(stack, v.Parent, nullable[v], nullable[v.GetChild(0)]);
+                }
+                else if (v is ANTLRv4Parser.ParserRuleSpecContext prsc)
+                {
+                    var b = nullable[prsc.ruleBlock()];
+                    Assign(stack, v.Parent, nullable[v], b);
+                    Assign(stack, v.Parent, nullable_rule_ref[prsc.RULE_REF().GetText()], b);
+                }
+                else if (v is ANTLRv4Parser.RuleBlockContext rbc)
+                {
+                    var b = nullable[rbc.ruleAltList()];
+                    Assign(stack, v.Parent, nullable[v], b);
+                }
+                else if (v is ANTLRv4Parser.RuleAltListContext ralc)
+                {
+                    bool first = true;
+                    var d = new NullableValue();
+                    for (int i = 0; i < ralc.ChildCount; ++i)
                     {
-                        Assign(stack, v.Parent, nullable[v], nullable[v.GetChild(0)]);
+                        var c = ralc.GetChild(i);
+                        if (!(c is ANTLRv4Parser.LabeledAltContext)) continue;
+                        var b = nullable[c];
+                        if (first)
+                            d.V = b.V;
+                        else
+                            d.Add(b.V);
+                        first = false;
                     }
-                    else if (v is ANTLRv4Parser.ParserRuleSpecContext prsc)
+                    Assign(stack, v.Parent, nullable[v], d);
+                }
+                else if (v is ANTLRv4Parser.LabeledAltContext lac)
+                {
+                    var b = nullable[lac.alternative()];
+                    Assign(stack, v.Parent, nullable[v], b);
+                }
+                else if (v is ANTLRv4Parser.LexerRuleSpecContext lrsc)
+                {
+                    var b = nullable[lrsc.lexerRuleBlock()];
+                    Assign(stack, v.Parent, nullable[v], b);
+                    Assign(stack, v.Parent, nullable_rule_ref[lrsc.TOKEN_REF().GetText()], b);
+                }
+                else if (v is ANTLRv4Parser.LexerRuleBlockContext lrbc)
+                {
+                    var b = nullable[lrbc.lexerAltList()];
+                    Assign(stack, v.Parent, nullable[v], b);
+                }
+                else if (v is ANTLRv4Parser.LexerAltListContext lalc)
+                {
+                    bool first = true;
+                    var d = new NullableValue();
+                    for (int i = 0; i < lalc.ChildCount; ++i)
                     {
-                        var b = nullable[prsc.ruleBlock()];
+                        var c = lalc.GetChild(i);
+                        if (!(c is ANTLRv4Parser.LexerAltContext)) continue;
+                        var b = nullable[c];
+                        if (first)
+                            d.V = b.V;
+                        else
+                            d.Add(b.V);
+                        first = false;
+                    }
+                    Assign(stack, v.Parent, nullable[v], d);
+                }
+                else if (v is ANTLRv4Parser.LexerAltContext lac2)
+                {
+                    if (lac2.ChildCount == 0)
+                        Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.Empty });
+                    else
+                    {
+                        var b = nullable[lac2.lexerElements()];
                         Assign(stack, v.Parent, nullable[v], b);
-                        Assign(stack, v.Parent, nullable_rule_ref[prsc.RULE_REF().GetText()], b);
                     }
-                    else if (v is ANTLRv4Parser.RuleBlockContext rbc)
-                    {
-                        var b = nullable[rbc.ruleAltList()];
-                        Assign(stack, v.Parent, nullable[v], b);
-                    }
-                    else if (v is ANTLRv4Parser.RuleAltListContext ralc)
+                }
+                else if (v is ANTLRv4Parser.LexerElementsContext lec)
+                {
+                    if (lec.ChildCount == 0)
+                        Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.Empty });
+                    else
                     {
                         bool first = true;
                         var d = new NullableValue();
-                        for (int i = 0; i < ralc.ChildCount; ++i)
+                        for (int i = 0; i < lec.ChildCount; ++i)
                         {
-                            var c = ralc.GetChild(i);
-                            if (!(c is ANTLRv4Parser.LabeledAltContext)) continue;
+                            var c = lec.GetChild(i);
+                            if (!(c is ANTLRv4Parser.LexerElementContext)) continue;
                             var b = nullable[c];
                             if (first)
                                 d.V = b.V;
@@ -780,32 +861,87 @@
                                 d.Add(b.V);
                             first = false;
                         }
-                        Assign(stack, v.Parent, nullable[v], d);
+                        if (0 != (d.V & (int)NullableValue.Value.NonEmpty))
+                            Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.NonEmpty });
+                        else if (0 != (nullable[v].V & (int)NullableValue.Value.Empty))
+                            Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.Empty });
+                        else
+                            Assign(stack, v.Parent, nullable[v], new NullableValue());
                     }
-                    else if (v is ANTLRv4Parser.LabeledAltContext lac)
+                }
+                else if (v is ANTLRv4Parser.LexerElementContext lec2)
+                {
+                    var suffix = lec2.ebnfSuffix();
+                    bool opt = suffix != null && suffix.GetText()[0] != '+';
+                    if (lec2.labeledLexerElement() != null)
                     {
-                        var b = nullable[lac.alternative()];
-                        Assign(stack, v.Parent, nullable[v], b);
+                        if (opt)
+                            Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.Empty });
+                        else
+                            Assign(stack, v.Parent, nullable[v], nullable[lec2.labeledLexerElement()]);
                     }
-                    else if (v is ANTLRv4Parser.LexerRuleSpecContext lrsc)
+                    else if (lec2.lexerAtom() != null)
                     {
-                        var b = nullable[lrsc.lexerRuleBlock()];
-                        Assign(stack, v.Parent, nullable[v], b);
-                        Assign(stack, v.Parent, nullable_rule_ref[lrsc.TOKEN_REF().GetText()], b);
+                        if (opt)
+                            Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.Empty });
+                        else
+                            Assign(stack, v.Parent, nullable[v], nullable[lec2.lexerAtom()]);
                     }
-                    else if (v is ANTLRv4Parser.LexerRuleBlockContext lrbc)
+                    else if (lec2.lexerBlock() != null)
                     {
-                        var b = nullable[lrbc.lexerAltList()];
-                        Assign(stack, v.Parent, nullable[v], b);
+                        if (opt)
+                            Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.Empty });
+                        else
+                            Assign(stack, v.Parent, nullable[v], nullable[lec2.lexerBlock()]);
                     }
-                    else if (v is ANTLRv4Parser.LexerAltListContext lalc)
+                    else
+                        Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.Empty });
+                }
+                else if (v is ANTLRv4Parser.LabeledLexerElementContext llec)
+                {
+                    var c1 = llec.lexerAtom();
+                    var c2 = llec.lexerBlock();
+                    if (c1 != null)
+                        Assign(stack, v.Parent, nullable[v], nullable[c1]);
+                    else if (c2 != null)
+                        Assign(stack, v.Parent, nullable[v], nullable[c2]);
+                    else
+                        Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.Empty });
+                }
+                else if (v is ANTLRv4Parser.LexerBlockContext lbc)
+                {
+                    var b = nullable[lbc.lexerAltList()];
+                    Assign(stack, v.Parent, nullable[v], b);
+                }
+                else if (v is ANTLRv4Parser.AltListContext alc)
+                {
+                    bool first = true;
+                    var d = new NullableValue();
+                    for (int i = 0; i < alc.ChildCount; ++i)
+                    {
+                        var c = alc.GetChild(i);
+                        if (!(c is ANTLRv4Parser.AlternativeContext)) continue;
+                        var b = nullable[c];
+                        if (first)
+                            d.V = b.V;
+                        else
+                            d.Add(b.V);
+                        first = false;
+                    }
+                    Assign(stack, v.Parent, nullable[v], d);
+                }
+                else if (v is ANTLRv4Parser.AlternativeContext ac)
+                {
+                    if (ac.ChildCount == 0)
+                        Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.Empty });
+                    else
                     {
                         bool first = true;
                         var d = new NullableValue();
-                        for (int i = 0; i < lalc.ChildCount; ++i)
+                        for (int i = 0; i < ac.ChildCount; ++i)
                         {
-                            var c = lalc.GetChild(i);
-                            if (!(c is ANTLRv4Parser.LexerAltContext)) continue;
+                            var c = ac.GetChild(i);
+                            if (!(c is ANTLRv4Parser.ElementContext)) continue;
                             var b = nullable[c];
                             if (first)
                                 d.V = b.V;
@@ -813,228 +949,103 @@
                                 d.Add(b.V);
                             first = false;
                         }
-                        Assign(stack, v.Parent, nullable[v], d);
-                    }
-                    else if (v is ANTLRv4Parser.LexerAltContext lac2)
-                    {
-                        if (lac2.ChildCount == 0)
-                            Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.Empty });
-                        else
-                        {
-                            var b = nullable[lac2.lexerElements()];
-                            Assign(stack, v.Parent, nullable[v], b);
-                        }
-                    }
-                    else if (v is ANTLRv4Parser.LexerElementsContext lec)
-                    {
-                        if (lec.ChildCount == 0)
-                            Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.Empty });
-                        else
-                        {
-                            bool first = true;
-                            var d = new NullableValue();
-                            for (int i = 0; i < lec.ChildCount; ++i)
-                            {
-                                var c = lec.GetChild(i);
-                                if (!(c is ANTLRv4Parser.LexerElementContext)) continue;
-                                var b = nullable[c];
-                                if (first)
-                                    d.V = b.V;
-                                else
-                                    d.Add(b.V);
-                                first = false;
-                            }
-                            if (0 != (d.V & (int)NullableValue.Value.NonEmpty))
-                                Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.NonEmpty });
-                            else if (0 != (nullable[v].V & (int)NullableValue.Value.Empty))
-                                Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.Empty });
-                            else
-                                Assign(stack, v.Parent, nullable[v], new NullableValue());
-                        }
-                    }
-                    else if (v is ANTLRv4Parser.LexerElementContext lec2)
-                    {
-                        var suffix = lec2.ebnfSuffix();
-                        bool opt = suffix != null && suffix.GetText()[0] != '+';
-                        if (lec2.labeledLexerElement() != null)
-                        {
-                            if (opt)
-                                Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.Empty });
-                            else
-                                Assign(stack, v.Parent, nullable[v], nullable[lec2.labeledLexerElement()]);
-                        }
-                        else if (lec2.lexerAtom() != null)
-                        {
-                            if (opt)
-                                Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.Empty });
-                            else
-                                Assign(stack, v.Parent, nullable[v], nullable[lec2.lexerAtom()]);
-                        }
-                        else if (lec2.lexerBlock() != null)
-                        {
-                            if (opt)
-                                Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.Empty });
-                            else
-                                Assign(stack, v.Parent, nullable[v], nullable[lec2.lexerBlock()]);
-                        }
-                        else
+                        if (0 != (d.V & (int)NullableValue.Value.NonEmpty))
+                            Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.NonEmpty });
+                        else if (0 != (d.V & (int)NullableValue.Value.Empty))
                             Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.Empty });
                     }
-                    else if (v is ANTLRv4Parser.LabeledLexerElementContext llec)
+                }
+                else if (v is ANTLRv4Parser.ElementContext ec)
+                {
+                    var suffix = ec.ebnfSuffix();
+                    bool opt = suffix != null && suffix.GetText()[0] != '+';
+                    if (ec.labeledElement() != null)
                     {
-                        var c1 = llec.lexerAtom();
-                        var c2 = llec.lexerBlock();
-                        if (c1 != null)
-                            Assign(stack, v.Parent, nullable[v], nullable[c1]);
-                        else if (c2 != null)
-                            Assign(stack, v.Parent, nullable[v], nullable[c2]);
-                        else
-                            Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.Empty });
-                    }
-                    else if (v is ANTLRv4Parser.LexerBlockContext lbc)
-                    {
-                        var b = nullable[lbc.lexerAltList()];
-                        Assign(stack, v.Parent, nullable[v], b);
-                    }
-                    else if (v is ANTLRv4Parser.AltListContext alc)
-                    {
-                        bool first = true;
-                        var d = new NullableValue();
-                        for (int i = 0; i < alc.ChildCount; ++i)
-                        {
-                            var c = alc.GetChild(i);
-                            if (!(c is ANTLRv4Parser.AlternativeContext)) continue;
-                            var b = nullable[c];
-                            if (first)
-                                d.V = b.V;
-                            else
-                                d.Add(b.V);
-                            first = false;
-                        }
-                        Assign(stack, v.Parent, nullable[v], d);
-                    }
-                    else if (v is ANTLRv4Parser.AlternativeContext ac)
-                    {
-                        if (ac.ChildCount == 0)
+                        if (opt)
                             Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.Empty });
                         else
-                        {
-                            bool first = true;
-                            var d = new NullableValue();
-                            for (int i = 0; i < ac.ChildCount; ++i)
-                            {
-                                var c = ac.GetChild(i);
-                                if (!(c is ANTLRv4Parser.ElementContext)) continue;
-                                var b = nullable[c];
-                                if (first)
-                                    d.V = b.V;
-                                else
-                                    d.Add(b.V);
-                                first = false;
-                            }
-                            if (0 != (d.V & (int)NullableValue.Value.NonEmpty))
-                                Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.NonEmpty });
-                            else if (0 != (d.V & (int)NullableValue.Value.Empty))
-                                Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.Empty });
-                        }
+                            Assign(stack, v.Parent, nullable[v], nullable[ec.labeledElement()]);
                     }
-                    else if (v is ANTLRv4Parser.ElementContext ec)
+                    else if (ec.atom() != null)
                     {
-                        var suffix = ec.ebnfSuffix();
-                        bool opt = suffix != null && suffix.GetText()[0] != '+';
-                        if (ec.labeledElement() != null)
-                        {
-                            if (opt)
-                                Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.Empty });
-                            else
-                                Assign(stack, v.Parent, nullable[v], nullable[ec.labeledElement()]);
-                        }
-                        else if (ec.atom() != null)
-                        {
-                            if (opt)
-                                Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.Empty });
-                            else
-                                Assign(stack, v.Parent, nullable[v], nullable[ec.atom()]);
-                        }
-                        else if (ec.ebnf() != null)
-                        {
-                            var b = nullable[ec.ebnf()];
-                            Assign(stack, v.Parent, nullable[v], b);
-                        }
-                        else
+                        if (opt)
                             Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.Empty });
-                    }
-                    else if (v is ANTLRv4Parser.LabeledElementContext lec3)
-                    {
-                        var c1 = lec3.atom();
-                        var c2 = lec3.block();
-                        if (c1 != null)
-                            Assign(stack, v.Parent, nullable[v], nullable[c1]);
-                        else if (c2 != null)
-                            Assign(stack, v.Parent, nullable[v], nullable[c2]);
                         else
-                            Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.Empty });
+                            Assign(stack, v.Parent, nullable[v], nullable[ec.atom()]);
                     }
-                    else if (v is ANTLRv4Parser.EbnfContext ebnf)
+                    else if (ec.ebnf() != null)
                     {
-                        var suffix = ebnf.blockSuffix();
-                        bool opt = suffix != null && suffix.GetText()[0] != '+';
-                        if (ebnf.block() != null)
-                        {
-                            var b = nullable[ebnf.block()];
-                            Assign(stack, v.Parent, nullable[v], b);
-                        }
-                        else
-                            Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.Empty });
-                    }
-                    else if (v is ANTLRv4Parser.BlockSuffixContext)
-                    {
-                        var b = nullable[v.GetChild(0)];
-                        Assign(stack, v.Parent, nullable[v], b);
-                    }
-                    else if (v is ANTLRv4Parser.EbnfSuffixContext ebnfsuffix)
-                    {
-                        var a = ebnfsuffix.PLUS() != null;
-                        var b = new NullableValue() { V = (int)(a ? NullableValue.Value.NonEmpty : NullableValue.Value.Empty) };
-                        Assign(stack, v.Parent, nullable[v], b);
-                    }
-                    else if (v is ANTLRv4Parser.BlockSetContext bsc)
-                    {
-                        bool first = true;
-                        var d = new NullableValue();
-                        for (int i = 0; i < bsc.ChildCount; ++i)
-                        {
-                            var c = bsc.GetChild(i);
-                            if (!(c is ANTLRv4Parser.SetElementContext)) continue;
-                            var b = nullable[c];
-                            if (first)
-                                d.V = b.V;
-                            else
-                                d.Add(b.V);
-                            first = false;
-                        }
-                        Assign(stack, v.Parent, nullable[v], d);
-                    }
-                    else if (v is ANTLRv4Parser.BlockContext bc)
-                    {
-                        var b = nullable[bc.altList()];
-                        Assign(stack, v.Parent, nullable[v], b);
-                    }
-                    else if (v is ANTLRv4Parser.RulerefContext rrc)
-                    {
-                        var b = nullable_rule_ref[rrc.RULE_REF().GetText()];
+                        var b = nullable[ec.ebnf()];
                         Assign(stack, v.Parent, nullable[v], b);
                     }
                     else
-                        throw new Exception();
-
-                    System.Console.WriteLine("v is " + v.GetText());
-                    System.Console.WriteLine("v nullable is " + nullable[v]);
+                        Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.Empty });
                 }
-                catch
+                else if (v is ANTLRv4Parser.LabeledElementContext lec3)
                 {
+                    var c1 = lec3.atom();
+                    var c2 = lec3.block();
+                    if (c1 != null)
+                        Assign(stack, v.Parent, nullable[v], nullable[c1]);
+                    else if (c2 != null)
+                        Assign(stack, v.Parent, nullable[v], nullable[c2]);
+                    else
+                        Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.Empty });
                 }
+                else if (v is ANTLRv4Parser.EbnfContext ebnf)
+                {
+                    var suffix = ebnf.blockSuffix();
+                    bool opt = suffix != null && suffix.GetText()[0] != '+';
+                    if (ebnf.block() != null)
+                    {
+                        var b = nullable[ebnf.block()];
+                        Assign(stack, v.Parent, nullable[v], b);
+                    }
+                    else
+                        Assign(stack, v.Parent, nullable[v], new NullableValue() { V = (int)NullableValue.Value.Empty });
+                }
+                else if (v is ANTLRv4Parser.BlockSuffixContext)
+                {
+                    var b = nullable[v.GetChild(0)];
+                    Assign(stack, v.Parent, nullable[v], b);
+                }
+                else if (v is ANTLRv4Parser.EbnfSuffixContext ebnfsuffix)
+                {
+                    var a = ebnfsuffix.PLUS() != null;
+                    var b = new NullableValue() { V = (int)(a ? NullableValue.Value.NonEmpty : NullableValue.Value.Empty) };
+                    Assign(stack, v.Parent, nullable[v], b);
+                }
+                else if (v is ANTLRv4Parser.BlockSetContext bsc)
+                {
+                    bool first = true;
+                    var d = new NullableValue();
+                    for (int i = 0; i < bsc.ChildCount; ++i)
+                    {
+                        var c = bsc.GetChild(i);
+                        if (!(c is ANTLRv4Parser.SetElementContext)) continue;
+                        var b = nullable[c];
+                        if (first)
+                            d.V = b.V;
+                        else
+                            d.Add(b.V);
+                        first = false;
+                    }
+                    Assign(stack, v.Parent, nullable[v], d);
+                }
+                else if (v is ANTLRv4Parser.BlockContext bc)
+                {
+                    var b = nullable[bc.altList()];
+                    Assign(stack, v.Parent, nullable[v], b);
+                }
+                else if (v is ANTLRv4Parser.RulerefContext rrc)
+                {
+                    var b = nullable_rule_ref[rrc.RULE_REF().GetText()];
+                    Assign(stack, v.Parent, nullable[v], b);
+                }
+                else
+                    throw new Exception();
             }
+            return nullable_rule_ref;
         }
     }
 }
