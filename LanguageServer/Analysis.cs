@@ -632,34 +632,20 @@
             {
                 ParsingResults pd = pd_parser;
                 var d = Nullable(pd.ParseTree);
-                using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext = new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
+                foreach (var pair in d)
                 {
-                    org.eclipse.wst.xml.xpath2.processor.Engine engine = new org.eclipse.wst.xml.xpath2.processor.Engine();
-                    var rules = engine.parseExpression(
-                        "//parserRuleSpec/RULE_REF[text() = ../ruleBlock//RULE_REF/text()]",
-                        new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
-                        .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree).ToList();
-                    foreach (var rule in rules)
-                    {
-                        // detect if any of these are non-nullable
-                        if (rule is TerminalNodeImpl term)
+                    var name = pair.Key;
+                    var val = pair.Value;
+                    string m = "Rule " + name + " is " + val;
+                    result.Add(
+                        new DiagnosticInfo()
                         {
-                            var name = term.GetText();
-                            if (d.ContainsKey(name) && (d[name].V & (int)NullableValue.Value.Empty) == 0)
-                            {
-                                string m = "Rule " + name + " is recursive and not ever nullable.";
-                                result.Add(
-                                    new DiagnosticInfo()
-                                    {
-                                        Document = document.FullPath,
-                                        Severify = DiagnosticInfo.Severity.Info,
-                                        Start = term.Payload.StartIndex,
-                                        End = term.Payload.StopIndex,
-                                        Message = m
-                                    });
-                            }
-                        }
-                    }
+                            Document = document.FullPath,
+                            Severify = DiagnosticInfo.Severity.Info,
+                            //Start = term.Payload.StartIndex,
+                            //End = term.Payload.StopIndex,
+                            Message = m
+                        });
                 }
             }
             return result;
@@ -1046,6 +1032,349 @@
                     throw new Exception();
             }
             return nullable_rule_ref;
+        }
+    }
+
+    public class AntlrGraph : IANTLRv4ParserVisitor<string>
+    {
+        public string Visit(IParseTree tree)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitActionBlock([NotNull] ANTLRv4Parser.ActionBlockContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitActionScopeName([NotNull] ANTLRv4Parser.ActionScopeNameContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitAction_([NotNull] ANTLRv4Parser.Action_Context context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitAlternative([NotNull] ANTLRv4Parser.AlternativeContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitAltList([NotNull] ANTLRv4Parser.AltListContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitArgActionBlock([NotNull] ANTLRv4Parser.ArgActionBlockContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitAtom([NotNull] ANTLRv4Parser.AtomContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitBlock([NotNull] ANTLRv4Parser.BlockContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitBlockSet([NotNull] ANTLRv4Parser.BlockSetContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitBlockSuffix([NotNull] ANTLRv4Parser.BlockSuffixContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitChannelsSpec([NotNull] ANTLRv4Parser.ChannelsSpecContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitCharacterRange([NotNull] ANTLRv4Parser.CharacterRangeContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitChildren(IRuleNode node)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitDelegateGrammar([NotNull] ANTLRv4Parser.DelegateGrammarContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitDelegateGrammars([NotNull] ANTLRv4Parser.DelegateGrammarsContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitEbnf([NotNull] ANTLRv4Parser.EbnfContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitEbnfSuffix([NotNull] ANTLRv4Parser.EbnfSuffixContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitElement([NotNull] ANTLRv4Parser.ElementContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitElementOption([NotNull] ANTLRv4Parser.ElementOptionContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitElementOptions([NotNull] ANTLRv4Parser.ElementOptionsContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitErrorNode(IErrorNode node)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitExceptionGroup([NotNull] ANTLRv4Parser.ExceptionGroupContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitExceptionHandler([NotNull] ANTLRv4Parser.ExceptionHandlerContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitFinallyClause([NotNull] ANTLRv4Parser.FinallyClauseContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitGrammarDecl([NotNull] ANTLRv4Parser.GrammarDeclContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitGrammarSpec([NotNull] ANTLRv4Parser.GrammarSpecContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitGrammarType([NotNull] ANTLRv4Parser.GrammarTypeContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitIdentifier([NotNull] ANTLRv4Parser.IdentifierContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitIdList([NotNull] ANTLRv4Parser.IdListContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitLabeledAlt([NotNull] ANTLRv4Parser.LabeledAltContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitLabeledElement([NotNull] ANTLRv4Parser.LabeledElementContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitLabeledLexerElement([NotNull] ANTLRv4Parser.LabeledLexerElementContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitLexerAlt([NotNull] ANTLRv4Parser.LexerAltContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitLexerAltList([NotNull] ANTLRv4Parser.LexerAltListContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitLexerAtom([NotNull] ANTLRv4Parser.LexerAtomContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitLexerBlock([NotNull] ANTLRv4Parser.LexerBlockContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitLexerCommand([NotNull] ANTLRv4Parser.LexerCommandContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitLexerCommandExpr([NotNull] ANTLRv4Parser.LexerCommandExprContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitLexerCommandName([NotNull] ANTLRv4Parser.LexerCommandNameContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitLexerCommands([NotNull] ANTLRv4Parser.LexerCommandsContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitLexerElement([NotNull] ANTLRv4Parser.LexerElementContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitLexerElements([NotNull] ANTLRv4Parser.LexerElementsContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitLexerRuleBlock([NotNull] ANTLRv4Parser.LexerRuleBlockContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitLexerRuleSpec([NotNull] ANTLRv4Parser.LexerRuleSpecContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitLocalsSpec([NotNull] ANTLRv4Parser.LocalsSpecContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitModeSpec([NotNull] ANTLRv4Parser.ModeSpecContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitNotSet([NotNull] ANTLRv4Parser.NotSetContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitOption([NotNull] ANTLRv4Parser.OptionContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitOptionsSpec([NotNull] ANTLRv4Parser.OptionsSpecContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitOptionValue([NotNull] ANTLRv4Parser.OptionValueContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitParserRuleSpec([NotNull] ANTLRv4Parser.ParserRuleSpecContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitPrequelConstruct([NotNull] ANTLRv4Parser.PrequelConstructContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitRuleAction([NotNull] ANTLRv4Parser.RuleActionContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitRuleAltList([NotNull] ANTLRv4Parser.RuleAltListContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitRuleBlock([NotNull] ANTLRv4Parser.RuleBlockContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitRuleModifier([NotNull] ANTLRv4Parser.RuleModifierContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitRuleModifiers([NotNull] ANTLRv4Parser.RuleModifiersContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitRulePrequel([NotNull] ANTLRv4Parser.RulePrequelContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitRuleref([NotNull] ANTLRv4Parser.RulerefContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitRuleReturns([NotNull] ANTLRv4Parser.RuleReturnsContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitRules([NotNull] ANTLRv4Parser.RulesContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitRuleSpec([NotNull] ANTLRv4Parser.RuleSpecContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitSetElement([NotNull] ANTLRv4Parser.SetElementContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitTerminal([NotNull] ANTLRv4Parser.TerminalContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitTerminal(ITerminalNode node)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitThrowsSpec([NotNull] ANTLRv4Parser.ThrowsSpecContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitTokensSpec([NotNull] ANTLRv4Parser.TokensSpecContext context)
+        {
+            throw new NotImplementedException();
         }
     }
 }

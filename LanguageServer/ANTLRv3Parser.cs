@@ -189,6 +189,12 @@ public partial class ANTLRv3Parser : Parser {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitGrammarDef(this);
 		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitGrammarDef(this);
+			else return visitor.VisitChildren(this);
+		}
 	}
 
 	[RuleVersion(0)]
@@ -333,6 +339,12 @@ public partial class ANTLRv3Parser : Parser {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitTokensSpec(this);
 		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitTokensSpec(this);
+			else return visitor.VisitChildren(this);
+		}
 	}
 
 	[RuleVersion(0)]
@@ -396,6 +408,12 @@ public partial class ANTLRv3Parser : Parser {
 		public override void ExitRule(IParseTreeListener listener) {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitTokenSpec(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitTokenSpec(this);
+			else return visitor.VisitChildren(this);
 		}
 	}
 
@@ -472,6 +490,12 @@ public partial class ANTLRv3Parser : Parser {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitAttrScope(this);
 		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitAttrScope(this);
+			else return visitor.VisitChildren(this);
+		}
 	}
 
 	[RuleVersion(0)]
@@ -526,6 +550,12 @@ public partial class ANTLRv3Parser : Parser {
 		public override void ExitRule(IParseTreeListener listener) {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitAction(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitAction(this);
+			else return visitor.VisitChildren(this);
 		}
 	}
 
@@ -587,6 +617,12 @@ public partial class ANTLRv3Parser : Parser {
 		public override void ExitRule(IParseTreeListener listener) {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitActionScopeName(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitActionScopeName(this);
+			else return visitor.VisitChildren(this);
 		}
 	}
 
@@ -660,6 +696,12 @@ public partial class ANTLRv3Parser : Parser {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitOptionsSpec(this);
 		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitOptionsSpec(this);
+			else return visitor.VisitChildren(this);
+		}
 	}
 
 	[RuleVersion(0)]
@@ -727,6 +769,12 @@ public partial class ANTLRv3Parser : Parser {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitOption(this);
 		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitOption(this);
+			else return visitor.VisitChildren(this);
+		}
 	}
 
 	[RuleVersion(0)]
@@ -779,6 +827,12 @@ public partial class ANTLRv3Parser : Parser {
 		public override void ExitRule(IParseTreeListener listener) {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitOptionValue(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitOptionValue(this);
+			else return visitor.VisitChildren(this);
 		}
 	}
 
@@ -862,6 +916,12 @@ public partial class ANTLRv3Parser : Parser {
 		public override void ExitRule(IParseTreeListener listener) {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitRules(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitRules(this);
+			else return visitor.VisitChildren(this);
 		}
 	}
 
@@ -954,6 +1014,12 @@ public partial class ANTLRv3Parser : Parser {
 		public override void ExitRule(IParseTreeListener listener) {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitRule_(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitRule_(this);
+			else return visitor.VisitChildren(this);
 		}
 	}
 
@@ -1122,6 +1188,12 @@ public partial class ANTLRv3Parser : Parser {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitRuleAction(this);
 		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitRuleAction(this);
+			else return visitor.VisitChildren(this);
+		}
 	}
 
 	[RuleVersion(0)]
@@ -1176,6 +1248,12 @@ public partial class ANTLRv3Parser : Parser {
 		public override void ExitRule(IParseTreeListener listener) {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitThrowsSpec(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitThrowsSpec(this);
+			else return visitor.VisitChildren(this);
 		}
 	}
 
@@ -1253,6 +1331,12 @@ public partial class ANTLRv3Parser : Parser {
 		public override void ExitRule(IParseTreeListener listener) {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitRuleScopeSpec(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitRuleScopeSpec(this);
+			else return visitor.VisitChildren(this);
 		}
 	}
 
@@ -1383,6 +1467,12 @@ public partial class ANTLRv3Parser : Parser {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitBlock(this);
 		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitBlock(this);
+			else return visitor.VisitChildren(this);
+		}
 	}
 
 	[RuleVersion(0)]
@@ -1484,6 +1574,12 @@ public partial class ANTLRv3Parser : Parser {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitAltList(this);
 		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitAltList(this);
+			else return visitor.VisitChildren(this);
+		}
 	}
 
 	[RuleVersion(0)]
@@ -1550,6 +1646,12 @@ public partial class ANTLRv3Parser : Parser {
 		public override void ExitRule(IParseTreeListener listener) {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitAlternative(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitAlternative(this);
+			else return visitor.VisitChildren(this);
 		}
 	}
 
@@ -1637,6 +1739,12 @@ public partial class ANTLRv3Parser : Parser {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitExceptionGroup(this);
 		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitExceptionGroup(this);
+			else return visitor.VisitChildren(this);
+		}
 	}
 
 	[RuleVersion(0)]
@@ -1722,6 +1830,12 @@ public partial class ANTLRv3Parser : Parser {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitExceptionHandler(this);
 		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitExceptionHandler(this);
+			else return visitor.VisitChildren(this);
+		}
 	}
 
 	[RuleVersion(0)]
@@ -1770,6 +1884,12 @@ public partial class ANTLRv3Parser : Parser {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitFinallyClause(this);
 		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitFinallyClause(this);
+			else return visitor.VisitChildren(this);
+		}
 	}
 
 	[RuleVersion(0)]
@@ -1814,6 +1934,12 @@ public partial class ANTLRv3Parser : Parser {
 		public override void ExitRule(IParseTreeListener listener) {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitElement(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitElement(this);
+			else return visitor.VisitChildren(this);
 		}
 	}
 
@@ -1879,6 +2005,12 @@ public partial class ANTLRv3Parser : Parser {
 		public override void ExitRule(IParseTreeListener listener) {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitElementNoOptionSpec(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitElementNoOptionSpec(this);
+			else return visitor.VisitChildren(this);
 		}
 	}
 
@@ -2147,6 +2279,12 @@ public partial class ANTLRv3Parser : Parser {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitActionBlock(this);
 		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitActionBlock(this);
+			else return visitor.VisitChildren(this);
+		}
 	}
 
 	[RuleVersion(0)]
@@ -2209,6 +2347,12 @@ public partial class ANTLRv3Parser : Parser {
 		public override void ExitRule(IParseTreeListener listener) {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitArgActionBlock(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitArgActionBlock(this);
+			else return visitor.VisitChildren(this);
 		}
 	}
 
@@ -2281,6 +2425,12 @@ public partial class ANTLRv3Parser : Parser {
 		public override void ExitRule(IParseTreeListener listener) {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitAtom(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitAtom(this);
+			else return visitor.VisitChildren(this);
 		}
 	}
 
@@ -2458,6 +2608,12 @@ public partial class ANTLRv3Parser : Parser {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitNotSet(this);
 		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitNotSet(this);
+			else return visitor.VisitChildren(this);
+		}
 	}
 
 	[RuleVersion(0)]
@@ -2526,6 +2682,12 @@ public partial class ANTLRv3Parser : Parser {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitTreeSpec(this);
 		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitTreeSpec(this);
+			else return visitor.VisitChildren(this);
+		}
 	}
 
 	[RuleVersion(0)]
@@ -2591,6 +2753,12 @@ public partial class ANTLRv3Parser : Parser {
 		public override void ExitRule(IParseTreeListener listener) {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitEbnf(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitEbnf(this);
+			else return visitor.VisitChildren(this);
 		}
 	}
 
@@ -2683,6 +2851,12 @@ public partial class ANTLRv3Parser : Parser {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitRange(this);
 		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitRange(this);
+			else return visitor.VisitChildren(this);
+		}
 	}
 
 	[RuleVersion(0)]
@@ -2738,6 +2912,12 @@ public partial class ANTLRv3Parser : Parser {
 		public override void ExitRule(IParseTreeListener listener) {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitTerminal_(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitTerminal_(this);
+			else return visitor.VisitChildren(this);
 		}
 	}
 
@@ -2903,6 +3083,12 @@ public partial class ANTLRv3Parser : Parser {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitElementOptions(this);
 		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitElementOptions(this);
+			else return visitor.VisitChildren(this);
+		}
 	}
 
 	[RuleVersion(0)]
@@ -2984,6 +3170,12 @@ public partial class ANTLRv3Parser : Parser {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitDefaultNodeOption(this);
 		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitDefaultNodeOption(this);
+			else return visitor.VisitChildren(this);
+		}
 	}
 
 	[RuleVersion(0)]
@@ -3033,6 +3225,12 @@ public partial class ANTLRv3Parser : Parser {
 		public override void ExitRule(IParseTreeListener listener) {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitElementOption(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitElementOption(this);
+			else return visitor.VisitChildren(this);
 		}
 	}
 
@@ -3117,6 +3315,12 @@ public partial class ANTLRv3Parser : Parser {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitElementOptionId(this);
 		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitElementOptionId(this);
+			else return visitor.VisitChildren(this);
+		}
 	}
 
 	[RuleVersion(0)]
@@ -3177,6 +3381,12 @@ public partial class ANTLRv3Parser : Parser {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitNotTerminal(this);
 		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitNotTerminal(this);
+			else return visitor.VisitChildren(this);
+		}
 	}
 
 	[RuleVersion(0)]
@@ -3227,6 +3437,12 @@ public partial class ANTLRv3Parser : Parser {
 		public override void ExitRule(IParseTreeListener listener) {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitEbnfSuffix(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitEbnfSuffix(this);
+			else return visitor.VisitChildren(this);
 		}
 	}
 
@@ -3295,6 +3511,12 @@ public partial class ANTLRv3Parser : Parser {
 		public override void ExitRule(IParseTreeListener listener) {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitRewrite(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitRewrite(this);
+			else return visitor.VisitChildren(this);
 		}
 	}
 
@@ -3382,6 +3604,12 @@ public partial class ANTLRv3Parser : Parser {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitRewrite_alternative(this);
 		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitRewrite_alternative(this);
+			else return visitor.VisitChildren(this);
+		}
 	}
 
 	[RuleVersion(0)]
@@ -3445,6 +3673,12 @@ public partial class ANTLRv3Parser : Parser {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitRewrite_tree_block(this);
 		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitRewrite_tree_block(this);
+			else return visitor.VisitChildren(this);
+		}
 	}
 
 	[RuleVersion(0)]
@@ -3494,6 +3728,12 @@ public partial class ANTLRv3Parser : Parser {
 		public override void ExitRule(IParseTreeListener listener) {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitRewrite_tree_alternative(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitRewrite_tree_alternative(this);
+			else return visitor.VisitChildren(this);
 		}
 	}
 
@@ -3559,6 +3799,12 @@ public partial class ANTLRv3Parser : Parser {
 		public override void ExitRule(IParseTreeListener listener) {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitRewrite_tree_element(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitRewrite_tree_element(this);
+			else return visitor.VisitChildren(this);
 		}
 	}
 
@@ -3674,6 +3920,12 @@ public partial class ANTLRv3Parser : Parser {
 		public override void ExitRule(IParseTreeListener listener) {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitRewrite_tree_atom(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitRewrite_tree_atom(this);
+			else return visitor.VisitChildren(this);
 		}
 	}
 
@@ -3807,6 +4059,12 @@ public partial class ANTLRv3Parser : Parser {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitRewrite_tree_ebnf(this);
 		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitRewrite_tree_ebnf(this);
+			else return visitor.VisitChildren(this);
+		}
 	}
 
 	[RuleVersion(0)]
@@ -3859,6 +4117,12 @@ public partial class ANTLRv3Parser : Parser {
 		public override void ExitRule(IParseTreeListener listener) {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitRewrite_tree(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitRewrite_tree(this);
+			else return visitor.VisitChildren(this);
 		}
 	}
 
@@ -3937,6 +4201,12 @@ public partial class ANTLRv3Parser : Parser {
 		public override void ExitRule(IParseTreeListener listener) {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitRewrite_template(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitRewrite_template(this);
+			else return visitor.VisitChildren(this);
 		}
 	}
 
@@ -4029,6 +4299,12 @@ public partial class ANTLRv3Parser : Parser {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitRewrite_template_ref(this);
 		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitRewrite_template_ref(this);
+			else return visitor.VisitChildren(this);
+		}
 	}
 
 	[RuleVersion(0)]
@@ -4089,6 +4365,12 @@ public partial class ANTLRv3Parser : Parser {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitRewrite_indirect_template_head(this);
 		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitRewrite_indirect_template_head(this);
+			else return visitor.VisitChildren(this);
+		}
 	}
 
 	[RuleVersion(0)]
@@ -4148,6 +4430,12 @@ public partial class ANTLRv3Parser : Parser {
 		public override void ExitRule(IParseTreeListener listener) {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitRewrite_template_args(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitRewrite_template_args(this);
+			else return visitor.VisitChildren(this);
 		}
 	}
 
@@ -4227,6 +4515,12 @@ public partial class ANTLRv3Parser : Parser {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitRewrite_template_arg(this);
 		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitRewrite_template_arg(this);
+			else return visitor.VisitChildren(this);
+		}
 	}
 
 	[RuleVersion(0)]
@@ -4272,6 +4566,12 @@ public partial class ANTLRv3Parser : Parser {
 		public override void ExitRule(IParseTreeListener listener) {
 			IANTLRv3ParserListener typedListener = listener as IANTLRv3ParserListener;
 			if (typedListener != null) typedListener.ExitId(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IANTLRv3ParserVisitor<TResult> typedVisitor = visitor as IANTLRv3ParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitId(this);
+			else return visitor.VisitChildren(this);
 		}
 	}
 
