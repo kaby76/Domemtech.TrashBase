@@ -238,8 +238,9 @@ namespace Algorithms
             foreach (T v in Vertices)
             {
                 s.Append(string.Format("{0}: ", v));
-                foreach (T w in Adj(v))
+                foreach (var e in SuccessorEdges(v))
                 {
+                    var w = e.ToString();
                     s.Append(string.Format("{0} ", w));
                 }
                 s.Append(System.Environment.NewLine);
@@ -469,11 +470,12 @@ namespace Algorithms
             foreach (T v in Vertices)
             {
                 s.Append(string.Format("{0}: ", v));
-                foreach (T w in Adj(v))
-                {
-                    s.Append(string.Format("{0} ", w));
-                }
-                s.Append(System.Environment.NewLine);
+		foreach (var e in SuccessorEdges(v))
+		{
+			var w = e.ToString();
+			s.Append(string.Format("{0} ", w));
+		}
+		s.Append(System.Environment.NewLine);
             }
             return s.ToString();
         }

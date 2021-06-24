@@ -19,6 +19,11 @@
         public SymbolEdge() { }
 
         public string _symbol { get; set; }
+
+        public override string ToString()
+        {
+            return From + "->" + To + " on " + _symbol;
+        }
     }
 
     public class NullableValue
