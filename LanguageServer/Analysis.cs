@@ -1250,6 +1250,7 @@
             switch (suffix)
             {
                 case "+":
+                case "+?":
                     {
                         var f = "s" + gen++;
                         var t = "s" + gen++;
@@ -1263,6 +1264,7 @@
                         break;
                     }
                 case "*":
+                case "*?":
                     {
                         var f = "s" + gen++;
                         g.AddStart(g.AddVertex(f));
@@ -1316,6 +1318,7 @@
                             return cg;
                         }
                     case "+":
+                    case "+?":
                         {
                             var f = "s" + gen++;
                             var t = "s" + gen++;
@@ -1329,6 +1332,7 @@
                             return g;
                         }
                     case "*":
+                    case "*?":
                         {
                             var f = "s" + gen++;
                             g.AddStart(g.AddVertex(f));
@@ -1368,6 +1372,7 @@
                             return cg;
                         }
                     case "+":
+                    case "+?":
                         {
                             var f = "s" + gen++;
                             var t = "s" + gen++;
@@ -1381,6 +1386,7 @@
                             return g;
                         }
                     case "*":
+                    case "*?":
                         {
                             var f = "s" + gen++;
                             g.AddStart(g.AddVertex(f));
@@ -1543,15 +1549,28 @@
             if (ct2 != null) return this.VisitCharacterRange(ct2);
             var ct3 = context.notSet();
             if (ct3 != null) return this.VisitNotSet(ct3);
+            var ct5 = context.LEXER_CHAR_SET();
+            if (ct5 != null)
+            {
+                var g = new Digraph<string, SymbolEdge>();
+                var f = "s" + gen++;
+                var t = "s" + gen++;
+                g.AddStart(g.AddVertex(f));
+                g.AddEnd(g.AddVertex(t));
+                g.AddEdge(new SymbolEdge() { From = f, To = t, _symbol = ct5.GetText() });
+                return g;
+            }
             var ct4 = context.DOT();
             if (ct4 == null) throw new Exception();
-            var g = new Digraph<string, SymbolEdge>();
-            var f = "s" + gen++;
-            var t = "s" + gen++;
-            g.AddStart(g.AddVertex(f));
-            g.AddEnd(g.AddVertex(t));
-            g.AddEdge(new SymbolEdge() { From = f, To = t, _symbol = "." });
-            return g;
+            {
+                var g = new Digraph<string, SymbolEdge>();
+                var f = "s" + gen++;
+                var t = "s" + gen++;
+                g.AddStart(g.AddVertex(f));
+                g.AddEnd(g.AddVertex(t));
+                g.AddEdge(new SymbolEdge() { From = f, To = t, _symbol = "." });
+                return g;
+            }
         }
 
         public override Digraph<string, SymbolEdge> VisitLexerBlock([NotNull] ANTLRv4Parser.LexerBlockContext context)
@@ -1594,6 +1613,7 @@
                             return cg;
                         }
                     case "+":
+                    case "+?":
                         {
                             var f = "s" + gen++;
                             var t = "s" + gen++;
@@ -1607,6 +1627,7 @@
                             return g;
                         }
                     case "*":
+                    case "*?":
                         {
                             var f = "s" + gen++;
                             g.AddStart(g.AddVertex(f));
@@ -1646,6 +1667,7 @@
                             return cg;
                         }
                     case "+":
+                    case "+?":
                         {
                             var f = "s" + gen++;
                             var t = "s" + gen++;
@@ -1659,6 +1681,7 @@
                             return g;
                         }
                     case "*":
+                    case "*?":
                         {
                             var f = "s" + gen++;
                             g.AddStart(g.AddVertex(f));
@@ -1698,6 +1721,7 @@
                             return cg;
                         }
                     case "+":
+                    case "+?":
                         {
                             var f = "s" + gen++;
                             var t = "s" + gen++;
@@ -1711,6 +1735,7 @@
                             return g;
                         }
                     case "*":
+                    case "*?":
                         {
                             var f = "s" + gen++;
                             g.AddStart(g.AddVertex(f));
@@ -1740,7 +1765,12 @@
             }
             else if (context.actionBlock() != null)
             {
-                return null;
+                var f = "s" + gen++;
+                var t = "s" + gen++;
+                g.AddStart(g.AddVertex(f));
+                g.AddEnd(g.AddVertex(t));
+                g.AddEdge(new SymbolEdge() { From = f, To = t, _symbol = null });
+                return g;
             }
             else throw new Exception();
         }
