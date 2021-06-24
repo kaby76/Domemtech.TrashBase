@@ -676,16 +676,18 @@
 
         private static void Find(List<DiagnosticInfo> result, Document document, Digraph<string, SymbolEdge> res, Dictionary<string, Digraph<string, SymbolEdge>> rules)
         {
-            Stack<string> stack = new Stack<string>();
             foreach (var v in rules)
             {
                 bool ok = false;
                 var sym = v.Key;
+                Stack<string> stack = new Stack<string>();
+                HashSet<string> visited = new HashSet<string>();
                 foreach (var x in v.Value.StartVertices)
                     stack.Push(x);
                 while (stack.Any())
                 {
                     var x = stack.Pop();
+                    visited.Add(x);
                     if (v.Value.EndVertices.Contains(x))
                     {
                         ok = true;
@@ -694,6 +696,7 @@
                     foreach (var e in res.SuccessorEdges(x))
                     {
                         if (e._symbol == sym) continue;
+                        if (visited.Contains(e.To)) continue;
                         stack.Push(e.To);
                     }
                 }
@@ -1421,7 +1424,13 @@
             }
             else if (context.actionBlock() != null)
             {
-                return null;
+                var f = "s" + gen++;
+                var t = "s" + gen++;
+                var g = new Digraph<string, SymbolEdge>();
+                g.AddStart(g.AddVertex(f));
+                g.AddEnd(g.AddVertex(t));
+                g.AddEdge(new SymbolEdge() { From = f, To = t, _symbol = null });
+                return g;
             }
             else throw new Exception();
         }
@@ -1767,6 +1776,7 @@
             {
                 var f = "s" + gen++;
                 var t = "s" + gen++;
+                var g = new Digraph<string, SymbolEdge>();
                 g.AddStart(g.AddVertex(f));
                 g.AddEnd(g.AddVertex(t));
                 g.AddEdge(new SymbolEdge() { From = f, To = t, _symbol = null });
