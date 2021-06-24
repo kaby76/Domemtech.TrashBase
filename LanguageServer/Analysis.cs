@@ -1103,7 +1103,7 @@
     public class AntlrGraph : ANTLRv4ParserBaseVisitor<Digraph<string, SymbolEdge>>
     {
         int gen = 0;
-        public Dictionary<string, Digraph<string, SymbolEdge>> Rules { get; set; }
+        public Dictionary<string, Digraph<string, SymbolEdge>> Rules { get; set; } = new Dictionary<string, Digraph<string, SymbolEdge>>();
 
         public override Digraph<string, SymbolEdge> VisitActionBlock([NotNull] ANTLRv4Parser.ActionBlockContext context)
         {
