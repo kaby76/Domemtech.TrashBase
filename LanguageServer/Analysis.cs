@@ -1796,7 +1796,17 @@
 
         public override Digraph<string, SymbolEdge> VisitNotSet([NotNull] ANTLRv4Parser.NotSetContext context)
         {
-            throw new Exception();
+            if (context.setElement() != null)
+            {
+                var cg = this.VisitSetElement(context.setElement());
+                return cg;
+            }
+            else if (context.blockSet() != null)
+            {
+                var cg = this.VisitSetElement(context.setElement());
+                return cg;
+            }
+            else throw new Exception();
         }
 
         public override Digraph<string, SymbolEdge> VisitOption([NotNull] ANTLRv4Parser.OptionContext context)
