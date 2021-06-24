@@ -11,6 +11,7 @@
     using System.Data;
     using System.Linq;
     using System.Linq.Expressions;
+    using System.Security.Cryptography.X509Certificates;
     using System.Text;
     using Document = Workspaces.Document;
 
@@ -666,10 +667,52 @@
                 var ag = new AntlrGraph();
                 ParsingResults pd = pd_parser;
                 var res = ag.Visit(pd.ParseTree);
-                System.Console.WriteLine(res.ToString());
+                Find(result, document, res, ag.Rules);
+                //System.Console.WriteLine(res.ToString());
             }
 
             return result;
+        }
+
+        private static void Find(List<DiagnosticInfo> result, Document document, Digraph<string, SymbolEdge> res, Dictionary<string, Digraph<string, SymbolEdge>> rules)
+        {
+            Stack<string> stack = new Stack<string>();
+            foreach (var v in rules)
+            {
+                bool ok = false;
+                var sym = v.Key;
+                foreach (var x in v.Value.StartVertices)
+                    stack.Push(x);
+                while (stack.Any())
+                {
+                    var x = stack.Pop();
+                    if (v.Value.EndVertices.Contains(x))
+                    {
+                        ok = true;
+                        break;
+                    }
+                    foreach (var e in res.SuccessorEdges(x))
+                    {
+                        if (e._symbol == sym) continue;
+                        stack.Push(e.To);
+                    }
+                }
+                if (!ok)
+                {
+                    var name = sym;
+                    string m = "Rule " + name + " is malformed. It does not derive a string with referencing itself.";
+                    result.Add(
+                        new DiagnosticInfo()
+                        {
+                            Document = document.FullPath,
+                            Severify = DiagnosticInfo.Severity.Info,
+                            //Start = term.Payload.StartIndex,
+                            //End = term.Payload.StopIndex,
+                            Message = m
+                        });
+
+                }
+            }
         }
 
         static void Update(Stack<IParseTree> stack, IParseTree parent, NullableValue to, NullableValue from)
@@ -1059,12 +1102,8 @@
 
     public class AntlrGraph : ANTLRv4ParserBaseVisitor<Digraph<string, SymbolEdge>>
     {
-
         int gen = 0;
-
-        //public override Digraph<string, SymbolEdge> Visit(IParseTree tree)
-        //{
-        //}
+        public Dictionary<string, Digraph<string, SymbolEdge>> Rules { get; set; }
 
         public override Digraph<string, SymbolEdge> VisitActionBlock([NotNull] ANTLRv4Parser.ActionBlockContext context)
         {
@@ -1732,6 +1771,7 @@
         public override Digraph<string, SymbolEdge> VisitLexerRuleSpec([NotNull] ANTLRv4Parser.LexerRuleSpecContext context)
         {
             var cg = this.VisitLexerRuleBlock(context.lexerRuleBlock());
+            Rules[context.TOKEN_REF().GetText()] = cg;
             return cg;
         }
 
@@ -1777,6 +1817,7 @@
         public override Digraph<string, SymbolEdge> VisitParserRuleSpec([NotNull] ANTLRv4Parser.ParserRuleSpecContext context)
         {
             var cg = this.VisitRuleBlock(context.ruleBlock());
+            Rules[context.RULE_REF().GetText()] = cg;
             return cg;
         }
 
