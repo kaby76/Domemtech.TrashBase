@@ -1096,7 +1096,7 @@
                 foreach (var v in cg.StartVertices) 
                     foreach (var l in last)
                         g.AddEdge(new SymbolEdge() { From = l, To = v, _symbol = null });
-                last = new List<string>(cg.StartVertices);
+                last = new List<string>(cg.EndVertices);
             }
             foreach (var l in last) g.AddEdge(new SymbolEdge() { From = l, To = t, _symbol = null });
             return g;
@@ -1717,7 +1717,7 @@
                 foreach (var v in cg.StartVertices)
                     foreach (var l in last)
                         g.AddEdge(new SymbolEdge() { From = l, To = v, _symbol = null });
-                last = new List<string>(cg.StartVertices);
+                last = new List<string>(cg.EndVertices);
             }
             foreach (var l in last) g.AddEdge(new SymbolEdge() { From = l, To = t, _symbol = null });
             return g;
