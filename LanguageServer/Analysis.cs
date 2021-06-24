@@ -1246,7 +1246,7 @@
         {
             var cg = this.VisitBlock(context.block());
             var g = new Digraph<string, SymbolEdge>();
-            var suffix = context.blockSuffix().GetText();
+            var suffix = context.blockSuffix()?.GetText();
             switch (suffix)
             {
                 case "+":
@@ -1285,6 +1285,10 @@
                         foreach (var v in cg.EndVertices) g.AddEdge(new SymbolEdge() { From = v, To = t, _symbol = null });
                         g.AddEdge(new SymbolEdge() { From = f, To = t, _symbol = null });
                         break;
+                    }
+                case null:
+                    {
+                        return cg;
                     }
                 default:
                     throw new Exception();
@@ -1803,7 +1807,7 @@
             }
             else if (context.blockSet() != null)
             {
-                var cg = this.VisitSetElement(context.setElement());
+                var cg = this.VisitBlockSet(context.blockSet());
                 return cg;
             }
             else throw new Exception();
