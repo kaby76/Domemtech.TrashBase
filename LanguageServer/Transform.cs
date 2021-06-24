@@ -1126,7 +1126,7 @@
                             continue;
                         }
 
-                        DirectedEdge<string> e = new DirectedEdge<string>(r.LHS, rhs);
+                        DirectedEdge<string> e = new DirectedEdge<string>() { From = r.LHS, To = rhs };
                         graph.AddEdge(e);
                     }
                 }
@@ -2147,7 +2147,7 @@
                                 continue;
 
                             graph.AddVertex(def2);
-                            DirectedEdge<Domemtech.Symtab.ISymbol> e = new DirectedEdge<Domemtech.Symtab.ISymbol>(def, def2);
+                            DirectedEdge<Domemtech.Symtab.ISymbol> e = new DirectedEdge<Domemtech.Symtab.ISymbol>() { From = def, To = def2 };
                             graph.AddEdge(e);
 
                             stack.Push(def2);
@@ -3390,7 +3390,7 @@
                     {
                         continue;
                     }
-                    DirectedEdge<string> e = new DirectedEdge<string>(r.LHS, rhs);
+                    DirectedEdge<string> e = new DirectedEdge<string>() { From = r.LHS, To = rhs };
                     graph.AddEdge(e);
                 }
             }

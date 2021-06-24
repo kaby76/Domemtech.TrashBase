@@ -14,6 +14,13 @@
     using System.Text;
     using Document = Workspaces.Document;
 
+    public class SymbolEdge : DirectedEdge<string>
+    {
+        public SymbolEdge() { }
+
+        public string _symbol { get; set; }
+    }
+
     public class NullableValue
     {
         public enum Value
@@ -83,6 +90,7 @@
             return GetEnumerator();
         }
     }
+
 
     public class Analysis
     {
@@ -169,7 +177,7 @@
                     {
                         continue;
                     }
-                    DirectedEdge<string> e = new DirectedEdge<string>(r.LHS, rhs);
+                    DirectedEdge<string> e = new DirectedEdge<string>() { From = r.LHS, To = rhs };
                     graph.AddEdge(e);
                 }
             }
@@ -1035,346 +1043,883 @@
         }
     }
 
-    public class AntlrGraph : IANTLRv4ParserVisitor<string>
+
+    public class AntlrGraph : ANTLRv4ParserBaseVisitor<Digraph<string, SymbolEdge>>
     {
-        public string Visit(IParseTree tree)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitActionBlock([NotNull] ANTLRv4Parser.ActionBlockContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitActionScopeName([NotNull] ANTLRv4Parser.ActionScopeNameContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitAction_([NotNull] ANTLRv4Parser.Action_Context context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitAlternative([NotNull] ANTLRv4Parser.AlternativeContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitAltList([NotNull] ANTLRv4Parser.AltListContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitArgActionBlock([NotNull] ANTLRv4Parser.ArgActionBlockContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitAtom([NotNull] ANTLRv4Parser.AtomContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitBlock([NotNull] ANTLRv4Parser.BlockContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitBlockSet([NotNull] ANTLRv4Parser.BlockSetContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitBlockSuffix([NotNull] ANTLRv4Parser.BlockSuffixContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitChannelsSpec([NotNull] ANTLRv4Parser.ChannelsSpecContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitCharacterRange([NotNull] ANTLRv4Parser.CharacterRangeContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitChildren(IRuleNode node)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitDelegateGrammar([NotNull] ANTLRv4Parser.DelegateGrammarContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitDelegateGrammars([NotNull] ANTLRv4Parser.DelegateGrammarsContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitEbnf([NotNull] ANTLRv4Parser.EbnfContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitEbnfSuffix([NotNull] ANTLRv4Parser.EbnfSuffixContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitElement([NotNull] ANTLRv4Parser.ElementContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitElementOption([NotNull] ANTLRv4Parser.ElementOptionContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitElementOptions([NotNull] ANTLRv4Parser.ElementOptionsContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitErrorNode(IErrorNode node)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitExceptionGroup([NotNull] ANTLRv4Parser.ExceptionGroupContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitExceptionHandler([NotNull] ANTLRv4Parser.ExceptionHandlerContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitFinallyClause([NotNull] ANTLRv4Parser.FinallyClauseContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitGrammarDecl([NotNull] ANTLRv4Parser.GrammarDeclContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitGrammarSpec([NotNull] ANTLRv4Parser.GrammarSpecContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitGrammarType([NotNull] ANTLRv4Parser.GrammarTypeContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitIdentifier([NotNull] ANTLRv4Parser.IdentifierContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitIdList([NotNull] ANTLRv4Parser.IdListContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitLabeledAlt([NotNull] ANTLRv4Parser.LabeledAltContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitLabeledElement([NotNull] ANTLRv4Parser.LabeledElementContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitLabeledLexerElement([NotNull] ANTLRv4Parser.LabeledLexerElementContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitLexerAlt([NotNull] ANTLRv4Parser.LexerAltContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitLexerAltList([NotNull] ANTLRv4Parser.LexerAltListContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitLexerAtom([NotNull] ANTLRv4Parser.LexerAtomContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitLexerBlock([NotNull] ANTLRv4Parser.LexerBlockContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitLexerCommand([NotNull] ANTLRv4Parser.LexerCommandContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitLexerCommandExpr([NotNull] ANTLRv4Parser.LexerCommandExprContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitLexerCommandName([NotNull] ANTLRv4Parser.LexerCommandNameContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitLexerCommands([NotNull] ANTLRv4Parser.LexerCommandsContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitLexerElement([NotNull] ANTLRv4Parser.LexerElementContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitLexerElements([NotNull] ANTLRv4Parser.LexerElementsContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitLexerRuleBlock([NotNull] ANTLRv4Parser.LexerRuleBlockContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitLexerRuleSpec([NotNull] ANTLRv4Parser.LexerRuleSpecContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitLocalsSpec([NotNull] ANTLRv4Parser.LocalsSpecContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitModeSpec([NotNull] ANTLRv4Parser.ModeSpecContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitNotSet([NotNull] ANTLRv4Parser.NotSetContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitOption([NotNull] ANTLRv4Parser.OptionContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitOptionsSpec([NotNull] ANTLRv4Parser.OptionsSpecContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitOptionValue([NotNull] ANTLRv4Parser.OptionValueContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitParserRuleSpec([NotNull] ANTLRv4Parser.ParserRuleSpecContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitPrequelConstruct([NotNull] ANTLRv4Parser.PrequelConstructContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitRuleAction([NotNull] ANTLRv4Parser.RuleActionContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitRuleAltList([NotNull] ANTLRv4Parser.RuleAltListContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitRuleBlock([NotNull] ANTLRv4Parser.RuleBlockContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitRuleModifier([NotNull] ANTLRv4Parser.RuleModifierContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string VisitRuleModifiers([NotNull] ANTLRv4Parser.RuleModifiersContext context)
-        {
-            throw new NotImplementedException();
-        }
 
-        public string VisitRulePrequel([NotNull] ANTLRv4Parser.RulePrequelContext context)
-        {
-            throw new NotImplementedException();
-        }
+        int gen = 0;
 
-        public string VisitRuleref([NotNull] ANTLRv4Parser.RulerefContext context)
-        {
-            throw new NotImplementedException();
-        }
+        //public override Digraph<string, SymbolEdge> Visit(IParseTree tree)
+        //{
+        //}
 
-        public string VisitRuleReturns([NotNull] ANTLRv4Parser.RuleReturnsContext context)
+        public override Digraph<string, SymbolEdge> VisitActionBlock([NotNull] ANTLRv4Parser.ActionBlockContext context)
         {
-            throw new NotImplementedException();
+            return null;
         }
 
-        public string VisitRules([NotNull] ANTLRv4Parser.RulesContext context)
+        public override Digraph<string, SymbolEdge> VisitActionScopeName([NotNull] ANTLRv4Parser.ActionScopeNameContext context)
         {
-            throw new NotImplementedException();
+            return null;
         }
 
-        public string VisitRuleSpec([NotNull] ANTLRv4Parser.RuleSpecContext context)
+        public override Digraph<string, SymbolEdge> VisitAction_([NotNull] ANTLRv4Parser.Action_Context context)
         {
-            throw new NotImplementedException();
+            return null;
         }
 
-        public string VisitSetElement([NotNull] ANTLRv4Parser.SetElementContext context)
+        public override Digraph<string, SymbolEdge> VisitAlternative([NotNull] ANTLRv4Parser.AlternativeContext context)
         {
-            throw new NotImplementedException();
+            var g = new Digraph<string, SymbolEdge>();
+            var f = "s" + gen++;
+            var t = "s" + gen++;
+            var last = new List<string>() { g.AddStart(g.AddVertex(f)) };
+            g.AddEnd(g.AddVertex(t));
+            foreach (var c in context.element())
+            {
+                var cg = this.VisitElement(c);
+                foreach (var v in cg.Vertices) g.AddVertex(v);
+                foreach (var e in cg.Edges) g.AddEdge(e);
+                foreach (var v in cg.StartVertices) 
+                    foreach (var l in last)
+                        g.AddEdge(new SymbolEdge() { From = l, To = v, _symbol = null });
+                last = new List<string>(cg.StartVertices);
+            }
+            foreach (var l in last) g.AddEdge(new SymbolEdge() { From = l, To = t, _symbol = null });
+            return g;
         }
 
-        public string VisitTerminal([NotNull] ANTLRv4Parser.TerminalContext context)
+        public override Digraph<string, SymbolEdge> VisitAltList([NotNull] ANTLRv4Parser.AltListContext context)
         {
-            throw new NotImplementedException();
+            var g = new Digraph<string, SymbolEdge>();
+            var f = "s" + gen++;
+            var t = "s" + gen++;
+            g.AddStart(g.AddVertex(f));
+            g.AddEnd(g.AddVertex(t));
+            foreach (var c in context.alternative())
+            {
+                var cg = this.VisitAlternative(c);
+                foreach (var v in cg.Vertices) g.AddVertex(v);
+                foreach (var e in cg.Edges) g.AddEdge(e);
+                foreach (var v in cg.StartVertices) g.AddEdge(new SymbolEdge() { From = f, To = v, _symbol = null });
+                foreach (var v in cg.EndVertices) g.AddEdge(new SymbolEdge() { From = v, To = t, _symbol = null });
+            }
+            return g;
         }
 
-        public string VisitTerminal(ITerminalNode node)
+        public override Digraph<string, SymbolEdge> VisitArgActionBlock([NotNull] ANTLRv4Parser.ArgActionBlockContext context)
         {
-            throw new NotImplementedException();
+            return null;
         }
 
-        public string VisitThrowsSpec([NotNull] ANTLRv4Parser.ThrowsSpecContext context)
+        public override Digraph<string, SymbolEdge> VisitAtom([NotNull] ANTLRv4Parser.AtomContext context)
         {
-            throw new NotImplementedException();
+            var ct1 = context.terminal();
+            if (ct1 != null) return this.Visit(ct1);
+            var ct2 = context.ruleref();
+            if (ct2 != null) return this.Visit(ct2);
+            var ct3 = context.notSet();
+            if (ct3 != null) return this.Visit(ct3);
+            var ct4 = context.DOT();
+            if (ct4 == null) throw new Exception();
+            var g = new Digraph<string, SymbolEdge>();
+            var f = "s" + gen++;
+            var t = "s" + gen++;
+            g.AddStart(g.AddVertex(f));
+            g.AddEnd(g.AddVertex(t));
+            g.AddEdge(new SymbolEdge() { From = f, To = t, _symbol = "." });
+            return g;
         }
 
-        public string VisitTokensSpec([NotNull] ANTLRv4Parser.TokensSpecContext context)
+        public override Digraph<string, SymbolEdge> VisitBlock([NotNull] ANTLRv4Parser.BlockContext context)
         {
-            throw new NotImplementedException();
+            var cg = this.VisitAltList(context.altList());
+            return cg;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitBlockSet([NotNull] ANTLRv4Parser.BlockSetContext context)
+        {
+            var g = new Digraph<string, SymbolEdge>();
+            var f = "s" + gen++;
+            var t = "s" + gen++;
+            g.AddStart(g.AddVertex(f));
+            g.AddEnd(g.AddVertex(t));
+            foreach (var c in context.setElement())
+            {
+                var cg = this.VisitSetElement(c);
+                foreach (var v in cg.Vertices) g.AddVertex(v);
+                foreach (var e in cg.Edges) g.AddEdge(e);
+                foreach (var v in cg.StartVertices) g.AddEdge(new SymbolEdge() { From = f, To = v, _symbol = null });
+                foreach (var v in cg.EndVertices) g.AddEdge(new SymbolEdge() { From = v, To = t, _symbol = null });
+            }
+            return g;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitBlockSuffix([NotNull] ANTLRv4Parser.BlockSuffixContext context)
+        {
+            return null;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitChannelsSpec([NotNull] ANTLRv4Parser.ChannelsSpecContext context)
+        {
+            return null;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitCharacterRange([NotNull] ANTLRv4Parser.CharacterRangeContext context)
+        {
+            var g = new Digraph<string, SymbolEdge>();
+            var f = "s" + gen++;
+            var t = "s" + gen++;
+            g.AddStart(g.AddVertex(f));
+            g.AddEnd(g.AddVertex(t));
+            g.AddEdge(new SymbolEdge() { From = f, To = t, _symbol = context.GetText() });
+            return g;
+        }
+
+        //public override Digraph<string, SymbolEdge> VisitChildren(IRuleNode node)
+        //{
+        //}
+
+        public override Digraph<string, SymbolEdge> VisitDelegateGrammar([NotNull] ANTLRv4Parser.DelegateGrammarContext context)
+        {
+            return null;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitDelegateGrammars([NotNull] ANTLRv4Parser.DelegateGrammarsContext context)
+        {
+            return null;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitEbnf([NotNull] ANTLRv4Parser.EbnfContext context)
+        {
+            var cg = this.VisitBlock(context.block());
+            var g = new Digraph<string, SymbolEdge>();
+            var suffix = context.blockSuffix().GetText();
+            switch (suffix)
+            {
+                case "+":
+                    {
+                        var f = "s" + gen++;
+                        var t = "s" + gen++;
+                        g.AddStart(g.AddVertex(f));
+                        g.AddEnd(g.AddVertex(t));
+                        foreach (var v in cg.Vertices) g.AddVertex(v);
+                        foreach (var e in cg.Edges) g.AddEdge(e);
+                        foreach (var v in cg.StartVertices) g.AddEdge(new SymbolEdge() { From = f, To = v, _symbol = null });
+                        foreach (var v in cg.EndVertices) g.AddEdge(new SymbolEdge() { From = v, To = t, _symbol = null });
+                        g.AddEdge(new SymbolEdge() { From = t, To = f, _symbol = null });
+                        break;
+                    }
+                case "*":
+                    {
+                        var f = "s" + gen++;
+                        g.AddStart(g.AddVertex(f));
+                        g.AddEnd(g.AddVertex(f));
+                        foreach (var v in cg.Vertices) g.AddVertex(v);
+                        foreach (var e in cg.Edges) g.AddEdge(e);
+                        foreach (var v in cg.StartVertices) g.AddEdge(new SymbolEdge() { From = f, To = v, _symbol = null });
+                        foreach (var v in cg.EndVertices) g.AddEdge(new SymbolEdge() { From = v, To = f, _symbol = null });
+                        break;
+                    }
+                case "?":
+                    {
+                        var f = "s" + gen++;
+                        var t = "s" + gen++;
+                        g.AddStart(g.AddVertex(f));
+                        g.AddEnd(g.AddVertex(t));
+                        foreach (var v in cg.Vertices) g.AddVertex(v);
+                        foreach (var e in cg.Edges) g.AddEdge(e);
+                        foreach (var v in cg.StartVertices) g.AddEdge(new SymbolEdge() { From = f, To = v, _symbol = null });
+                        foreach (var v in cg.EndVertices) g.AddEdge(new SymbolEdge() { From = v, To = t, _symbol = null });
+                        g.AddEdge(new SymbolEdge() { From = f, To = t, _symbol = null });
+                        break;
+                    }
+                default:
+                    throw new Exception();
+                    break;
+            }
+            return g;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitEbnfSuffix([NotNull] ANTLRv4Parser.EbnfSuffixContext context)
+        {
+            return null;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitElement([NotNull] ANTLRv4Parser.ElementContext context)
+        {
+            if (context.labeledElement() != null)
+            {
+                var cg = this.VisitLabeledElement(context.labeledElement());
+                var g = new Digraph<string, SymbolEdge>();
+                var suffix = context.ebnfSuffix()?.GetText();
+                switch (suffix)
+                {
+                    case null:
+                        {
+                            return g;
+                        }
+                    case "+":
+                        {
+                            var f = "s" + gen++;
+                            var t = "s" + gen++;
+                            g.AddStart(g.AddVertex(f));
+                            g.AddEnd(g.AddVertex(t));
+                            foreach (var v in cg.Vertices) g.AddVertex(v);
+                            foreach (var e in cg.Edges) g.AddEdge(e);
+                            foreach (var v in cg.StartVertices) g.AddEdge(new SymbolEdge() { From = f, To = v, _symbol = null });
+                            foreach (var v in cg.EndVertices) g.AddEdge(new SymbolEdge() { From = v, To = t, _symbol = null });
+                            g.AddEdge(new SymbolEdge() { From = t, To = f, _symbol = null });
+                            return g;
+                        }
+                    case "*":
+                        {
+                            var f = "s" + gen++;
+                            g.AddStart(g.AddVertex(f));
+                            g.AddEnd(g.AddVertex(f));
+                            foreach (var v in cg.Vertices) g.AddVertex(v);
+                            foreach (var e in cg.Edges) g.AddEdge(e);
+                            foreach (var v in cg.StartVertices) g.AddEdge(new SymbolEdge() { From = f, To = v, _symbol = null });
+                            foreach (var v in cg.EndVertices) g.AddEdge(new SymbolEdge() { From = v, To = f, _symbol = null });
+                            return g;
+                        }
+                    case "?":
+                        {
+                            var f = "s" + gen++;
+                            var t = "s" + gen++;
+                            g.AddStart(g.AddVertex(f));
+                            g.AddEnd(g.AddVertex(t));
+                            foreach (var v in cg.Vertices) g.AddVertex(v);
+                            foreach (var e in cg.Edges) g.AddEdge(e);
+                            foreach (var v in cg.StartVertices) g.AddEdge(new SymbolEdge() { From = f, To = v, _symbol = null });
+                            foreach (var v in cg.EndVertices) g.AddEdge(new SymbolEdge() { From = v, To = t, _symbol = null });
+                            g.AddEdge(new SymbolEdge() { From = f, To = t, _symbol = null });
+                            return g;
+                        }
+                    default:
+                        throw new Exception();
+                }
+            }
+            else if (context.atom() != null)
+            {
+                var cg = this.VisitAtom(context.atom());
+                var g = new Digraph<string, SymbolEdge>();
+                var suffix = context.ebnfSuffix()?.GetText();
+                switch (suffix)
+                {
+                    case null:
+                        {
+                            return g;
+                        }
+                    case "+":
+                        {
+                            var f = "s" + gen++;
+                            var t = "s" + gen++;
+                            g.AddStart(g.AddVertex(f));
+                            g.AddEnd(g.AddVertex(t));
+                            foreach (var v in cg.Vertices) g.AddVertex(v);
+                            foreach (var e in cg.Edges) g.AddEdge(e);
+                            foreach (var v in cg.StartVertices) g.AddEdge(new SymbolEdge() { From = f, To = v, _symbol = null });
+                            foreach (var v in cg.EndVertices) g.AddEdge(new SymbolEdge() { From = v, To = t, _symbol = null });
+                            g.AddEdge(new SymbolEdge() { From = t, To = f, _symbol = null });
+                            return g;
+                        }
+                    case "*":
+                        {
+                            var f = "s" + gen++;
+                            g.AddStart(g.AddVertex(f));
+                            g.AddEnd(g.AddVertex(f));
+                            foreach (var v in cg.Vertices) g.AddVertex(v);
+                            foreach (var e in cg.Edges) g.AddEdge(e);
+                            foreach (var v in cg.StartVertices) g.AddEdge(new SymbolEdge() { From = f, To = v, _symbol = null });
+                            foreach (var v in cg.EndVertices) g.AddEdge(new SymbolEdge() { From = v, To = f, _symbol = null });
+                            return g;
+                        }
+                    case "?":
+                        {
+                            var f = "s" + gen++;
+                            var t = "s" + gen++;
+                            g.AddStart(g.AddVertex(f));
+                            g.AddEnd(g.AddVertex(t));
+                            foreach (var v in cg.Vertices) g.AddVertex(v);
+                            foreach (var e in cg.Edges) g.AddEdge(e);
+                            foreach (var v in cg.StartVertices) g.AddEdge(new SymbolEdge() { From = f, To = v, _symbol = null });
+                            foreach (var v in cg.EndVertices) g.AddEdge(new SymbolEdge() { From = v, To = t, _symbol = null });
+                            g.AddEdge(new SymbolEdge() { From = f, To = t, _symbol = null });
+                            return g;
+                        }
+                    default:
+                        throw new Exception();
+                }
+            }
+            else if (context.ebnf() != null)
+            {
+                var cg = this.VisitEbnf(context.ebnf());
+                return cg;
+            }
+            else if (context.actionBlock() != null)
+            {
+                return null;
+            }
+            else throw new Exception();
+        }
+
+        public override Digraph<string, SymbolEdge> VisitElementOption([NotNull] ANTLRv4Parser.ElementOptionContext context)
+        {
+            return null;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitElementOptions([NotNull] ANTLRv4Parser.ElementOptionsContext context)
+        {
+            return null;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitErrorNode(IErrorNode node)
+        {
+            return null;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitExceptionGroup([NotNull] ANTLRv4Parser.ExceptionGroupContext context)
+        {
+            return null;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitExceptionHandler([NotNull] ANTLRv4Parser.ExceptionHandlerContext context)
+        {
+            return null;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitFinallyClause([NotNull] ANTLRv4Parser.FinallyClauseContext context)
+        {
+            return null;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitGrammarDecl([NotNull] ANTLRv4Parser.GrammarDeclContext context)
+        {
+            return null;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitGrammarSpec([NotNull] ANTLRv4Parser.GrammarSpecContext context)
+        {
+            return this.Visit(context.rules());
+        }
+
+        public override Digraph<string, SymbolEdge> VisitGrammarType([NotNull] ANTLRv4Parser.GrammarTypeContext context)
+        {
+            return null;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitIdentifier([NotNull] ANTLRv4Parser.IdentifierContext context)
+        {
+            return null;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitIdList([NotNull] ANTLRv4Parser.IdListContext context)
+        {
+            return null;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitLabeledAlt([NotNull] ANTLRv4Parser.LabeledAltContext context)
+        {
+            var cg = this.VisitAlternative(context.alternative());
+            return cg;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitLabeledElement([NotNull] ANTLRv4Parser.LabeledElementContext context)
+        {
+            if (context.block() != null)
+            {
+                var cg = this.VisitBlock(context.block());
+                return cg;
+            }
+            else if (context.atom() != null)
+            {
+                var cg = this.VisitAtom(context.atom());
+                return cg;
+            }
+            else throw new Exception();
+        }
+
+        public override Digraph<string, SymbolEdge> VisitLabeledLexerElement([NotNull] ANTLRv4Parser.LabeledLexerElementContext context)
+        {
+            if (context.lexerBlock() != null)
+            {
+                var cg = this.VisitLexerBlock(context.lexerBlock());
+                return cg;
+            }
+            else if (context.lexerAtom() != null)
+            {
+                var cg = this.VisitLexerAtom(context.lexerAtom());
+                return cg;
+            }
+            else throw new Exception();
+        }
+
+        public override Digraph<string, SymbolEdge> VisitLexerAlt([NotNull] ANTLRv4Parser.LexerAltContext context)
+        {
+            var cg = this.VisitLexerElements(context.lexerElements());
+            return cg;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitLexerAltList([NotNull] ANTLRv4Parser.LexerAltListContext context)
+        {
+            var g = new Digraph<string, SymbolEdge>();
+            var f = "s" + gen++;
+            var t = "s" + gen++;
+            g.AddStart(g.AddVertex(f));
+            g.AddEnd(g.AddVertex(t));
+            foreach (var c in context.lexerAlt())
+            {
+                var cg = this.VisitLexerAlt(c);
+                foreach (var v in cg.Vertices) g.AddVertex(v);
+                foreach (var e in cg.Edges) g.AddEdge(e);
+                foreach (var v in cg.StartVertices) g.AddEdge(new SymbolEdge() { From = f, To = v, _symbol = null });
+                foreach (var v in cg.EndVertices) g.AddEdge(new SymbolEdge() { From = v, To = t, _symbol = null });
+            }
+            return g;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitLexerAtom([NotNull] ANTLRv4Parser.LexerAtomContext context)
+        {
+            var ct1 = context.terminal();
+            if (ct1 != null) return this.VisitTerminal(ct1);
+            var ct2 = context.characterRange();
+            if (ct2 != null) return this.VisitCharacterRange(ct2);
+            var ct3 = context.notSet();
+            if (ct3 != null) return this.VisitNotSet(ct3);
+            var ct4 = context.DOT();
+            if (ct4 == null) throw new Exception();
+            var g = new Digraph<string, SymbolEdge>();
+            var f = "s" + gen++;
+            var t = "s" + gen++;
+            g.AddStart(g.AddVertex(f));
+            g.AddEnd(g.AddVertex(t));
+            g.AddEdge(new SymbolEdge() { From = f, To = t, _symbol = "." });
+            return g;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitLexerBlock([NotNull] ANTLRv4Parser.LexerBlockContext context)
+        {
+            var cg = this.VisitLexerAltList(context.lexerAltList());
+            return cg;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitLexerCommand([NotNull] ANTLRv4Parser.LexerCommandContext context)
+        {
+            return null;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitLexerCommandExpr([NotNull] ANTLRv4Parser.LexerCommandExprContext context)
+        {
+            return null;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitLexerCommandName([NotNull] ANTLRv4Parser.LexerCommandNameContext context)
+        {
+            return null;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitLexerCommands([NotNull] ANTLRv4Parser.LexerCommandsContext context)
+        {
+            return null;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitLexerElement([NotNull] ANTLRv4Parser.LexerElementContext context)
+        {
+            if (context.labeledLexerElement() != null)
+            {
+                var cg = this.VisitLabeledLexerElement(context.labeledLexerElement());
+                var g = new Digraph<string, SymbolEdge>();
+                var suffix = context.ebnfSuffix()?.GetText();
+                switch (suffix)
+                {
+                    case null:
+                        {
+                            return g;
+                        }
+                    case "+":
+                        {
+                            var f = "s" + gen++;
+                            var t = "s" + gen++;
+                            g.AddStart(g.AddVertex(f));
+                            g.AddEnd(g.AddVertex(t));
+                            foreach (var v in cg.Vertices) g.AddVertex(v);
+                            foreach (var e in cg.Edges) g.AddEdge(e);
+                            foreach (var v in cg.StartVertices) g.AddEdge(new SymbolEdge() { From = f, To = v, _symbol = null });
+                            foreach (var v in cg.EndVertices) g.AddEdge(new SymbolEdge() { From = v, To = t, _symbol = null });
+                            g.AddEdge(new SymbolEdge() { From = t, To = f, _symbol = null });
+                            return g;
+                        }
+                    case "*":
+                        {
+                            var f = "s" + gen++;
+                            g.AddStart(g.AddVertex(f));
+                            g.AddEnd(g.AddVertex(f));
+                            foreach (var v in cg.Vertices) g.AddVertex(v);
+                            foreach (var e in cg.Edges) g.AddEdge(e);
+                            foreach (var v in cg.StartVertices) g.AddEdge(new SymbolEdge() { From = f, To = v, _symbol = null });
+                            foreach (var v in cg.EndVertices) g.AddEdge(new SymbolEdge() { From = v, To = f, _symbol = null });
+                            return g;
+                        }
+                    case "?":
+                        {
+                            var f = "s" + gen++;
+                            var t = "s" + gen++;
+                            g.AddStart(g.AddVertex(f));
+                            g.AddEnd(g.AddVertex(t));
+                            foreach (var v in cg.Vertices) g.AddVertex(v);
+                            foreach (var e in cg.Edges) g.AddEdge(e);
+                            foreach (var v in cg.StartVertices) g.AddEdge(new SymbolEdge() { From = f, To = v, _symbol = null });
+                            foreach (var v in cg.EndVertices) g.AddEdge(new SymbolEdge() { From = v, To = t, _symbol = null });
+                            g.AddEdge(new SymbolEdge() { From = f, To = t, _symbol = null });
+                            return g;
+                        }
+                    default:
+                        throw new Exception();
+                }
+            }
+            else if (context.lexerAtom() != null)
+            {
+                var cg = this.VisitLexerAtom(context.lexerAtom());
+                var g = new Digraph<string, SymbolEdge>();
+                var suffix = context.ebnfSuffix()?.GetText();
+                switch (suffix)
+                {
+                    case null:
+                        {
+                            return g;
+                        }
+                    case "+":
+                        {
+                            var f = "s" + gen++;
+                            var t = "s" + gen++;
+                            g.AddStart(g.AddVertex(f));
+                            g.AddEnd(g.AddVertex(t));
+                            foreach (var v in cg.Vertices) g.AddVertex(v);
+                            foreach (var e in cg.Edges) g.AddEdge(e);
+                            foreach (var v in cg.StartVertices) g.AddEdge(new SymbolEdge() { From = f, To = v, _symbol = null });
+                            foreach (var v in cg.EndVertices) g.AddEdge(new SymbolEdge() { From = v, To = t, _symbol = null });
+                            g.AddEdge(new SymbolEdge() { From = t, To = f, _symbol = null });
+                            return g;
+                        }
+                    case "*":
+                        {
+                            var f = "s" + gen++;
+                            g.AddStart(g.AddVertex(f));
+                            g.AddEnd(g.AddVertex(f));
+                            foreach (var v in cg.Vertices) g.AddVertex(v);
+                            foreach (var e in cg.Edges) g.AddEdge(e);
+                            foreach (var v in cg.StartVertices) g.AddEdge(new SymbolEdge() { From = f, To = v, _symbol = null });
+                            foreach (var v in cg.EndVertices) g.AddEdge(new SymbolEdge() { From = v, To = f, _symbol = null });
+                            return g;
+                        }
+                    case "?":
+                        {
+                            var f = "s" + gen++;
+                            var t = "s" + gen++;
+                            g.AddStart(g.AddVertex(f));
+                            g.AddEnd(g.AddVertex(t));
+                            foreach (var v in cg.Vertices) g.AddVertex(v);
+                            foreach (var e in cg.Edges) g.AddEdge(e);
+                            foreach (var v in cg.StartVertices) g.AddEdge(new SymbolEdge() { From = f, To = v, _symbol = null });
+                            foreach (var v in cg.EndVertices) g.AddEdge(new SymbolEdge() { From = v, To = t, _symbol = null });
+                            g.AddEdge(new SymbolEdge() { From = f, To = t, _symbol = null });
+                            return g;
+                        }
+                    default:
+                        throw new Exception();
+                }
+            }
+            else if (context.lexerBlock() != null)
+            {
+                var cg = this.VisitLexerBlock(context.lexerBlock());
+                var g = new Digraph<string, SymbolEdge>();
+                var suffix = context.ebnfSuffix()?.GetText();
+                switch (suffix)
+                {
+                    case null:
+                        {
+                            return g;
+                        }
+                    case "+":
+                        {
+                            var f = "s" + gen++;
+                            var t = "s" + gen++;
+                            g.AddStart(g.AddVertex(f));
+                            g.AddEnd(g.AddVertex(t));
+                            foreach (var v in cg.Vertices) g.AddVertex(v);
+                            foreach (var e in cg.Edges) g.AddEdge(e);
+                            foreach (var v in cg.StartVertices) g.AddEdge(new SymbolEdge() { From = f, To = v, _symbol = null });
+                            foreach (var v in cg.EndVertices) g.AddEdge(new SymbolEdge() { From = v, To = t, _symbol = null });
+                            g.AddEdge(new SymbolEdge() { From = t, To = f, _symbol = null });
+                            return g;
+                        }
+                    case "*":
+                        {
+                            var f = "s" + gen++;
+                            g.AddStart(g.AddVertex(f));
+                            g.AddEnd(g.AddVertex(f));
+                            foreach (var v in cg.Vertices) g.AddVertex(v);
+                            foreach (var e in cg.Edges) g.AddEdge(e);
+                            foreach (var v in cg.StartVertices) g.AddEdge(new SymbolEdge() { From = f, To = v, _symbol = null });
+                            foreach (var v in cg.EndVertices) g.AddEdge(new SymbolEdge() { From = v, To = f, _symbol = null });
+                            return g;
+                        }
+                    case "?":
+                        {
+                            var f = "s" + gen++;
+                            var t = "s" + gen++;
+                            g.AddStart(g.AddVertex(f));
+                            g.AddEnd(g.AddVertex(t));
+                            foreach (var v in cg.Vertices) g.AddVertex(v);
+                            foreach (var e in cg.Edges) g.AddEdge(e);
+                            foreach (var v in cg.StartVertices) g.AddEdge(new SymbolEdge() { From = f, To = v, _symbol = null });
+                            foreach (var v in cg.EndVertices) g.AddEdge(new SymbolEdge() { From = v, To = t, _symbol = null });
+                            g.AddEdge(new SymbolEdge() { From = f, To = t, _symbol = null });
+                            return g;
+                        }
+                    default:
+                        throw new Exception();
+                }
+            }
+            else if (context.actionBlock() != null)
+            {
+                return null;
+            }
+            else throw new Exception();
+        }
+
+        public override Digraph<string, SymbolEdge> VisitLexerElements([NotNull] ANTLRv4Parser.LexerElementsContext context)
+        {
+            var g = new Digraph<string, SymbolEdge>();
+            var f = "s" + gen++;
+            var t = "s" + gen++;
+            var last = new List<string>() { g.AddStart(g.AddVertex(f)) };
+            g.AddEnd(g.AddVertex(t));
+            foreach (var c in context.lexerElement())
+            {
+                var cg = this.VisitLexerElement(c);
+                foreach (var v in cg.Vertices) g.AddVertex(v);
+                foreach (var e in cg.Edges) g.AddEdge(e);
+                foreach (var v in cg.StartVertices)
+                    foreach (var l in last)
+                        g.AddEdge(new SymbolEdge() { From = l, To = v, _symbol = null });
+                last = new List<string>(cg.StartVertices);
+            }
+            foreach (var l in last) g.AddEdge(new SymbolEdge() { From = l, To = t, _symbol = null });
+            return g;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitLexerRuleBlock([NotNull] ANTLRv4Parser.LexerRuleBlockContext context)
+        {
+            var cg = this.VisitLexerAltList(context.lexerAltList());
+            return cg;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitLexerRuleSpec([NotNull] ANTLRv4Parser.LexerRuleSpecContext context)
+        {
+            var cg = this.VisitLexerRuleBlock(context.lexerRuleBlock());
+            return cg;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitLocalsSpec([NotNull] ANTLRv4Parser.LocalsSpecContext context)
+        {
+            return null;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitModeSpec([NotNull] ANTLRv4Parser.ModeSpecContext context)
+        {
+            var g = new Digraph<string, SymbolEdge>();
+            foreach (var c in context.lexerRuleSpec())
+            {
+                var cg = this.VisitLexerRuleSpec(c);
+                foreach (var v in cg.Vertices) g.AddVertex(v);
+                foreach (var e in cg.Edges) g.AddEdge(e);
+                foreach (var v in cg.StartVertices) g.AddStart(v);
+                foreach (var v in cg.EndVertices) g.AddEnd(v);
+            }
+            return g;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitNotSet([NotNull] ANTLRv4Parser.NotSetContext context)
+        {
+            throw new Exception();
+        }
+
+        public override Digraph<string, SymbolEdge> VisitOption([NotNull] ANTLRv4Parser.OptionContext context)
+        {
+            return null;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitOptionsSpec([NotNull] ANTLRv4Parser.OptionsSpecContext context)
+        {
+            return null;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitOptionValue([NotNull] ANTLRv4Parser.OptionValueContext context)
+        {
+            return null;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitParserRuleSpec([NotNull] ANTLRv4Parser.ParserRuleSpecContext context)
+        {
+            var cg = this.VisitRuleBlock(context.ruleBlock());
+            return cg;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitPrequelConstruct([NotNull] ANTLRv4Parser.PrequelConstructContext context)
+        {
+            return null;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitRuleAction([NotNull] ANTLRv4Parser.RuleActionContext context)
+        {
+            return null;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitRuleAltList([NotNull] ANTLRv4Parser.RuleAltListContext context)
+        {
+            var g = new Digraph<string, SymbolEdge>();
+            var f = "s" + gen++;
+            var t = "s" + gen++;
+            g.AddStart(g.AddVertex(f));
+            g.AddEnd(g.AddVertex(t));
+            foreach (var c in context.labeledAlt())
+            {
+                var cg = this.VisitLabeledAlt(c);
+                foreach (var v in cg.Vertices) g.AddVertex(v);
+                foreach (var e in cg.Edges) g.AddEdge(e);
+                foreach (var v in cg.StartVertices) g.AddEdge(new SymbolEdge() { From = f, To = v, _symbol = null });
+                foreach (var v in cg.EndVertices) g.AddEdge(new SymbolEdge() { From = v, To = t, _symbol = null });
+            }
+            return g;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitRuleBlock([NotNull] ANTLRv4Parser.RuleBlockContext context)
+        {
+            var cg = this.VisitRuleAltList(context.ruleAltList());
+            return cg;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitRuleModifier([NotNull] ANTLRv4Parser.RuleModifierContext context)
+        {
+            return null;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitRuleModifiers([NotNull] ANTLRv4Parser.RuleModifiersContext context)
+        {
+            return null;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitRulePrequel([NotNull] ANTLRv4Parser.RulePrequelContext context)
+        {
+            return null;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitRuleref([NotNull] ANTLRv4Parser.RulerefContext context)
+        {
+            var g = new Digraph<string, SymbolEdge>();
+            var f = "s" + gen++;
+            var t = "s" + gen++;
+            g.AddStart(g.AddVertex(f));
+            g.AddEnd(g.AddVertex(t));
+            if (context.RULE_REF() != null)
+                g.AddEdge(new SymbolEdge() { From = f, To = t, _symbol = context.RULE_REF().GetText() });
+            var n = g.AddVertex(context.GetText());
+            return g;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitRuleReturns([NotNull] ANTLRv4Parser.RuleReturnsContext context)
+        {
+            return null;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitRules([NotNull] ANTLRv4Parser.RulesContext context)
+        {
+            var g = new Digraph<string, SymbolEdge>();
+            foreach (var c in context.ruleSpec())
+            {
+                var cg = this.VisitRuleSpec(c);
+                foreach (var v in cg.Vertices) g.AddVertex(v);
+                foreach (var e in cg.Edges) g.AddEdge(e);
+                foreach (var v in cg.StartVertices) g.AddStart(v);
+                foreach (var v in cg.EndVertices) g.AddEnd(v);
+            }
+            return g;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitRuleSpec([NotNull] ANTLRv4Parser.RuleSpecContext context)
+        {
+            var cg = this.Visit(context.GetChild(0));
+            return cg;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitSetElement([NotNull] ANTLRv4Parser.SetElementContext context)
+        {
+            if (context.TOKEN_REF() != null)
+            {
+                var g = new Digraph<string, SymbolEdge>();
+                var f = "s" + gen++;
+                var t = "s" + gen++;
+                g.AddStart(g.AddVertex(f));
+                g.AddEnd(g.AddVertex(t));
+                g.AddEdge(new SymbolEdge() { From = f, To = t, _symbol = context.TOKEN_REF().GetText() });
+                return g;
+            }
+            else if (context.STRING_LITERAL() != null)
+            {
+                var g = new Digraph<string, SymbolEdge>();
+                var f = "s" + gen++;
+                var t = "s" + gen++;
+                g.AddStart(g.AddVertex(f));
+                g.AddEnd(g.AddVertex(t));
+                g.AddEdge(new SymbolEdge() { From = f, To = t, _symbol = context.STRING_LITERAL().GetText() });
+                return g;
+            }
+            else if (context.characterRange() != null)
+            {
+                var cg = this.VisitCharacterRange(context.characterRange());
+                return cg;
+            }
+            else if (context.LEXER_CHAR_SET() != null)
+            {
+                var g = new Digraph<string, SymbolEdge>();
+                var f = "s" + gen++;
+                var t = "s" + gen++;
+                g.AddStart(g.AddVertex(f));
+                g.AddEnd(g.AddVertex(t));
+                g.AddEdge(new SymbolEdge() { From = f, To = t, _symbol = context.LEXER_CHAR_SET().GetText() });
+                return g;
+            }
+            else throw new Exception();
+        }
+
+        public override Digraph<string, SymbolEdge> VisitTerminal([NotNull] ANTLRv4Parser.TerminalContext context)
+        {
+            var g = new Digraph<string, SymbolEdge>();
+            var f = "s" + gen++;
+            var t = "s" + gen++;
+            g.AddStart(g.AddVertex(f));
+            g.AddEnd(g.AddVertex(t));
+            if (context.TOKEN_REF() != null)
+                g.AddEdge(new SymbolEdge() { From = f, To = t, _symbol = context.TOKEN_REF().GetText() });
+            else
+                g.AddEdge(new SymbolEdge() { From = f, To = t, _symbol = context.STRING_LITERAL().GetText() });
+            return g;
+        }
+
+        //public override Digraph<string, SymbolEdge> VisitTerminal(ITerminalNode node)
+        //{
+        //}
+
+        public override Digraph<string, SymbolEdge> VisitThrowsSpec([NotNull] ANTLRv4Parser.ThrowsSpecContext context)
+        {
+            return null;
+        }
+
+        public override Digraph<string, SymbolEdge> VisitTokensSpec([NotNull] ANTLRv4Parser.TokensSpecContext context)
+        {
+            return null;
         }
     }
 }

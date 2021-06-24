@@ -853,7 +853,7 @@
                 {
                     Document d_doc = workspace.FindDocument(d);
                     ParsingResults d_pd = ParsingResultsFactory.Create(d_doc);
-                    g.AddEdge(new DirectedEdge<ParsingResults>(pd, d_pd));
+                    g.AddEdge(new DirectedEdge<ParsingResults>() { From = pd, To = d_pd });
                 }
             }
 

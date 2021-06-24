@@ -26,7 +26,6 @@ namespace Algorithms
 
     public class DirectedEdge<NODE> : IEdge<NODE>
     {
-        private readonly double weight;
         private NODE _from;
         private NODE _to;
 
@@ -37,16 +36,8 @@ namespace Algorithms
          * @param w the head vertex
          * @param weight the weight of the directed edge
          */
-        public DirectedEdge(NODE v, NODE w, double weight = 0)
+        public DirectedEdge()
         {
-            if (double.IsNaN(weight))
-            {
-                throw new Exception("Weight is NaN");
-            }
-
-            _from = v;
-            _to = w;
-            this.weight = weight;
         }
 
         /**
@@ -71,15 +62,6 @@ namespace Algorithms
         }
 
         /**
-         * Returns the weight of the directed edge.
-         * @return the weight of the directed edge
-         */
-        public double Weight()
-        {
-            return weight;
-        }
-
-        /**
          * Returns a string representation of the directed edge.
          * @return a string representation of the directed edge
          */
@@ -90,7 +72,7 @@ namespace Algorithms
 
         public override string ToString()
         {
-            return _from + "->" + _to + " " + string.Format("%5.2f", weight);
+            return _from + "->" + _to;
         }
 
         /**
@@ -100,7 +82,7 @@ namespace Algorithms
          */
         public static void Test()
         {
-            DirectedEdge<int> e = new DirectedEdge<int>(12, 34, 5.67);
+            DirectedEdge<int> e = new DirectedEdge<int>() { From = 12, To = 34 };
             System.Console.Error.WriteLine(e);
         }
     }

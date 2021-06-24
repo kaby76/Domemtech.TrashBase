@@ -67,7 +67,7 @@ namespace LanguageServer
                         continue;
                     }
 
-                    DirectedEdge<string> e = new DirectedEdge<string>(r.LHS, rhs);
+                    DirectedEdge<string> e = new DirectedEdge<string>() { From = r.LHS, To = rhs };
                     g1.AddEdge(e);
                 }
             }
@@ -105,7 +105,7 @@ namespace LanguageServer
                         continue;
                     }
 
-                    DirectedEdge<string> e = new DirectedEdge<string>(r.LHS, rhs);
+                    DirectedEdge<string> e = new DirectedEdge<string>() { From = r.LHS, To = rhs };
                     g2.AddEdge(e);
                 }
             }

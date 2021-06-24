@@ -9,6 +9,8 @@ namespace Algorithms
         public Dictionary<NODE, NODE> VertexSpace = new Dictionary<NODE, NODE>();
         public MultiMap<NODE, EDGE> ForwardEdgeSpace = new MultiMap<NODE, EDGE>();
         public MultiMap<NODE, EDGE> ReverseEdgeSpace = new MultiMap<NODE, EDGE>();
+        private HashSet<NODE> StartSpace = new HashSet<NODE>();
+        private HashSet<NODE> EndSpace = new HashSet<NODE>();
 
         private class VertexEnumerator : IEnumerable<NODE>
         {
@@ -64,6 +66,9 @@ namespace Algorithms
 
         public IEnumerable<EDGE> Edges => new EdgeEnumerator(ForwardEdgeSpace);
 
+        public IEnumerable<NODE> StartVertices { get { return StartSpace; } }
+        public IEnumerable<NODE> EndVertices { get { return EndSpace; } }
+
         public virtual NODE AddVertex(NODE v)
         {
             if (VertexSpace.ContainsKey(v))
@@ -71,6 +76,26 @@ namespace Algorithms
                 return VertexSpace[v];
             }
             VertexSpace[v] = v;
+            return v;
+        }
+
+        public virtual NODE AddStart(NODE v)
+        {
+            if (StartSpace.Contains(v))
+            {
+                return v;
+            }
+            StartSpace.Add(v);
+            return v;
+        }
+
+        public virtual NODE AddEnd(NODE v)
+        {
+            if (EndSpace.Contains(v))
+            {
+                return v;
+            }
+            EndSpace.Add(v);
             return v;
         }
 
