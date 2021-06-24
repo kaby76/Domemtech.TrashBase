@@ -656,6 +656,14 @@
                         });
                 }
             }
+
+            {
+                var ag = new AntlrGraph();
+                ParsingResults pd = pd_parser;
+                var res = ag.Visit(pd.ParseTree);
+                System.Console.WriteLine(res.ToString());
+            }
+
             return result;
         }
 
@@ -1257,7 +1265,7 @@
                 {
                     case null:
                         {
-                            return g;
+                            return cg;
                         }
                     case "+":
                         {
@@ -1309,7 +1317,7 @@
                 {
                     case null:
                         {
-                            return g;
+                            return cg;
                         }
                     case "+":
                         {
@@ -1535,7 +1543,7 @@
                 {
                     case null:
                         {
-                            return g;
+                            return cg;
                         }
                     case "+":
                         {
@@ -1587,7 +1595,7 @@
                 {
                     case null:
                         {
-                            return g;
+                            return cg;
                         }
                     case "+":
                         {
@@ -1639,7 +1647,7 @@
                 {
                     case null:
                         {
-                            return g;
+                            return cg;
                         }
                     case "+":
                         {
