@@ -719,6 +719,7 @@
         private static void FindInterrule(List<DiagnosticInfo> result, Document document, Digraph<string, SymbolEdge> res, Dictionary<string, Digraph<string, SymbolEdge>> rules)
         {
             Digraph<string> interrule_graph = new Digraph<string>();
+            Dictionary<string, HashSet<string>> symbols_used = new Dictionary<string, HashSet<string>>();
 
             Algorithms.Utils.MultiMap<string, List<SymbolEdge>> paths = new Algorithms.Utils.MultiMap<string, List<SymbolEdge>>();
             foreach (var v in rules)
@@ -726,9 +727,12 @@
                 // Find all paths from start to end for current rule.
                 bool ok = false;
                 var sym = v.Key;
+                var graph = v.Value;
                 HashSet<SymbolEdge> visited = new HashSet<SymbolEdge>();
                 Stack<List<SymbolEdge>> stack = new Stack<List<SymbolEdge>>();
-
+                Dictionary<SymbolEdge, EdgeClassifier.Classification> classify = new Dictionary<SymbolEdge, EdgeClassifier.Classification>();
+                var xxx = graph.StartVertices.First();
+                EdgeClassifier.Classify(graph, xxx, ref classify);
                 foreach (var x in v.Value.StartVertices)
                 {
                     foreach (var e in res.SuccessorEdges(x))
@@ -750,7 +754,10 @@
                     }
                     foreach (var e in res.SuccessorEdges(xlv))
                     {
-                        if (visited.Contains(e)) continue;
+                        if (classify[e] == EdgeClassifier.Classification.Back)
+                        {
+                            continue;
+                        }
                         var new_path = x.ToList();
                         new_path.Add(e);
                         stack.Push(new_path);
@@ -780,40 +787,51 @@
             // a common symbol. Make note of those symbols.
             // Create a graph of these symbol usages.
             // Find cycles in this graph.
-            foreach (KeyValuePair<string, List<List<SymbolEdge>>> v in paths)
+            foreach (var r in rules)
             {
-                HashSet<string> symbols_used = new HashSet<string>();
+                var ps = paths[r.Key];
                 bool first = true;
-                string a = v.Key;
-                foreach (List<SymbolEdge> p in v.Value)
+                string a = r.Key;
+                symbols_used[a] = new HashSet<string>();
+                var list = symbols_used[a];
+                foreach (List<SymbolEdge> p in ps)
                 {
                     if (first)
                     {
                         foreach (SymbolEdge q in p)
                         {
-                            if (q._symbol != null) symbols_used.Add(q._symbol);
+                            if (q._symbol != null)
+                            {
+                                list.Add(q._symbol);
+                                first = false;
+                            }
                         }
-                        first = false;
-                        continue;
                     }
                     else
                     {
+                        bool diff = false;
                         foreach (SymbolEdge q in p)
                         {
                             if (q._symbol != null)
                             {
-                                if (symbols_used.Contains(q._symbol))
-                                    continue;
-                                symbols_used = new HashSet<string>();
-                                break;
+                                if (!list.Contains(q._symbol))
+                                {
+                                    diff = true;
+                                    break;
+                                }
                             }
+                        }
+                        if (diff)
+                        {
+                            symbols_used[a] = new HashSet<string>();
+                            break;
                         }
                     }
                 }
-                if (!symbols_used.Any())
+                if (!symbols_used[a].Any())
                     continue;
 
-                foreach (var s in symbols_used)
+                foreach (var s in list)
                 {
                     interrule_graph.AddEdge(new DirectedEdge<string>() { From = a, To = s });
                 }
@@ -836,11 +854,10 @@
                         {
                             Document = document.FullPath,
                             Severify = DiagnosticInfo.Severity.Info,
-                            //Start = term.Payload.StartIndex,
-                            //End = term.Payload.StopIndex,
-                            Message = m
+                                //Start = term.Payload.StartIndex,
+                                //End = term.Payload.StopIndex,
+                                Message = m
                         });
-
                 }
             }
         }
