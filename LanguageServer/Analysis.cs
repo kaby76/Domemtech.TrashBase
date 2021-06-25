@@ -10,8 +10,6 @@
     using System.Collections.Generic;
     using System.Data;
     using System.Linq;
-    using System.Linq.Expressions;
-    using System.Security.Cryptography.X509Certificates;
     using System.Text;
     using Document = Workspaces.Document;
 
@@ -668,6 +666,7 @@
                 ParsingResults pd = pd_parser;
                 var res = ag.Visit(pd.ParseTree);
                 Find(result, document, res, ag.Rules);
+                FindInterrule(result, document, res, ag.Rules);
                 //System.Console.WriteLine(res.ToString());
             }
 
@@ -704,6 +703,134 @@
                 {
                     var name = sym;
                     string m = "Rule " + name + " is malformed. It does not derive a string with referencing itself.";
+                    result.Add(
+                        new DiagnosticInfo()
+                        {
+                            Document = document.FullPath,
+                            Severify = DiagnosticInfo.Severity.Info,
+                            //Start = term.Payload.StartIndex,
+                            //End = term.Payload.StopIndex,
+                            Message = m
+                        });
+                }
+            }
+        }
+
+        private static void FindInterrule(List<DiagnosticInfo> result, Document document, Digraph<string, SymbolEdge> res, Dictionary<string, Digraph<string, SymbolEdge>> rules)
+        {
+            Digraph<string> interrule_graph = new Digraph<string>();
+
+            Algorithms.Utils.MultiMap<string, List<SymbolEdge>> paths = new Algorithms.Utils.MultiMap<string, List<SymbolEdge>>();
+            foreach (var v in rules)
+            {
+                // Find all paths from start to end for current rule.
+                bool ok = false;
+                var sym = v.Key;
+                HashSet<SymbolEdge> visited = new HashSet<SymbolEdge>();
+                Stack<List<SymbolEdge>> stack = new Stack<List<SymbolEdge>>();
+
+                foreach (var x in v.Value.StartVertices)
+                {
+                    foreach (var e in res.SuccessorEdges(x))
+                    {
+                        stack.Push(new List<SymbolEdge>() { e });
+                    }
+                }
+
+                while (stack.Any())
+                {
+                    var x = stack.Pop();
+                    var xl = x.Last();
+                    var xlv = xl.To;
+                    visited.Add(xl);
+                    if (v.Value.EndVertices.Contains(xl.To))
+                    {
+                        paths.Add(v.Key, x);
+                        continue;
+                    }
+                    foreach (var e in res.SuccessorEdges(xlv))
+                    {
+                        if (visited.Contains(e)) continue;
+                        var new_path = x.ToList();
+                        new_path.Add(e);
+                        stack.Push(new_path);
+                    }
+                }
+
+                interrule_graph.AddVertex(v.Key);
+            }
+
+            foreach (var pair in paths)
+            {
+                string k = pair.Key;
+                List<List<SymbolEdge>> v = pair.Value;
+                System.Console.WriteLine();
+                System.Console.WriteLine(k);
+                foreach (var l in v)
+                {
+                    foreach (var p in l)
+                    {
+                        System.Console.Write(p);
+                    }
+                    System.Console.WriteLine();
+                }
+            }
+
+            // For each rule, determine if all paths contain
+            // a common symbol. Make note of those symbols.
+            // Create a graph of these symbol usages.
+            // Find cycles in this graph.
+            foreach (KeyValuePair<string, List<List<SymbolEdge>>> v in paths)
+            {
+                HashSet<string> symbols_used = new HashSet<string>();
+                bool first = true;
+                string a = v.Key;
+                foreach (List<SymbolEdge> p in v.Value)
+                {
+                    if (first)
+                    {
+                        foreach (SymbolEdge q in p)
+                        {
+                            if (q._symbol != null) symbols_used.Add(q._symbol);
+                        }
+                        first = false;
+                        continue;
+                    }
+                    else
+                    {
+                        foreach (SymbolEdge q in p)
+                        {
+                            if (q._symbol != null)
+                            {
+                                if (symbols_used.Contains(q._symbol))
+                                    continue;
+                                symbols_used = new HashSet<string>();
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (!symbols_used.Any())
+                    continue;
+
+                foreach (var s in symbols_used)
+                {
+                    interrule_graph.AddEdge(new DirectedEdge<string>() { From = a, To = s });
+                }
+            }
+
+            // Find cylces.
+            var tarjan = new TarjanSCC<string, DirectedEdge<string>>(interrule_graph);
+            IDictionary<string, IEnumerable<string>> sccs = tarjan.Compute();
+            foreach (var pair in sccs)
+            {
+                var k = pair.Key;
+                var v = pair.Value;
+                var x = v.ToList();
+                if (x.Count > 1)
+                {
+                    var name = String.Join("->", x);
+                    string m = "Rule " + name + " are malformed. They contain a cycle that cannot terminate.";
                     result.Add(
                         new DiagnosticInfo()
                         {
