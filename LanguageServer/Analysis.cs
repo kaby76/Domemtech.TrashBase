@@ -797,12 +797,12 @@
                 {
                     if (first)
                     {
+                        first = false;
                         foreach (SymbolEdge q in p)
                         {
                             if (q._symbol != null)
                             {
                                 symbols_used[a].Add(q._symbol);
-                                first = false;
                             }
                         }
                     }
