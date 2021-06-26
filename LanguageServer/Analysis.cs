@@ -964,6 +964,8 @@
                 {
                     var b = nullable[prsc.ruleBlock()];
                     Assign(stack, v.Parent, nullable[v], b);
+                    if (!nullable_rule_ref.ContainsKey(prsc.RULE_REF().GetText()))
+                        nullable_rule_ref[prsc.RULE_REF().GetText()] = new NullableValue() { V = (int)NullableValue.Value.NonEmpty };
                     Assign(stack, v.Parent, nullable_rule_ref[prsc.RULE_REF().GetText()], b);
                 }
                 else if (v is ANTLRv4Parser.RuleBlockContext rbc)
@@ -997,6 +999,8 @@
                 {
                     var b = nullable[lrsc.lexerRuleBlock()];
                     Assign(stack, v.Parent, nullable[v], b);
+                    if (!nullable_rule_ref.ContainsKey(lrsc.TOKEN_REF().GetText()))
+                        nullable_rule_ref[lrsc.TOKEN_REF().GetText()] = new NullableValue() { V = (int)NullableValue.Value.NonEmpty };
                     Assign(stack, v.Parent, nullable_rule_ref[lrsc.TOKEN_REF().GetText()], b);
                 }
                 else if (v is ANTLRv4Parser.LexerRuleBlockContext lrbc)
@@ -1228,6 +1232,8 @@
                 }
                 else if (v is ANTLRv4Parser.RulerefContext rrc)
                 {
+                    if (!nullable_rule_ref.ContainsKey(rrc.RULE_REF().GetText()))
+                        nullable_rule_ref[rrc.RULE_REF().GetText()] = new NullableValue() { V = (int)NullableValue.Value.NonEmpty };
                     var b = nullable_rule_ref[rrc.RULE_REF().GetText()];
                     Assign(stack, v.Parent, nullable[v], b);
                 }
