@@ -1421,6 +1421,7 @@
                         break;
                     }
                 case "?":
+                case "??":
                     {
                         var f = "s" + gen++;
                         var t = "s" + gen++;
@@ -1489,6 +1490,7 @@
                             return g;
                         }
                     case "?":
+                    case "??":
                         {
                             var f = "s" + gen++;
                             var t = "s" + gen++;
@@ -1543,6 +1545,7 @@
                             return g;
                         }
                     case "?":
+                    case "??":
                         {
                             var f = "s" + gen++;
                             var t = "s" + gen++;
@@ -1790,6 +1793,7 @@
                             return g;
                         }
                     case "?":
+                    case "??":
                         {
                             var f = "s" + gen++;
                             var t = "s" + gen++;
@@ -1844,6 +1848,7 @@
                             return g;
                         }
                     case "?":
+                    case "??":
                         {
                             var f = "s" + gen++;
                             var t = "s" + gen++;
@@ -1898,6 +1903,7 @@
                             return g;
                         }
                     case "?":
+                    case "??":
                         {
                             var f = "s" + gen++;
                             var t = "s" + gen++;
