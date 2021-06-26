@@ -793,7 +793,6 @@
                 bool first = true;
                 string a = r.Key;
                 symbols_used[a] = new HashSet<string>();
-                var list = symbols_used[a];
                 foreach (List<SymbolEdge> p in ps)
                 {
                     if (first)
@@ -802,36 +801,29 @@
                         {
                             if (q._symbol != null)
                             {
-                                list.Add(q._symbol);
+                                symbols_used[a].Add(q._symbol);
                                 first = false;
                             }
                         }
                     }
                     else
                     {
-                        bool diff = false;
+                        var other_list = new HashSet<string>();
                         foreach (SymbolEdge q in p)
                         {
                             if (q._symbol != null)
                             {
-                                if (!list.Contains(q._symbol))
-                                {
-                                    diff = true;
-                                    break;
-                                }
+                                other_list.Add(q._symbol);
                             }
                         }
-                        if (diff)
-                        {
-                            symbols_used[a] = new HashSet<string>();
-                            break;
-                        }
+                        var rr = symbols_used[a].Intersect(other_list);
+                        symbols_used[a] = rr.ToHashSet();
                     }
                 }
                 if (!symbols_used[a].Any())
                     continue;
 
-                foreach (var s in list)
+                foreach (var s in symbols_used[a])
                 {
                     interrule_graph.AddEdge(new DirectedEdge<string>() { From = a, To = s });
                 }
