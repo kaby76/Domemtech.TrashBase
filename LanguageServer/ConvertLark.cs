@@ -11,7 +11,7 @@
     {
         public ConvertLark() { }
 
-        public Dictionary<string, string> Try(string ffn, string input)
+        public Dictionary<string, string> Try(string ffn, string input, string out_type = "antlr4")
         {
             Dictionary<string, string> results = new Dictionary<string, string>();
             bool convert_undefined_to_terminals = true;

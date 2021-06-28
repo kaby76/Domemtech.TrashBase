@@ -18,7 +18,7 @@
         {
         }
 
-        public Dictionary<string, string> Try(string ffn, string input)
+        public Dictionary<string, string> Try(string ffn, string input, string out_type = "antlr4")
         {
             Dictionary<string, string> results = new Dictionary<string, string>();
             var now = DateTime.Now.ToString();

@@ -25,7 +25,7 @@
         {
         }
 
-        public Dictionary<string, string> Try(string ffn, string input)
+        public Dictionary<string, string> Try(string ffn, string input, string out_type = "antlr4")
         {
             var error_file_name = ffn;
             error_file_name = error_file_name.EndsWith(".g2")
