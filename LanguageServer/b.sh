@@ -5,4 +5,5 @@ java -jar ~/Downloads/antlr-4.9.2-complete.jar -package LanguageServer -Dlanguag
 java -jar ~/Downloads/antlr-4.9.2-complete.jar -package LanguageServer -Dlanguage=CSharp -visitor -listener Iso14977Lexer.g4 Iso14977Parser.g4
 java -jar ~/Downloads/antlr-4.9.2-complete.jar -package LanguageServer -Dlanguage=CSharp -visitor -listener W3CebnfLexer.g4 W3CebnfParser.g4
 java -jar ~/Downloads/antlr-4.9.2-complete.jar -package LanguageServer -Dlanguage=CSharp -visitor -listener lbnfLexer.g4 lbnfParser.g4
+java -jar ~/Downloads/antlr-4.9.2-complete.jar -package LanguageServer -Dlanguage=CSharp -visitor -listener LarkLexer.g4 LarkParser.g4
 

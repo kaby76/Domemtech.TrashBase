@@ -15,6 +15,8 @@
                     "antlr2",
                     "antlr3",
                     "antlr4",
+                    "lark",
+                    "bison",
                 };
                 return result;
             }
@@ -37,6 +39,7 @@
                 else if (parse_as == "ebnf") result = new W3CebnfParsingResults(document);
                 else if (parse_as == "iso14977") result = new Iso14977ParsingResults(document);
                 else if (parse_as == "lbnf") result = new lbnfParsingResults(document);
+                else if (parse_as == "lark") result = new LarkParsingResults(document);
                 else result = null;
             }
             else if (document.FullPath.EndsWith(".ebnf"))
@@ -73,6 +76,11 @@
             {
                 document.ParseAs = "lbnf";
                 result = new lbnfParsingResults(document);
+            }
+            else if (document.FullPath.EndsWith(".lark"))
+            {
+                document.ParseAs = "lark";
+                result = new LarkParsingResults(document);
             }
             else result = null;
             _parsing_results[document] = result;
