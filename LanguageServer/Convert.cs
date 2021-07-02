@@ -32,6 +32,11 @@
                     var imp = new ConvertAntlr3();
                     results = imp.Try(f, input);
                 }
+                else if (f.EndsWith(".g4"))
+                {
+                    var imp = new ConvertAntlr4();
+                    results = imp.Try(f, input);
+                }
                 else if (f.EndsWith(".lark"))
                 {
                     var imp = new ConvertLark();
