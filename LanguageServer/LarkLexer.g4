@@ -30,8 +30,9 @@ NL: ('\r'? '\n')+ Space* ;
 //
 // Strings
 //
-fragment STRING_INNER: (~'"')*? ;
-fragment STRING_ESC_INNER: STRING_INNER ;
+fragment ESC: '\\' ('n' | 'r' | 't' | 'b' | 'f' | '"' | '\'' | '\\' | '>' | .);
+fragment STRING_INNER: ~('\\' | '"');
+fragment STRING_ESC_INNER: (ESC | STRING_INNER)* ;
 fragment FSTRING : '"' STRING_ESC_INNER '"' ;
 
 //

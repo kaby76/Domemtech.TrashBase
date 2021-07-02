@@ -149,10 +149,9 @@
                         if (id == null) continue;
                         string tok = id.GetText();
                         ISymbol sym = new NonterminalSymbol(tok, new List<IToken>() { token.Symbol });
-                                    this.RootScope.define(ref sym);
+                        this.RootScope.define(ref sym);
                         CombinedScopeSymbol s = (CombinedScopeSymbol)sym;
-                                    this.Attributes[id] = new List<CombinedScopeSymbol>() { s };
-                                    this.Attributes[id.GetChild(0)] = new List<CombinedScopeSymbol>() { s };
+                        this.Attributes[id] = new List<CombinedScopeSymbol>() { s };
                     }
                 }
 
