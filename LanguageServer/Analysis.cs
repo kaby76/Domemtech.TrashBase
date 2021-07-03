@@ -321,7 +321,8 @@
                     }
                     for (int j = 0; j < histogram.Length; ++j)
                     {
-                        string i = "Parser type " + j + " " + histogram[j];
+                        if (histogram[j] == 0) continue;
+                        string i = histogram[j] + " occurrences of " + pd_parser.Map[j];
                         result.Add(
                             new DiagnosticInfo()
                             {
@@ -767,6 +768,7 @@
                 interrule_graph.AddVertex(v.Key);
             }
 
+            /*
             foreach (var pair in paths)
             {
                 string k = pair.Key;
@@ -782,7 +784,8 @@
                     System.Console.WriteLine();
                 }
             }
-
+            */
+        
             // For each rule, determine if all paths contain
             // a common symbol. Make note of those symbols.
             // Create a graph of these symbol usages.
