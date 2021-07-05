@@ -55,39 +55,39 @@
                     // Allow language, tokenVocab, TokenLabelType, superClass
                     var nodes = engine.parseExpression(
                         @"//(grammarDecl
-						 | grammarType
-						 | prequelConstruct
-						 | optionsSpec
-						 | option
-						 | optionValue
-						 | delegateGrammars
-						 | delegateGrammar
-						 | tokensSpec
-						 | channelsSpec
-						 | idList
-						 | action_
-						 | actionScopeName
-						 | actionBlock
-						 | argActionBlock
-						 | exceptionGroup
-						 | exceptionHandler
-						 | finallyClause
-						 | rulePrequel
-						 | ruleReturns
-						 | throwsSpec
-						 | localsSpec
-						 | ruleAction
-						 | ruleModifiers
-						 | ruleModifier
-						 | elementOptions
-						 | elementOption
+                        | grammarType
+                        | prequelConstruct
+                        | optionsSpec
+                        | option
+                        | optionValue
+                        | delegateGrammars
+                        | delegateGrammar
+                        | tokensSpec
+                        | channelsSpec
+                        | idList
+                        | action_
+                        | actionScopeName
+                        | actionBlock
+                        | argActionBlock
+                        | exceptionGroup
+                        | exceptionHandler
+                        | finallyClause
+                        | rulePrequel
+                        | ruleReturns
+                        | throwsSpec
+                        | localsSpec
+                        | ruleAction
+                        | ruleModifiers
+                        | ruleModifier
+                        | elementOptions
+                        | elementOption
                         | FRAGMENT
                         | BLOCK_COMMENT
                         | LINE_COMMENT
                         | DOC_COMMENT
-						)",
-                            new StaticContextBuilder()).evaluate(
-                            dynamicContext, new object[] { dynamicContext.Document })
+                        )",
+                        new StaticContextBuilder()).evaluate(
+                        dynamicContext, new object[] { dynamicContext.Document })
                         .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree);
                     TreeEdits.Delete(nodes);
                 }

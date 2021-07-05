@@ -1,5 +1,6 @@
 ﻿using Algorithms.Utils;
 using System.Collections.Generic;
+using System.Text;
 
 namespace Algorithms
 {
@@ -367,6 +368,20 @@ namespace Algorithms
             {
                 return true;
             }
+        }
+
+        public virtual string ToDotString()
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("digraph G {");
+            sb.AppendLine("rankdir=\"LR\";");
+            foreach (var s in StartVertices) sb.AppendLine(s + " [ pos=left ];");
+            foreach (var e in Edges)
+            {
+                sb.AppendLine(e.ToString());
+            }
+            sb.AppendLine("}");
+            return sb.ToString();
         }
     }
 }
