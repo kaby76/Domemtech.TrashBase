@@ -6,7 +6,7 @@ build:
 	nuget pack base.nuspec -Symbols -SymbolPackageFormat snupkg
 
 publish:
-	export version=1.5.0; dotnet nuget push Domemtech.TrashBase.${version}.nupkg --api-key ${trashkey} --source https://api.nuget.org/v3/index.json
+	dotnet nuget push Domemtech.TrashBase.1.5.0.nupkg --api-key ${trashkey} --source https://api.nuget.org/v3/index.json
 
 clean:
 	rm -rf */obj */bin
