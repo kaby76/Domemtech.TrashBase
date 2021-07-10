@@ -32,14 +32,14 @@
             if (document.ParseAs != null)
             {
                 var parse_as = document.ParseAs;
-                if (parse_as == "antlr2") result = new Antlr2ParsingResults(document);
-                else if (parse_as == "antlr3") result = new Antlr3ParsingResults(document);
-                else if (parse_as == "antlr4") result = new Antlr4ParsingResults(document);
-                else if (parse_as == "bison") result = new BisonParsingResults(document);
-                else if (parse_as == "ebnf") result = new W3CebnfParsingResults(document);
-                else if (parse_as == "iso14977") result = new Iso14977ParsingResults(document);
-                else if (parse_as == "lbnf") result = new lbnfParsingResults(document);
-                else if (parse_as == "lark") result = new LarkParsingResults(document);
+                if (parse_as == "antlr2" || parse_as == "ANTLRv2Parser.g4") result = new Antlr2ParsingResults(document);
+                else if (parse_as == "antlr3" || parse_as == "ANTLRv3Parser.g4") result = new Antlr3ParsingResults(document);
+                else if (parse_as == "antlr4" || parse_as == "ANTLRv4Parser.g4") result = new Antlr4ParsingResults(document);
+                else if (parse_as == "bison" || parse_as == "BisonParser.g4") result = new BisonParsingResults(document);
+                else if (parse_as == "ebnf" || parse_as == "W3CebnfParser.g4") result = new W3CebnfParsingResults(document);
+                else if (parse_as == "iso14977" || parse_as == "Iso14977Parser.g4") result = new Iso14977ParsingResults(document);
+                else if (parse_as == "lbnf" || parse_as == "lbnfParser.g4") result = new lbnfParsingResults(document);
+                else if (parse_as == "lark" || parse_as == "LarkParser.g4") result = new LarkParsingResults(document);
                 else result = null;
             }
             else if (document.FullPath.EndsWith(".ebnf"))
