@@ -42,6 +42,11 @@
                     var imp = new ConvertLark();
                     results = imp.Try(f, input);
                 }
+		else if (f.EndsWith(".pest"))
+		{
+			var imp = new ConvertPest();
+			results = imp.Try(f, input);
+		}
             }
             return results;
         }

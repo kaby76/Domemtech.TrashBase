@@ -11,9 +11,9 @@
     using System.Text;
     using Workspaces;
 
-    internal class lbnfParsingResults : ParsingResults, IParserDescription
+    internal class PestParsingResults : ParsingResults, IParserDescription
     {
-        public lbnfParsingResults(Document item) : base(item)
+        public PestParsingResults(Document item) : base(item)
         {
             Passes.Add(() =>
             {
@@ -269,7 +269,7 @@
                 return true;
             }
         }
-        public override string FileExtension { get; } = ".lark";
+        public override string FileExtension { get; } = ".pest";
         public override string[] Map { get; } = new string[]
           {
                  "Antlr - nonterminal def",
@@ -286,7 +286,7 @@
                  "Antlr - punctuation",
                  "Antlr - operator",
           };
-        public override string Name { get; } = "lbnf";
+        public override string Name { get; } = "pest";
         public override List<Func<ParsingResults, IParseTree, string>> PopUpDefinition { get; } =
             new List<Func<ParsingResults, IParseTree, string>>()
             {
@@ -379,7 +379,7 @@
                                     IParseTree node = fod;
                                     for (; node != null; node = node.Parent)
                                     {
-                                        if (node is lbnfParser.DefContext)
+                                        if (node is PestParser.Grammar_ruleContext)
                                         {
                                             break;
                                         }
@@ -482,7 +482,7 @@
                                     IParseTree node = fod;
                                     for (; node != null; node = node.Parent)
                                     {
-                                        if (node is lbnfParser.DefContext)
+                                        if (node is PestParser.Grammar_ruleContext)
                                         {
                                             break;
                                         }
@@ -585,7 +585,7 @@
                                     IParseTree node = fod;
                                     for (; node != null; node = node.Parent)
                                     {
-                                        if (node is lbnfParser.DefContext)
+                                        if (node is PestParser.Grammar_ruleContext)
                                         {
                                             break;
                                         }
@@ -689,7 +689,7 @@
                                     IParseTree node = fod;
                                     for (; node != null; node = node.Parent)
                                     {
-                                        if (node is lbnfParser.DefContext)
+                                        if (node is PestParser.Grammar_ruleContext)
                                         {
                                             break;
                                         }
@@ -748,14 +748,14 @@
             //var ais = new AntlrInputStream(
             //            new StreamReader(
             //                new MemoryStream(byteArray)).ReadToEnd());
-            //var lexer = new lbnfLexer(ais);
-            //CommonTokenStream cts_off_channel = new CommonTokenStream(lexer, LbnfLexer.OFF_CHANNEL);
+            //var lexer = new PestLexer(ais);
+            //CommonTokenStream cts_off_channel = new CommonTokenStream(lexer, PestLexer.OFF_CHANNEL);
             //lexer.RemoveErrorListeners();
             //var lexer_error_listener = new ErrorListener<int>(null, lexer, this.QuietAfter);
             //lexer.AddErrorListener(lexer_error_listener);
             //Dictionary<IToken, int> new_list = new Dictionary<IToken, int>();
             //int type = (int)AntlrClassifications.ClassificationComment;
-            //while (cts_off_channel.LA(1) != lbnfParser.Eof)
+            //while (cts_off_channel.LA(1) != PestParser.Eof)
             //{
             //    IToken token = cts_off_channel.LT(1);
             //    //if (token.Type == Iso14977Parser.COMMENT)
@@ -810,9 +810,9 @@
             {
                 name = ffn
             };
-            var lexer = new lbnfLexer(ais);
+            var lexer = new PestLexer(ais);
             CommonTokenStream cts = new CommonTokenStream(lexer);
-            var parser = new lbnfParser(cts);
+            var parser = new PestParser(cts);
             lexer.RemoveErrorListeners();
             var lexer_error_listener = new ErrorListener<int>(parser, lexer, pd.QuietAfter);
             lexer.AddErrorListener(lexer_error_listener);
@@ -827,7 +827,7 @@
             }
             try
             {
-                pt = parser.start_LGrammar();
+                pt = parser.grammar_rules();
             }
             catch (Exception)
             {
@@ -886,9 +886,9 @@
             AntlrInputStream ais = new AntlrInputStream(
             new StreamReader(
                 new MemoryStream(byteArray)).ReadToEnd());
-            var lexer = new lbnfLexer(ais);
+            var lexer = new PestLexer(ais);
             CommonTokenStream cts = new CommonTokenStream(lexer);
-            var parser = new lbnfParser(cts);
+            var parser = new PestParser(cts);
             lexer.RemoveErrorListeners();
             var lexer_error_listener = new ErrorListener<int>(parser, lexer, this.QuietAfter);
             lexer.AddErrorListener(lexer_error_listener);
@@ -897,7 +897,7 @@
             parser.AddErrorListener(parser_error_listener);
             try
             {
-                pt = parser.start_LGrammar();
+                pt = parser.grammar_rules();
             }
             catch (Exception)
             {
@@ -925,7 +925,7 @@
             }
         }
 
-        public class Pass2Listener : lbnfParserBaseListener
+        public class Pass2Listener : PestParserBaseListener
         {
             private readonly ParsingResults _pd;
 
@@ -968,27 +968,19 @@
                 return null;
             }
 
-            public override void EnterCat([NotNull] lbnfParser.CatContext context)
+            public override void EnterGrammar_rule([NotNull] PestParser.Grammar_ruleContext context)
             {
-                if (context.Identifier() == null) return;
-                var id = context.Identifier().GetText();
-                if (context.Parent is lbnfParser.DefContext
-                    || context.Parent is lbnfParser.CatContext)
-                {
-                    var frontier = TreeEdits.Frontier(context);
-                    var list = frontier.Select(t => t.Symbol).ToList();
-                    ISymbol sym = new NonterminalSymbol(id, list);
-                    _pd.RootScope.define(ref sym);
-                    CombinedScopeSymbol s = (CombinedScopeSymbol)sym;
-                    _pd.Attributes[context] = new List<CombinedScopeSymbol>() { s };
-                    foreach (var tr in frontier)
-                        _pd.Attributes[tr] = new List<CombinedScopeSymbol>() { s };
-                }
+                var rule_ref = context.IDENTIFIER() as TerminalNodeImpl;
+                string id = rule_ref.GetText();
+                ISymbol sym = new NonterminalSymbol(id, new List<IToken>() { rule_ref.Symbol });
+                _pd.RootScope.define(ref sym);
+                CombinedScopeSymbol s = (CombinedScopeSymbol)sym;
+                _pd.Attributes[context] = new List<CombinedScopeSymbol>() { s };
             }
         }
 
 
-        public class Pass3Listener : lbnfParserBaseListener
+        public class Pass3Listener : PestParserBaseListener
         {
             private readonly ParsingResults _pd;
 
@@ -996,30 +988,23 @@
             {
                 _pd = pd;
             }
-            public override void EnterCat([NotNull] lbnfParser.CatContext context)
-	        {
-		        if (context.Identifier() == null) return;
-                var id = context.Identifier().GetText();
-                if (!(context.Parent is lbnfParser.ItemContext))
-                    return;
 
-                var frontier = TreeEdits.Frontier(context);
-                List<ISymbol> prior = _pd.RootScope.LookupType(id).ToList();
-                if (!prior.Any())
+            public override void EnterTerminal([NotNull] PestParser.TerminalContext context)
+            {
+                var idn = context.IDENTIFIER() as TerminalNodeImpl;
+                if (idn == null) return;
+                string id = idn.GetText();
+                List<ISymbol> list = _pd.RootScope.LookupType(id).ToList();
+                if (!list.Any())
                 {
-                    var listp = frontier.Select(t => t.Symbol).ToList();
-                    ISymbol symp = new NonterminalSymbol(id, listp);
-                    _pd.RootScope.define(ref symp);
-                    prior = _pd.RootScope.LookupType(id).ToList();
+                    ISymbol sym = new NonterminalSymbol(id, new List<IToken>() { idn.Symbol });
+                    _pd.RootScope.define(ref sym);
+                    list = _pd.RootScope.LookupType(id).ToList();
                 }
-                var list = frontier.Select(t => t.Symbol).ToList();
                 List<CombinedScopeSymbol> new_attrs = new List<CombinedScopeSymbol>();
-                CombinedScopeSymbol s = new RefSymbol(list, prior);
+                CombinedScopeSymbol s = new RefSymbol(new List<IToken>() { idn.Symbol }, list);
                 new_attrs.Add(s);
-                _pd.Attributes[context] = new_attrs;
-                _pd.Attributes[context] = new List<CombinedScopeSymbol>() { s };
-                foreach (var tr in frontier)
-                    _pd.Attributes[tr] = new List<CombinedScopeSymbol>() { s };
+                _pd.Attributes[idn] = new_attrs;
             }
         }
     }

@@ -6,22 +6,6 @@
     {
         private static Dictionary<Workspaces.Document, ParsingResults> _parsing_results = new Dictionary<Workspaces.Document, ParsingResults>();
 
-        public static List<string> AllLanguages
-        {
-            get
-            {
-                List<string> result = new List<string>
-                {
-                    "antlr2",
-                    "antlr3",
-                    "antlr4",
-                    "lark",
-                    "bison",
-                };
-                return result;
-            }
-        }
-
         public static ParsingResults Create(Workspaces.Document document)
         {
             if (_parsing_results.ContainsKey(document) && _parsing_results[document] != null)
@@ -39,8 +23,9 @@
                 else if (parse_as == "ebnf" || parse_as == "W3CebnfParser.g4") result = new W3CebnfParsingResults(document);
                 else if (parse_as == "iso14977" || parse_as == "Iso14977Parser.g4") result = new Iso14977ParsingResults(document);
                 else if (parse_as == "lbnf" || parse_as == "lbnfParser.g4") result = new lbnfParsingResults(document);
-                else if (parse_as == "lark" || parse_as == "LarkParser.g4") result = new LarkParsingResults(document);
-                else result = null;
+		else if (parse_as == "lark" || parse_as == "LarkParser.g4") result = new LarkParsingResults(document);
+		else if (parse_as == "pest" || parse_as == "PestParser.g4") result = new LarkParsingResults(document);
+		else result = null;
             }
             else if (document.FullPath.EndsWith(".ebnf"))
             {
@@ -82,6 +67,11 @@
                 document.ParseAs = "lark";
                 result = new LarkParsingResults(document);
             }
+	    else if (document.FullPath.EndsWith(".pest"))
+	    {
+		    document.ParseAs = "PestParser.g4";
+		    result = new PestParsingResults(document);
+	    }
             else result = null;
             _parsing_results[document] = result;
             return result;
