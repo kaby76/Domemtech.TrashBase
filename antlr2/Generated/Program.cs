@@ -27,6 +27,10 @@ public class Program
         Tree = tree;
         return tree;
     }
+    public static Dictionary<IParseTree, object> ComputeAttributes()
+    {
+	    return null;
+    }
 
     static void Main(string[] args)
     {
