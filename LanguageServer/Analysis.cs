@@ -233,7 +233,7 @@
             //}
         }
 
-        public static List<DiagnosticInfo> PerformAnalysis(Document document)
+        public static List<DiagnosticInfo> PerformAnalysis(Document document, System.Collections.Generic.IEnumerable<string> start_rules)
         {
             List<DiagnosticInfo> result = new List<DiagnosticInfo>();
 
@@ -655,11 +655,69 @@
                 ParsingResults pd = pd_parser;
                 var res = ag.Visit(pd.ParseTree);
                 Find(result, document, res, ag.Rules);
-                FindInterrule(result, document, res, ag.Rules);
+                FindInterrule(result, document, start_rules, res, ag.Rules);
                 //System.Console.WriteLine(res.ToString());
+                FindReachable(result, document, ag.Rules, start_rules);
             }
 
             return result;
+        }
+
+        private static void FindReachable(List<DiagnosticInfo> result, Document document, Dictionary<string, Digraph<string, SymbolEdge>> rules, IEnumerable<string> start_rules)
+        {
+            // Convert.
+            Digraph<string, DirectedEdge<string>> g = new Digraph<string, DirectedEdge<string>>();
+            foreach (var v in rules)
+            {
+                bool ok = false;
+                var sym = v.Key;
+                var rule_graph = v.Value;
+                Stack<string> stack = new Stack<string>();
+                HashSet<string> visited = new HashSet<string>();
+                foreach (var x in rule_graph.StartVertices)
+                    stack.Push(x);
+                g.AddVertex(sym);
+                while (stack.Any())
+                {
+                    var x = stack.Pop();
+                    visited.Add(x);
+                    if (rule_graph.EndVertices.Contains(x))
+                    {
+                        continue;
+                    }
+                    foreach (var e in rule_graph.SuccessorEdges(x))
+                    {
+                        var sym_to = e._symbol;
+                        if (sym_to != "" && sym_to != null)
+                            g.AddEdge(new DirectedEdge<string>() { From = sym, To = sym_to });
+                        if (visited.Contains(e.To)) continue;
+                        stack.Push(e.To);
+                    }
+                }
+            }
+
+            // Perform reachability and report all symbols not reachable.
+            HashSet<string> visited_reachable = new HashSet<string>();
+            var dfs = new DepthFirstOrder<string, DirectedEdge<string>>(g, start_rules);
+            foreach (var v in dfs)
+            {
+                visited_reachable.Add(v);
+            }
+            foreach (var v in g.Vertices)
+            {
+                if (visited_reachable.Contains(v)) continue;
+                string m = v + " is unreachable from the start symbol.";
+                result.Add(
+                    new DiagnosticInfo()
+                    {
+                        Document = document.FullPath,
+                        Severify = DiagnosticInfo.Severity.Info,
+                        //Start = term.Payload.StartIndex,
+                        //End = term.Payload.StopIndex,
+                        Message = m
+                    });
+            }
+
         }
 
         private static void Find(List<DiagnosticInfo> result, Document document, Digraph<string, SymbolEdge> res, Dictionary<string, Digraph<string, SymbolEdge>> rules)
@@ -691,7 +749,7 @@
                 if (!ok)
                 {
                     var name = sym;
-                    string m = "Rule " + name + " is malformed. It does not derive a string with referencing itself.";
+                    string m = "Rule " + name + " is malformed. Infinite recursion.";
                     result.Add(
                         new DiagnosticInfo()
                         {
@@ -705,7 +763,7 @@
             }
         }
 
-        private static void FindInterrule(List<DiagnosticInfo> result, Document document, Digraph<string, SymbolEdge> res, Dictionary<string, Digraph<string, SymbolEdge>> rules)
+        private static void FindInterrule(List<DiagnosticInfo> result, Document document, IEnumerable<string> start_rules, Digraph<string, SymbolEdge> res, Dictionary<string, Digraph<string, SymbolEdge>> rules)
         {
             Digraph<string> interrule_graph = new Digraph<string>();
             Dictionary<string, HashSet<string>> symbols_used = new Dictionary<string, HashSet<string>>();
@@ -777,7 +835,6 @@
             // For each rule, determine if all paths contain
             // a common symbol. Make note of those symbols.
             // Create a graph of these symbol usages.
-            // Find cycles in this graph.
             foreach (var r in rules)
             {
                 var ps = paths[r.Key];

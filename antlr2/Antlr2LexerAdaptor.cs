@@ -1,5 +1,3 @@
-namespace LanguageServer
-{
     using Antlr4.Runtime;
     using Antlr4.Runtime.Misc;
     using System;
@@ -135,4 +133,4 @@ namespace LanguageServer
         private bool InParserRule => CurrentRuleType == ANTLRv2Lexer.RULE_REF;
 
     }
-}
+
