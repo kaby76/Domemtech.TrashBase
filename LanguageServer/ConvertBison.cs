@@ -56,9 +56,17 @@
                 foreach (var token in nodes)
                 {
                     string tok = token.GetText();
-                    string cap_tok = tok.Length == 1 ? char.ToUpper(tok[0]).ToString() :
+                    string new_name = tok.Length == 1 ? char.ToUpper(tok[0]).ToString() :
                         (char.ToUpper(tok[0]) + tok.Substring(1));
-                    terminals.Add(tok, cap_tok);
+                    for (; ; )
+                    {
+                        if (!terminals.ContainsValue(new_name))
+                        {
+                            break;
+                        }
+                        new_name = new_name + '_';
+                    }
+                    terminals.Add(tok, new_name);
                 }
             }
 
@@ -76,10 +84,18 @@
                 foreach (var rule in nodes)
                 {
                     var r = rule.AntlrIParseTree;
-                    var lhs = r.GetChild(0).GetText();
-                    string cap_tok = lhs.Length == 1 ? char.ToLower(lhs[0]).ToString() :
+                    string lhs = r.GetChild(0).GetText();
+                    string new_name = lhs.Length == 1 ? char.ToLower(lhs[0]).ToString() :
                         (char.ToLower(lhs[0]) + lhs.Substring(1));
-                    nonterminals[lhs] = cap_tok;
+                    for (; ;)
+                    {
+                        if (nonterminals.ContainsKey(lhs) || !nonterminals.ContainsValue(new_name))
+                        {
+                            break;
+                        }
+                        new_name = new_name + '_';
+                    }
+                    nonterminals[lhs] = new_name;
                     var rhs = new List<List<string>>();
                     var rhses = engine.parseExpression(
                             @".//rhses_1/rhs",
@@ -140,9 +156,17 @@
                             // RHS symbol is not a non-terminal and not a %token terminal.
                             // Enter it as a terminal.
                             string tok = c;
-                            string cap_tok = tok.Length == 1 ? char.ToUpper(tok[0]).ToString() :
+                            string new_name = tok.Length == 1 ? char.ToUpper(tok[0]).ToString() :
                                 (char.ToUpper(tok[0]) + tok.Substring(1));
-                            terminals.Add(tok, cap_tok);
+                            for (; ; )
+                            {
+                                if (!terminals.ContainsValue(new_name))
+                                {
+                                    break;
+                                }
+                                new_name = new_name + '_';
+                            }
+                            terminals.Add(tok, new_name);
                             // Note that in the error list.
                             errors.AppendLine("Symbol " + c + " not declared, assuming it is a terminal.");
                         }
@@ -163,12 +187,34 @@
                     ))
                 {
                     if (!nonterminals.ContainsKey(r.Item1))
-                        nonterminals.Add(r.Item1, r.Item1 + "_nonterminal");
+                    {
+                        var new_name = r.Item1 + "_nonterminal";
+                        for (; ; )
+                        {
+                            if (!nonterminals.ContainsValue(new_name))
+                            {
+                                break;
+                            }
+                            new_name = new_name + '_';
+                        }
+                        nonterminals.Add(r.Item1, new_name);
+                    }
                 }
                 else
                 {
                     if (! nonterminals.ContainsKey(r.Item1))
-                        nonterminals.Add(r.Item1, r.Item1);
+                    {
+                        var new_name = r.Item1;
+                        for (; ; )
+                        {
+                            if (!nonterminals.ContainsValue(new_name))
+                            {
+                                break;
+                            }
+                            new_name = new_name + '_';
+                        }
+                        nonterminals.Add(r.Item1, new_name);
+                    }
                 }
             }
 
@@ -184,7 +230,6 @@
             foreach (Tuple<string, List<List<string>>> r in rules)
             {
                 string lhs = r.Item1;
-                lhs = nonterminals[lhs];
                 nonterminals.TryGetValue(lhs, out string nlhs);
                 if (nlhs != null && nlhs != "") lhs = nlhs;
                 sb.Append(lhs);
