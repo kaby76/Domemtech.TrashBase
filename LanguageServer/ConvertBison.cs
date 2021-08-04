@@ -106,7 +106,7 @@
                     {
                         rhs.Add(new List<string>());
                         var sym = engine.parseExpression(
-                                @".//symbol",
+                                @".//symbol[not(preceding-sibling::PERCENT_PREC)]",
                                 new StaticContextBuilder()).evaluate(
                                 dynamicContext, new object[] { r1 })
                             .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree);
