@@ -1,3 +1,5 @@
+; Excel
+
 formula = expression
 expression= ref-expression / *whitespace nospace-expression *whitespace
 ref-expression= *whitespace ref-nospace-expression *whitespace

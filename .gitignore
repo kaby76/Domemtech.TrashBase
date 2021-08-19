@@ -87,3 +87,4 @@ VsCode/server/
 LanguageServer/.antlr/
 *.nupkg
 *.snupkg
+supported_grammars/abnf/Generated/
