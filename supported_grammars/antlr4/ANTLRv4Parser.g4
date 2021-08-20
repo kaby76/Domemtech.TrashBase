@@ -3,7 +3,7 @@ parser grammar ANTLRv4Parser;
 options
 {
 	tokenVocab = ANTLRv4Lexer;
-    contextSuperClass=LanguageServer.AttributedParseTreeNode;
+//    contextSuperClass=LanguageServer.AttributedParseTreeNode;
 }
 
 // The main entry point for parsing a v4 grammar.

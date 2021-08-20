@@ -27,11 +27,11 @@ parser grammar BisonParser;
 
 options {
     tokenVocab=BisonLexer;
-    contextSuperClass=AntlrTreeEditing.AntlrDOM.ObserverParserRuleContext;
+//    contextSuperClass=AntlrTreeEditing.AntlrDOM.ObserverParserRuleContext;
 }
 
 input
-    : prologue_declarations '%%' bison_grammar epilogue_opt
+    : prologue_declarations '%%' bison_grammar epilogue_opt EOF
     ;
 
 /*------------------------------------.

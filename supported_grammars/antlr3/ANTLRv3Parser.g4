@@ -3,7 +3,7 @@ parser grammar ANTLRv3Parser;
 options
 {
     tokenVocab = ANTLRv3Lexer;
-    contextSuperClass=LanguageServer.AttributedParseTreeNode;
+//    contextSuperClass=LanguageServer.AttributedParseTreeNode;
 }
 
 grammarDef
