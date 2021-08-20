@@ -81,7 +81,7 @@ VSCode/client/package-lock.json
 VSCode/out/
 a/
 VsCode/Trash/
-Trash/test/Generated/
+Generated/
 Trash/Generated/
 VsCode/server/
 LanguageServer/.antlr/
