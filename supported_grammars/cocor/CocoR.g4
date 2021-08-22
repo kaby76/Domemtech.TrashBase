@@ -1,10 +1,7 @@
 grammar CocoR;
 
 coco :
-  ( // import statements
-    .
-    .*?
-  )?
+  .*?
   'COMPILER'
   Ident
   .*?
@@ -235,6 +232,10 @@ fragment Digit: [0-9] ;
 fragment Cr: '\r' ;
 fragment Lf: '\n' ;
 fragment Tab: '\t' ;
+
+// In Coco/R, there is no explicit use of space anywhere in the
+// grammar file!
+fragment Space : ' ' ;
 fragment StringCh: ~('"' | '\\' | '\r' | '\n') ;
 fragment CharCh: ~('\'' | '\\' | '\r' | '\n') ;
 fragment Printable: '\u0020' .. '\u007e';
@@ -254,4 +255,11 @@ OptionSym : '$' Letter Letter* '='
 
 COMMENT : '/*' .*? '*/' -> channel(HIDDEN) ;
 LINE_COMMENT : '//' ~'\n'* -> channel(HIDDEN) ;
-IGNORE_ : (Cr | Lf | Tab) -> channel(HIDDEN) ;
+// Incomplete! IGNORE_ : (Cr | Lf | Tab) -> channel(HIDDEN) ;
+IGNORE_ : (Cr | Lf | Tab | Space) -> channel(HIDDEN) ;
+
+
+// Coco/R is context-sensitive lexing, but Antlr is not.
+// For now, just have a bunch of typical tokens.
+
+OTHER : . ;
