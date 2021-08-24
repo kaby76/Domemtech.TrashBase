@@ -57,15 +57,11 @@ fragment UnicodeCombiningMark : [\p{Mn}] | [\p{Mc}] ;
 fragment UnicodeDigit : [\p{Nd}] ;
 fragment UnicodeConnectorPunctuation : [\p{Pc}] ;
 
-CharacterClassMatcher : '[' CharacterPart* ']' 'i'? ;
-fragment CharacterPart : ClassCharacterRange | ClassCharacter ;
-fragment ClassCharacterRange : ClassCharacter '-' ClassCharacter ;
-fragment ClassCharacter : SourceCharacter | '\\' EscapeSequence | LineContinuation ;
-fragment LineContinuation : '\\' LineTerminatorSequence ;
-fragment EscapeSequence : CharacterEscapeSequence | '0' | HexEscapeSequence | UnicodeEscapeSequence ;
-fragment CharacterEscapeSequence : SingleEscapeCharacter | NonEscapeCharacter ;
-fragment SingleEscapeCharacter : '\'' | '"' | '\\' | 'b' | 'f' | 'n' | 'r' | 't' | 'v' ;
-fragment NonEscapeCharacter : SourceCharacter ;
+CharacterClassMatcher : '[' CharacterPart*? ']' 'i'? ;
+fragment CharacterPart : (~(']' | '\\')) | '\\' . ;
+
+fragment EscapeSequence : SingleEscapeSequence | '0' | HexEscapeSequence | UnicodeEscapeSequence ;
+fragment SingleEscapeCharacter : '\'' | '"' | '\\' | 'b' | 'f' | 'n' | 'r' | 't' | 'v' | ']' | . ;
 fragment EscapeCharacter : SingleEscapeCharacter | DecimalDigit | 'x' | 'u' ;
 fragment HexEscapeSequence : 'x' HexDigit HexDigit ;
 fragment UnicodeEscapeSequence : 'u' HexDigit HexDigit HexDigit HexDigit ;
@@ -75,8 +71,7 @@ HexDigit : [0-9a-fA-F] ;
 AnyMatcher : '.' ;
 CodeBlock : CB ;
 fragment CB : '{' CBAux* '}' ;
-fragment CBAux : ~'{' | CB ;
-
+fragment CBAux : (~('{' | '}')) | CB ;
 
 literalMatcher : StringLiteral 'i'? ;
 StringLiteral : '"' DoubleStringCharacters? '"' | '\'' SingleStringCharacters? '\'' ;
