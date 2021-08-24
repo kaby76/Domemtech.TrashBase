@@ -1,128 +1,93 @@
-
 grammar Pegjs;
 
 grammar_ : initializer? rule+ EOF;
-
 initializer : CodeBlock eos ;
-
-eos : ';'
-  ;
-
+eos : ';' | ;
 rule : identifier StringLiteral? '=' expression eos ;
-
 expression : choiceexpression ;
-
 choiceexpression : actionexpression ('/' actionexpression)* ;
-
 actionexpression : sequenceexpression CodeBlock? ;
-
 sequenceexpression : labeledexpression labeledexpression* ;
-
-labeledexpression : labelidentifier? prefixedexpression
+labeledexpression : '@' labelidentifier? prefixedexpression
   | labelidentifier prefixedexpression
   | prefixedexpression
   ;
-
 labelidentifier : identifier ':' ;
-
 prefixedexpression : prefixedoperator suffixedexpression
   | suffixedexpression
   ;
-
 prefixedoperator : '$'
   | '&'
   | '!'
   ;
-
 suffixedexpression : primaryexpression suffixedoperator
   | primaryexpression
   ;
-
 suffixedoperator : '?'
   | '*'
   | '+'
   ;
-
-primaryexpression : LiteralMatcher
+primaryexpression : literalMatcher
   | CharacterClassMatcher
   | AnyMatcher
   | rulereferenceexpression
   | semanticpredicateexpression
   | '(' expression ')'
   ;
-
 rulereferenceexpression : identifier  /* {! stringliteral? '=' }? */ ;
-
 semanticpredicateexpression : semanticpredicateoperator CodeBlock ;
-
 semanticpredicateoperator : '&' | '!' ;
 
-SourceCharacter : . ;
-WhiteSpace : [\t\r\f \u00a0\ufeff] ; // Zs.
-LineTerminator : [\n\r\u2028\u2029] ;
-LineTerminatorSequence : '\n' | '\r\n' | '\r' | '\u2028' | '\u2029' ;
-Comment : MultiLineComment | SingleLineComment ;
-MultiLineComment : '/*' .*? '*/' ;
-SingleLineComment : '//' SourceCharacter* ;
-identifier : identifierstart identifierpart* ;
-identifierstart : UnicodeLetter | '$' | '_' | '\\' UnicodeEscapeSequence ;
-identifierpart : identifierstart | UnicodeCombiningMark | UnicodeDigit | UnicodeConnectorPunctuation | '\u200c' | '\u200d' ;
-UnicodeLetter
-    : [\p{Lu}]
-    | [\p{Ll}]
-    | [\p{Lt}]
-    | [\p{Lm}]
-    | [\p{Lo}]
-    | [\p{Nl}]
-    ;
+identifier : Identifier;
+Identifier : Identifierstart Identifierpart* ;
 
-UnicodeCombiningMark
-    : [\p{Mn}]
-    | [\p{Mc}]
-    ;
+WhiteSpace : [\t\n\r\f \u00a0\ufeff] -> channel(HIDDEN);
 
-UnicodeDigit
-    : [\p{Nd}]
-    ;
+fragment LineTerminator : [\n\r\u2028\u2029] ;
+fragment LineTerminatorSequence : '\n' | '\r' '\n' | '\r' | '\u2028' | '\u2029' ;
+fragment SourceCharacter : ~[\n\r\u2028\u2029] ;
 
-UnicodeConnectorPunctuation
-    : [\p{Pc}]
-    ;
+Comment : (MultiLineComment | SingleLineComment) -> channel(HIDDEN);
+fragment MultiLineComment : '/*' .*? '*/' ;
+fragment SingleLineComment : '//' SourceCharacter* ;
+fragment Identifierstart : UnicodeLetter | '$' | '_' | '\\' UnicodeEscapeSequence ;
+fragment Identifierpart : Identifierstart | UnicodeCombiningMark | UnicodeDigit | UnicodeConnectorPunctuation | '\u200c' | '\u200d' ;
+fragment UnicodeLetter : [\p{Lu}] | [\p{Ll}] | [\p{Lt}] | [\p{Lm}] | [\p{Lo}] | [\p{Nl}] ;
+fragment UnicodeCombiningMark : [\p{Mn}] | [\p{Mc}] ;
+fragment UnicodeDigit : [\p{Nd}] ;
+fragment UnicodeConnectorPunctuation : [\p{Pc}] ;
 
-LiteralMatcher : StringLiteral 'i'? ;
-
-StringLiteral : '"' .*? '"'
-  | '\'' .*? '\''
-  ;
-
-CharacterClassMatcher : '{' CharacterPart* ']' 'i'? ;
-
-CharacterPart : ClassCharacterRange | ClassCharacter ;
-
-ClassCharacterRange : ClassCharacter '-' ClassCharacter ;
-
-ClassCharacter : SourceCharacter | '\\' EscapeSequence | LineContinuation ;
-
-LineContinuation : '\\' LineTerminatorSequence ;
-
-EscapeSequence : CharacterEscapeSequence | '0' | HexEscapeSequence | UnicodeEscapeSequence ;
-
-CharacterEscapeSequence : SingleEscapeCharacter | NonEscapeCharacter ;
-
-SingleEscapeCharacter : '\'' | '"' | '\\' | 'b' | 'f' | 'n' | 'r' | 't' | 'v' ;
-
-NonEscapeCharacter : SourceCharacter ;
-
-EscapeCharacter : SingleEscapeCharacter | DecimalDigit | 'x' | 'u' ;
-
-HexEscapeSequence : 'x' HexDigit HexDigit ;
-
-UnicodeEscapeSequence : 'u' HexDigit HexDigit HexDigit HexDigit ;
+CharacterClassMatcher : '[' CharacterPart* ']' 'i'? ;
+fragment CharacterPart : ClassCharacterRange | ClassCharacter ;
+fragment ClassCharacterRange : ClassCharacter '-' ClassCharacter ;
+fragment ClassCharacter : SourceCharacter | '\\' EscapeSequence | LineContinuation ;
+fragment LineContinuation : '\\' LineTerminatorSequence ;
+fragment EscapeSequence : CharacterEscapeSequence | '0' | HexEscapeSequence | UnicodeEscapeSequence ;
+fragment CharacterEscapeSequence : SingleEscapeCharacter | NonEscapeCharacter ;
+fragment SingleEscapeCharacter : '\'' | '"' | '\\' | 'b' | 'f' | 'n' | 'r' | 't' | 'v' ;
+fragment NonEscapeCharacter : SourceCharacter ;
+fragment EscapeCharacter : SingleEscapeCharacter | DecimalDigit | 'x' | 'u' ;
+fragment HexEscapeSequence : 'x' HexDigit HexDigit ;
+fragment UnicodeEscapeSequence : 'u' HexDigit HexDigit HexDigit HexDigit ;
 
 DecimalDigit : [0-9] ;
-
 HexDigit : [0-9a-fA-F] ;
-
 AnyMatcher : '.' ;
+CodeBlock : CB ;
+fragment CB : '{' CBAux* '}' ;
+fragment CBAux : ~'{' | CB ;
 
-CodeBlock : '{' .*? '}' ;
+
+literalMatcher : StringLiteral 'i'? ;
+StringLiteral : '"' DoubleStringCharacters? '"' | '\'' SingleStringCharacters? '\'' ;
+fragment DoubleStringCharacters : DoubleStringCharacter+ ;
+fragment DoubleStringCharacter : ~["\\\r\n] | DoubleEscapeSequence ;
+fragment DoubleEscapeSequence : '\\' [bvtnfr"'\\] | OctalEscape | UnicodeEscape ;
+fragment SingleStringCharacters : SingleStringCharacter+ ;
+fragment SingleStringCharacter : ~['\\\r\n] | SingleEscapeSequence ;
+fragment SingleEscapeSequence : '\\' [bvtnfr"'\\] | OctalEscape | UnicodeEscape ;
+fragment OctalDigit : [0-7] ;
+fragment OctalEscape : '\\' OctalDigit | '\\' OctalDigit OctalDigit | '\\' ZeroToThree OctalDigit OctalDigit ;
+fragment ZeroToThree : [0-3] ;
+fragment UnicodeEscape : '\\' 'u'+  HexDigit HexDigit HexDigit HexDigit ;
+
