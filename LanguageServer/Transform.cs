@@ -7207,6 +7207,22 @@ and not(lexerRuleBlock//ebnfSuffix)
             return result;
         }
 
+        public static IParseTree NextSib(IParseTree p)
+        {
+            if (p == null) return null;
+            var parent = p.Parent;
+            if (parent == null) return null;
+            for (int i = 0; i < parent.ChildCount; ++i)
+            {
+                var c = parent.GetChild(i);
+                if (c == p && i != parent.ChildCount - 1)
+                {
+                    return parent.GetChild(i + 1);
+                }
+            }
+            return null;
+        }
+
         public static Dictionary<string, string> Strip(Document document)
         {
             Dictionary<string, string> result = new Dictionary<string, string>();
@@ -7314,6 +7330,29 @@ and not(lexerRuleBlock//ebnfSuffix)
                 {
                     var nodes = engine.parseExpression(
                             @"//actionBlock",
+                            new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
+                        .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree)
+                        .ToArray();
+		            foreach (var n in nodes)
+		            {
+                        // Get next sibling.
+                        var sib = NextSib(n);
+                        if (sib != null)
+                        {
+                            if (sib is TerminalNodeImpl t)
+                            {
+                                if (t.Symbol.Type == ANTLRv4Parser.QUESTION)
+                                {
+                                    TreeEdits.Delete(sib);
+                                }
+                            }
+                        }
+			            TreeEdits.Delete(n);
+		            }
+                }
+                {
+                    var nodes = engine.parseExpression(
+                            @"//argActionBlock",
                             new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
                         .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree)
                         .ToArray();
