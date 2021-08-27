@@ -1,5 +1,5 @@
 grammar xtext ;
-start : ( 'grammar' ( ( grammarID ) ) ( 'with' ( ( grammarID ) ) ( ',' ( ( grammarID ) ) ) * ) ? ( ( ( 'hidden' ) ) '(' ( ( ( ruleID ) ) ( ',' ( ( ruleID ) ) ) * ) ? ')' ) ? ( ( abstractMetamodelDeclaration ) ) * ( ( abstractRule ) ) + ) ;
+start : ( 'grammar' ( ( grammarID ) ) ( 'with' ( ( grammarID ) ) ( ',' ( ( grammarID ) ) ) * ) ? ( ( ( 'hidden' ) ) '(' ( ( ( ruleID ) ) ( ',' ( ( ruleID ) ) ) * ) ? ')' ) ? ( ( abstractMetamodelDeclaration ) ) * ( ( abstractRule ) ) + ) EOF ;
 grammarID : ( validID ( '.' validID ) * ) ;
 abstractRule : ( parserRule_ | terminalRule | enumRule ) ;
 abstractMetamodelDeclaration : ( generatedMetamodel | referencedMetamodel ) ;
@@ -49,9 +49,9 @@ terminalTokenElement : ( characterRange | terminalRuleCall | parenthesizedTermin
 parenthesizedTerminalElement : ( '(' terminalAlternatives ')' ) ;
 abstractNegatedToken : ( negatedToken | untilToken ) ;
 negatedToken : ( '!' ( ( terminalTokenElement ) ) ) ;
-untilToken : ( '->' ( ( terminalTokenElement ) ) ) ;
-wildcard : ( ( ) '.' ) ;
-eOF : ( ( ) 'EOF' ) ;
+untilToken : '->' terminalTokenElement ;
+wildcard : '.' ;
+eOF : 'EOF' ;
 characterRange : ( keyword ( ( ) '..' ( ( keyword ) ) ) ? ) ;
 enumRule : ( ( ( annotation ) ) * 'enum' ( ( validID ) ) ( 'returns' ( ( typeRef ) ) ) ? ':' ( ( enumLiterals ) ) ';' ) ;
 enumLiterals : ( enumLiteralDeclaration ( ( ) ( '|' ( ( enumLiteralDeclaration ) ) ) + ) ? ) ;
