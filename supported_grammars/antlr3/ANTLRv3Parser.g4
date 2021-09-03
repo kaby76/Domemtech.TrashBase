@@ -19,15 +19,15 @@ tokenSpec
    ;
 
 attrScope
-   : SCOPE id actionBlock
+   : SCOPE id_ actionBlock
    ;
 
 action
-   : AT (actionScopeName COLONCOLON)? id actionBlock
+   : AT (actionScopeName COLONCOLON)? id_ actionBlock
    ;
 
 actionScopeName
-   : id
+   : id_
    | LEXER
    | PARSER
    ;
@@ -37,11 +37,11 @@ optionsSpec
    ;
 
 option
-   : id EQUAL optionValue SEMI
+   : id_ EQUAL optionValue SEMI
    ;
 
 optionValue
-   : id
+   : id_
    | STRING_LITERAL
    | CHAR_LITERAL
    | INT
@@ -53,21 +53,21 @@ rules
    ;
 
 rule_
-   : DOC_COMMENT? ((PROTECTED | PUBLIC | PRIVATE | FRAGMENT))? id BANG? argActionBlock? (RETURNS argActionBlock)? throwsSpec? optionsSpec? ruleScopeSpec? ruleAction* COLON altList SEMI exceptionGroup?
+   : DOC_COMMENT? ((PROTECTED | PUBLIC | PRIVATE | FRAGMENT))? id_ BANG? argActionBlock? (RETURNS argActionBlock)? throwsSpec? optionsSpec? ruleScopeSpec? ruleAction* COLON altList SEMI exceptionGroup?
    ;
    
 ruleAction
-   : AT id actionBlock
+   : AT id_ actionBlock
    ;
 
 throwsSpec
-   : THROWS id (COMMA id)*
+   : THROWS id_ (COMMA id_)*
    ;
 
 ruleScopeSpec
    : SCOPE actionBlock
-   | SCOPE id (COMMA id)* SEMI
-   | SCOPE actionBlock SCOPE id (COMMA id)* SEMI
+   | SCOPE id_ (COMMA id_)* SEMI
+   | SCOPE actionBlock SCOPE id_ (COMMA id_)* SEMI
    ;
 
 block
@@ -103,8 +103,8 @@ element
    ;
 
 elementNoOptionSpec
-   : id (EQUAL | PEQ) atom (ebnfSuffix | )
-   | id (EQUAL | PEQ) block (ebnfSuffix | )
+   : id_ (EQUAL | PEQ) atom (ebnfSuffix | )
+   | id_ (EQUAL | PEQ) block (ebnfSuffix | )
    | atom (ebnfSuffix | )
    | ebnf
    | actionBlock
@@ -121,7 +121,7 @@ argActionBlock
    ;
 
 atom
-   : range ( ROOT | BANG | )
+   : range_ ( ROOT | BANG | )
    | terminal_
    | notSet ( ROOT | BANG | )
    | RULE_REF argActionBlock? ( ROOT | BANG )?
@@ -139,7 +139,7 @@ ebnf
    : block (QM | STAR | PLUS | SEMPREDOP | )
    ;
 
-range
+range_
    : CHAR_LITERAL RANGE CHAR_LITERAL
    ;
 
@@ -224,7 +224,7 @@ rewrite_tree
    ;
 
 rewrite_template
-   : id LPAREN rewrite_template_args RPAREN
+   : id_ LPAREN rewrite_template_args RPAREN
       ( DOUBLE_QUOTE_STRING_LITERAL | DOUBLE_ANGLE_STRING_LITERAL )
    | rewrite_template_ref
    | rewrite_indirect_template_head
@@ -232,7 +232,7 @@ rewrite_template
    ;
 
 rewrite_template_ref
-   : id LPAREN rewrite_template_args RPAREN
+   : id_ LPAREN rewrite_template_args RPAREN
    ;
 
 rewrite_indirect_template_head
@@ -245,10 +245,10 @@ rewrite_template_args
    ;
 
 rewrite_template_arg
-   : id EQUAL actionBlock
+   : id_ EQUAL actionBlock
    ;
 
-id
+id_
    : TOKEN_REF
    | RULE_REF
    ;

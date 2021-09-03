@@ -57,8 +57,8 @@
             else
             {
                 var x = tree as RuleContext;
-                var ri = x.RuleIndex;
-                var name = parser.RuleNames[ri];
+		        var ri = x.RuleIndex;
+                var name = parser.RuleNames.Length <= ri ? "unknown" : parser.RuleNames[ri];
                 StartLine(sb, level);
                 sb.Append("( " + name);
                 sb.AppendLine();

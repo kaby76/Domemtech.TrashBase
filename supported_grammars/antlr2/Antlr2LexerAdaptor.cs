@@ -1,22 +1,20 @@
-    using Antlr4.Runtime;
-    using Antlr4.Runtime.Misc;
-    using System;
-    using System.IO;
-    using System.Reflection;
+using Antlr4.Runtime;
+using Antlr4.Runtime.Misc;
+using System;
+using System.IO;
+using System.Reflection;
 
-#pragma warning disable CA1012 // Abstract types should not have constructors
-    public abstract class Antlr2LexerAdaptor : Lexer
-#pragma warning restore CA1012 // But Lexer demands it - old 
-    {
-        // I copy a reference to the stream, so It can be used as a Char Stream, not as a IISStream
-        readonly ICharStream stream;
-        // Tokens are read only so I hack my way
-        readonly FieldInfo tokenInput = typeof(CommonToken).GetField("_type", BindingFlags.NonPublic | BindingFlags.Instance);
-        protected Antlr2LexerAdaptor(ICharStream input)
-            : base(input, Console.Out, Console.Error)
-        {
-            stream = input;
-        }
+public abstract class Antlr2LexerAdaptor : Lexer
+{
+	// I copy a reference to the stream, so It can be used as a Char Stream, not as a IISStream
+	readonly ICharStream stream;
+	// Tokens are read only so I hack my way
+	readonly FieldInfo tokenInput = typeof(CommonToken).GetField("_type", BindingFlags.NonPublic | BindingFlags.Instance);
+	protected Antlr2LexerAdaptor(ICharStream input)
+		: base(input, Console.Out, Console.Error)
+	{
+		stream = input;
+	}
 
 	    protected Antlr2LexerAdaptor(ICharStream input, TextWriter output, TextWriter errorOutput)
             : base(input, output, errorOutput)
@@ -38,27 +36,27 @@
         private static int PREQUEL_CONSTRUCT = -10;
         private int CurrentRuleType { get; set; } = TokenConstants.InvalidType;
 
-        protected void handleBeginArgument()
-        {
-            if (InLexerRule)
-            {
-                PushMode(ANTLRv2Lexer.LexerCharSet);
-                More();
-            }
-            else
-            {
-                PushMode(ANTLRv2Lexer.Argument);
-            }
-        }
+	protected void handleBeginArgument()
+	{
+		if (InLexerRule)
+		{
+			PushMode(ANTLRv2Lexer.LexerCharSet);
+			More();
+		}
+		else
+		{
+			PushMode(ANTLRv2Lexer.Argument);
+		}
+	}
 
-        protected void handleEndArgument()
-        {
-            PopMode();
-            if (ModeStack.Count > 0)
-            {
-                CurrentRuleType = (ANTLRv2Lexer.ARGUMENT_CONTENT);
-            }
-        }
+	protected void handleEndArgument()
+	{
+		PopMode();
+		if (ModeStack.Count > 0)
+		{
+			CurrentRuleType = (ANTLRv2Lexer.ARGUMENT_CONTENT);
+		}
+	}
 
         protected void handleEndAction()
         {
