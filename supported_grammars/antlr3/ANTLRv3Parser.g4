@@ -7,7 +7,7 @@ options
 }
 
 grammarDef
-   : DOC_COMMENT? (LEXER | PARSER | TREE| ) GRAMMAR id SEMI optionsSpec? tokensSpec? attrScope* action* rules EOF
+   : DOC_COMMENT? (LEXER | PARSER | TREE| ) GRAMMAR id_ SEMI optionsSpec? tokensSpec? attrScope* action* rules EOF
    ;
 
 tokensSpec
@@ -161,11 +161,11 @@ defaultNodeOption
    ;
 
 elementOption
-   : id EQUAL ( elementOptionId | STRING_LITERAL | DOUBLE_QUOTE_STRING_LITERAL | DOUBLE_ANGLE_STRING_LITERAL)
+   : id_ EQUAL ( elementOptionId | STRING_LITERAL | DOUBLE_QUOTE_STRING_LITERAL | DOUBLE_ANGLE_STRING_LITERAL)
    ;
 
 elementOptionId
-   : id (DOT id )*
+   : id_ (DOT id_ )*
    ;
 
 notTerminal
@@ -211,7 +211,7 @@ rewrite_tree_atom
    | TOKEN_REF elementOptions? argActionBlock?
    | RULE_REF
    | STRING_LITERAL elementOptions?
-   | DOLLAR id
+   | DOLLAR id_
    | actionBlock
    ;
 
