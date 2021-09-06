@@ -3,7 +3,10 @@
 
 parser grammar W3CebnfParser;
 
-options { tokenVocab = W3CebnfLexer; contextSuperClass=AttributedParseTreeNode; }
+options {
+ tokenVocab = W3CebnfLexer;
+// contextSuperClass=AttributedParseTreeNode;
+ }
 
 prods : prod+ EOF ;
 prod : lhs PPEQ rhs ;
