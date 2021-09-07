@@ -1,11 +1,43 @@
 lexer grammar rexLexer;
 
+options { superClass = LexerBase; }
+
+OpenQu : '<?' -> pushMode(EXPLICIT) ;
+CloseQu : '?>' -> popMode ;
+RuleDef : '::=' ;
+RuleSep : ';' ;
+Quest : '?' ;
+Star : '*' ;
+Plus : '+' ;
+VBar : '|' ;
+Slash : '/' ;
+OpenP : '(' ;
+CloseP : ')' ;
+Tokens : '<?TOKENS?>' ;
+Encore : '<?ENCORE?>' ;
+Dot : '.' ;
+Amp : '&' ;
+Minus : '-' ;
+OpenSet : '[' ;
+OpenNotSet : '[^' ;
+CloseSet : ']' ;
+Dollar : '$' ;
+OpenMLComment : '/*' ;
+CloseMLComment : '*/' ;
+Colon : ':' ;
+GtGt : '>>' ;
+LtLt : '<<' ;
+BsBs : '\\' ;
+EqEq : '==' ;
+WsLit : 'ws' ;
+ExplicitLit : 'explicit' ;
+DefinitionLit : 'definition' ;
 Name     : NCNameStartChar NCNameChar* ;
-NCNameChar : NameChar { input.LA(1) != ':' }? ;
-NCNameStartChar : Letter | '_' ;
-NameChar : Letter | Digit | '.' | '-' | '_' | ':' | CombiningChar | Extender ;
-Letter   : BaseChar | Ideographic ;
-BaseChar : [\u0041-\u005A]
+fragment NCNameChar : NameChar { this.Check1() }? ;
+fragment NCNameStartChar : Letter | '_' ;
+fragment NameChar : Letter | Digit | '.' | '-' | '_' | ':' | CombiningChar | Extender ;
+fragment Letter   : BaseChar | Ideographic ;
+fragment BaseChar : [\u0041-\u005A]
            | [\u0061-\u007A]
            | [\u00C0-\u00D6]
            | [\u00D8-\u00F6]
@@ -208,12 +240,12 @@ BaseChar : [\u0041-\u005A]
            | [\u3105-\u312C]
            | [\uAC00-\uD7A3]
 	   ;
-Ideographic
+fragment Ideographic
          : [\u4E00-\u9FA5]
            | [\u3007]
            | [\u3021-\u3029]
 	   ;
-CombiningChar
+fragment CombiningChar
          : [\u0300-\u0345]
            | [\u0360-\u0361]
            | [\u0483-\u0486]
@@ -310,7 +342,7 @@ CombiningChar
            | [\u3099]
            | [\u309A]
 	   ;
-Digit    : [\u0030-\u0039]
+fragment Digit    : [\u0030-\u0039]
            | [\u0660-\u0669]
            | [\u06F0-\u06F9]
            | [\u0966-\u096F]
@@ -326,7 +358,7 @@ Digit    : [\u0030-\u0039]
            | [\u0ED0-\u0ED9]
            | [\u0F20-\u0F29]
 	   ;
-Extender : [\u00B7]
+fragment Extender : [\u00B7]
            | [\u02D0]
            | [\u02D1]
            | [\u0387]
@@ -338,12 +370,9 @@ Extender : [\u00B7]
            | [\u309D-\u309E]
            | [\u30FC-\u30FE]
 	   ;
-Space    : ( [\u0009] | [\u000D] | [\u0020] )+
+fragment Space    : ( [\u0009] | [\u000D] | [\u0020] )+
            | [\u000A]
 	   ;
-//DirPIContents
-//         : ( [^?\u0009\u000D\u0020\u000A] | '?'+ [^?>] ) ( [^?] | '?'+ [^?>] )* '?'* &'?>'
-//	 ;
 StringLiteral
          : '"' ~["\u0009\u000A\u000D]* '"'
            | '\'' ~['\u0009\u000A\u000D]* '\''
@@ -351,7 +380,7 @@ StringLiteral
 CaretName
          : '^' Name?
 	 ;
-CharCode : '\u' [0-9a-fA-F]+ ;
+CharCode : '\\u' [0-9a-fA-F]+ ;
 Char     : ~[\u0009\u000A\u000D\u0023\u005D]
            | '#' ~[0-9a-fA-F]
 	   ;
@@ -368,6 +397,17 @@ MultiLineComment
 //         : &( '[' ( Char | CharCode | CharRange | CharCodeRange ) ']' Whitespace? '==' )
 //	 ;
 Whitespace
-         : ( Space | SingleLineComment | MultiLineComment )+
+         : ( Space | SingleLineComment | MultiLineComment )+ -> skip
           /* ws: definition */
 	  ;
+
+mode EXPLICIT;
+
+WS_Space
+         : ( Space | SingleLineComment | MultiLineComment )+
+	  ;
+
+DirPIContents
+         : ( [^?\u0009\u000D\u0020\u000A] | '?'+ [^?>] ) ( [^?] | '?'+ [^?>] )* '?'*
+	 ;
+

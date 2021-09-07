@@ -4,7 +4,7 @@ options { tokenVocab = rexLexer; }
 
 grammar_  : prolog syntaxDefinition lexicalDefinition? encore? EOF ;
 prolog   : processingInstruction* ;
-processingInstruction : '<?' Name ( Space+ DirPIContents? )? '?>'
+processingInstruction : '<?' Name ( WS_Space+ DirPIContents? )? '?>'
           /* ws: explicit */
 	  ;
 syntaxDefinition : syntaxProduction+ ;
@@ -26,14 +26,16 @@ context  : CaretName ;
 charClass : ( '[' | '[^' ) ( Char | CharCode | CharRange | CharCodeRange )+ ']'
           /* ws: explicit */
 	  ;
-option : '/*' Space* 'ws' ':' Space* ( 'explicit' | 'definition' ) Space* '*/'
+option : '/*' WS_Space* Name 'ws' ':' WS_Space* ( 'explicit' | 'definition' ) WS_Space* '*/'
           /* ws: explicit */
 	  ;
 preference : nameOrString ( '>>' nameOrString+ | '<<' nameOrString+ ) ;
 delimiter : Name '\\' nameOrString+ ;
-equivalence : EquivalenceLookAhead equivalenceCharRange '==' equivalenceCharRange ;
+equivalence : /* EquivalenceLookAhead */
+    equivalenceCharRange '==' equivalenceCharRange ;
 equivalenceCharRange : StringLiteral | '[' ( Char | CharCode | CharRange | CharCodeRange ) ']'
           /* ws: explicit */
 	  ;
 encore : '<?ENCORE?>' processingInstruction* ;
+name : Name | WsLit | ExplicitLit | DefinitionLit ;
 
