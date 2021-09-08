@@ -6,6 +6,7 @@ OpenQu : '<?' -> pushMode(EXPLICIT) ;
 CloseQu : '?>' -> popMode ;
 RuleDef : '::=' ;
 RuleSep : ';' ;
+Sharp : '#' ;
 Quest : '?' ;
 Star : '*' ;
 Plus : '+' ;
@@ -18,16 +19,15 @@ Encore : '<?ENCORE?>' ;
 Dot : '.' ;
 Amp : '&' ;
 Minus : '-' ;
-OpenSet : '[' ;
-OpenNotSet : '[^' ;
-CloseSet : ']' ;
+OpenSet : '[' -> pushMode(SET) ;
+OpenNotSet : '[^' -> pushMode(SET) ;
 Dollar : '$' ;
 OpenMLComment : '/*' ;
 CloseMLComment : '*/' ;
 Colon : ':' ;
 GtGt : '>>' ;
 LtLt : '<<' ;
-BsBs : '\\' ;
+BsBs : '\\\\' ;
 EqEq : '==' ;
 WsLit : 'ws' ;
 ExplicitLit : 'explicit' ;
@@ -380,12 +380,13 @@ StringLiteral
 CaretName
          : '^' Name?
 	 ;
-CharCode : '\\u' [0-9a-fA-F]+ ;
-Char     : ~[\u0009\u000A\u000D\u0023\u005D]
-           | '#' ~[0-9a-fA-F]
-	   ;
-CharRange : Char '-' Char ;
-CharCodeRange : CharCode '-' CharCode ;
+CharCode : FCharCode ;
+Unicode : '#' 'x' [0-9a-fA-F]+ ;
+Char : FChar ;
+fragment FCharCode : '\\u' [0-9a-fA-F]+ ;
+fragment FChar     : ~[ \u0009\u000A\u000D\u0023\u005D] ;
+fragment FCharRange : FChar '-' FChar ;
+fragment FCharCodeRange : FCharCode '-' FCharCode ;
 SingleLineComment : '//' ~[\u000A]* [\u000A]? ;
 //MultiLineComment
 //         : '/*' ( ( .* - ( .* '*/' .* ) ) - ( Space* 'ws' Space* ':' .* ) ) '*/'
@@ -410,4 +411,12 @@ WS_Space
 DirPIContents
          : ( [^?\u0009\u000D\u0020\u000A] | '?'+ [^?>] ) ( [^?] | '?'+ [^?>] )* '?'*
 	 ;
+
+mode SET;
+
+SetChar : ~']' ;
+SetCharCode : FCharCode ;
+SetCharRange : FCharRange ;
+SetCharCodeRange : FCharCodeRange ;
+CloseSet : ']' -> popMode ;
 
