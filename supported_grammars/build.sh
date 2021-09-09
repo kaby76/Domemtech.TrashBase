@@ -1,8 +1,12 @@
 #!/bin/sh
 
 cwd=`pwd`
-for i in abnf antlr2 antlr3 antlr4 bison cocor iso14977 javacc lark lbnf pegen pegjs pest rex w3cebnf xtext
+for i in *
 do
+    if [[ -f $i ]]
+    then
+        continue
+    fi
     echo $i
     cd $cwd/$i
     rm -rf Generated
