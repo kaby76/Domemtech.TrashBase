@@ -2987,9 +2987,293 @@
             }
             if (rule == null)
                 throw new LanguageServerException("A parser rule is not selected. Please select one first.");
+            
+            TableOfRules table = new TableOfRules(pd_parser, document);
+            table.ReadRules();
+            table.FindPartitions();
+            table.FindStartRules();
+            Digraph<string> graph = new Digraph<string>();
+            foreach (TableOfRules.Row r in table.rules)
+            {
+                if (!r.is_parser_rule)
+                {
+                    continue;
+                }
+                graph.AddVertex(r.LHS);
+            }
+            foreach (TableOfRules.Row r in table.rules)
+            {
+                if (!r.is_parser_rule)
+                {
+                    continue;
+                }
+                List<string> j = r.RHS;
+                //j.Reverse();
+                foreach (string rhs in j)
+                {
+                    TableOfRules.Row sym = table.rules.Where(t => t.LHS == rhs).FirstOrDefault();
+                    if (!sym.is_parser_rule)
+                    {
+                        continue;
+                    }
+                    DirectedEdge<string> e = new DirectedEdge<string>() { From = r.LHS, To = rhs };
+                    graph.AddEdge(e);
+                }
+            }
+            List<string> starts = new List<string>();
+            List<string> parser_lhs_rules = new List<string>();
+            foreach (TableOfRules.Row r in table.rules)
+            {
+                if (r.is_parser_rule)
+                {
+                    parser_lhs_rules.Add(r.LHS);
+                    if (r.is_start)
+                    {
+                        starts.Add(r.LHS);
+                    }
+                }
+            }
 
-            //bool has_direct_left_recursion = HasDirectLeftRecursion(rule);
-            //bool has_indirect_left_recursion = HasIndirectLeftRecursion(rule);
+            var k = (ANTLRv4Parser.ParserRuleSpecContext)rule;
+            var tarjan = new TarjanSCC<string, DirectedEdge<string>>(graph);
+            List<string> ordered = new List<string>();
+            var sccs = tarjan.Compute();
+
+            // We are only going to note in "ordered" rules that are going to change.
+            var scc = sccs[k.RULE_REF().ToString()];
+            foreach (var v in scc)
+            {
+                ordered.Add(v);
+            }
+
+            // We are now at the rule that the user identified to eliminate indirect
+            // left recursion.
+            // Check if the rule participates in indirect left recursion.
+
+            // Get all intertoken text immediately for source reconstruction.
+            var (text_before, other) = TreeEdits.TextToLeftOfLeaves(pd_parser.TokStream, pd_parser.ParseTree);
+            var rules_tree = TreeEdits.FindTopDown(pd_parser.ParseTree,
+                (in IParseTree t, out bool c) =>
+                {
+                    if (t is ANTLRv4Parser.RulesContext)
+                    {
+                        c = false;
+                        return t;
+                    }
+                    c = true;
+                    return null;
+                }).First() as ANTLRv4Parser.RulesContext;
+
+            // Keep a list of rules that are part of the SCC.
+            Dictionary<string, IParseTree> rules = new Dictionary<string, IParseTree>();
+            foreach (string s in ordered)
+            {
+                var ai = table.rules.Where(r => r.LHS == s).First();
+                var air = (ANTLRv4Parser.ParserRuleSpecContext)ai.rule;
+                rules[s] = TreeEdits.CopyTreeRecursive(air, null, text_before);
+            }
+            for (int i = 0; i < ordered.Count; ++i)
+            {
+                var ai = ordered[i];
+                var ai_tree = rules[ai];
+                ANTLRv4Parser.ParserRuleSpecContext new_a_rule = new ANTLRv4Parser.ParserRuleSpecContext(null, 0);
+                var r = ai_tree as ANTLRv4Parser.ParserRuleSpecContext;
+                var lhs = r.RULE_REF()?.GetText();
+                TreeEdits.CopyTreeRecursive(r.RULE_REF(), new_a_rule, text_before);
+                // Now have "A"
+                {
+                    var token2 = new CommonToken(ANTLRv4Parser.COLON) { Line = -1, Column = -1, Text = ":" };
+                    var new_colon = new TerminalNodeImpl(token2);
+                    new_a_rule.AddChild(new_colon);
+                    new_colon.Parent = new_a_rule;
+                }
+                // Now have "A :"
+                ANTLRv4Parser.RuleAltListContext rule_alt_list = new ANTLRv4Parser.RuleAltListContext(null, 0);
+                {
+                    ANTLRv4Parser.RuleBlockContext new_rule_block_context = new ANTLRv4Parser.RuleBlockContext(new_a_rule, 0);
+                    new_a_rule.AddChild(new_rule_block_context);
+                    new_rule_block_context.Parent = new_a_rule;
+                    new_rule_block_context.AddChild(rule_alt_list);
+                    rule_alt_list.Parent = new_rule_block_context;
+                }
+                // Now have "A : <rb <ral> >"
+                {
+                    var token3 = new CommonToken(ANTLRv4Parser.SEMI) { Line = -1, Column = -1, Text = ";" };
+                    var new_semi = new TerminalNodeImpl(token3);
+                    new_a_rule.AddChild(new_semi);
+                    new_semi.Parent = new_a_rule;
+                }
+                // Now have "A : <rb <ral> > ;"
+                {
+                    TreeEdits.CopyTreeRecursive(r.exceptionGroup(), new_a_rule, text_before);
+                }
+                // Now have "A : <rb <ral> > ; <eg>"
+                for (int j = 0; j < i; ++j)
+                {
+                    var aj = ordered[j];
+                    var aj_tree = rules[aj];
+                    var new_alts = new List<ANTLRv4Parser.AlternativeContext>();
+                    foreach (ANTLRv4Parser.AlternativeContext alt in EnumeratorOfAlts(ai_tree))
+                    {
+                        ANTLRv4Parser.AtomContext atom = EnumeratorOfRHS(alt)?.FirstOrDefault();
+                        if (aj != atom?.GetText())
+                        {
+                            // Leave alt unchanged.
+                            new_alts.Add(alt);
+                            continue;
+                        }
+
+                        // Substitute Aj into Ai.
+                        // Example:
+                        // s : a A | B;
+                        // a : a C | s D | ;
+                        // ts order of symbols = [s, a].
+                        // i = 1, j = 0.
+                        // => a : a C | a A D | B D | ;
+
+                        foreach (ANTLRv4Parser.AlternativeContext alt2 in EnumeratorOfAlts(aj_tree))
+                        {
+                            ANTLRv4Parser.AlternativeContext new_alt = new ANTLRv4Parser.AlternativeContext(null, 0);
+                            foreach (var element in alt2.element())
+                            {
+                                TreeEdits.CopyTreeRecursive(element, new_alt, text_before);
+                            }
+                            bool first = true;
+                            foreach (var element in alt.element())
+                            {
+                                if (first)
+                                {
+                                    first = false;
+                                    continue;
+                                }
+                                TreeEdits.CopyTreeRecursive(element, new_alt, text_before);
+                            }
+                            new_alts.Add(new_alt);
+                        }
+                    }
+                    {
+                        bool first = true;
+                        foreach (var new_alt in new_alts)
+                        {
+                            if (!first)
+                            {
+                                var token4 = new CommonToken(ANTLRv4Lexer.OR) { Line = -1, Column = -1, Text = "|" };
+                                var new_or = new TerminalNodeImpl(token4);
+                                rule_alt_list.AddChild(new_or);
+                                new_or.Parent = rule_alt_list;
+                            }
+                            first = false;
+                            ANTLRv4Parser.LabeledAltContext l_alt = new ANTLRv4Parser.LabeledAltContext(rule_alt_list, 0);
+                            rule_alt_list.AddChild(l_alt);
+                            l_alt.Parent = rule_alt_list;
+                            l_alt.AddChild(new_alt);
+                            new_alt.Parent = l_alt;
+                        }
+                    }
+                    rules[ai] = new_a_rule;
+                }
+
+                // Check if the rule ai has direct left recursion.
+                bool has_direct_left_recursion = HasDirectLeftRecursion(rules[ai]);
+                if (!has_direct_left_recursion)
+                {
+                    continue;
+                }
+
+                // Has direct left recursion.
+
+                // Replace rule with two new rules.
+                //
+                // Original rule:
+                // A
+                //   : A a1
+                //   | A a2
+                //   | A a3
+                //   | B1
+                //   | B2
+                //   ...
+                //   ;
+                // Note a1, a2, a3 ... cannot be empty sequences.
+                // B1, B2, ... cannot start with A.
+                //
+                // New rules.
+                //
+                // A
+                //   : B1 A'
+                //   | B2 A'
+                //   | ...
+                //   ;
+                // A'
+                //   : a1 A'
+                //   | a2 A'
+                //   | ...
+                //   | (empty)
+                //   ;
+                //
+
+                string generated_name = GenerateNewName(rules[ai], pd_parser);
+                var (fixed_rule, new_rule) = GenerateReplacementRules(generated_name, rules[ai], text_before);
+                rules[ai] = fixed_rule;
+                rules[generated_name] = new_rule;
+            }
+
+
+            {
+                // Replace original rule.
+                IParseTree last = null;
+                int last_index = -1;
+                TreeEdits.Replace(pd_parser.ParseTree,
+                    (in IParseTree x, out bool c) =>
+                    {
+                        c = true;
+                        if (x is ANTLRv4Parser.ParserRuleSpecContext)
+                        {
+                            var y = x as ANTLRv4Parser.ParserRuleSpecContext;
+                            var name = y.RULE_REF()?.GetText();
+                            rules.TryGetValue(name, out IParseTree replacement);
+                            if (replacement != null)
+                            {
+                                last_index = rules_tree.children.FindIndex(
+                                    w =>
+                                    {
+                                        var xxxx = w as ANTLRv4Parser.RuleSpecContext;
+                                        var yyyy = xxxx.parserRuleSpec();
+                                        if (yyyy == null)
+                                            return false;
+                                        return y == yyyy;
+                                    });
+                                last = replacement;
+                                return replacement;
+                            }
+                        }
+                        return null;
+                    });
+
+
+                // Add in new rules.
+                last_index++;
+                foreach (var r in rules)
+                {
+                    var key = r.Key;
+                    var value = r.Value;
+                    var prc = value as ANTLRv4Parser.ParserRuleSpecContext;
+                    if (!ordered.Contains(key))
+                    {
+                        var rule_spec = new ANTLRv4Parser.RuleSpecContext(null, 0);
+                        rule_spec.AddChild(prc);
+                        prc.Parent = rule_spec;
+                        rules_tree.children.Insert(last_index++, rule_spec);
+                        rule_spec.Parent = rules_tree;
+                    }
+                }
+                StringBuilder sb = new StringBuilder();
+                TreeEdits.Reconstruct(sb, pd_parser.ParseTree, text_before);
+                var new_code = sb.ToString();
+                if (new_code != pd_parser.Code)
+                {
+                    result[document.FullPath] = new_code;
+                }
+            }
             return result;
         }
 
