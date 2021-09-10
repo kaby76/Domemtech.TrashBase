@@ -1,0 +1,14 @@
+def nonterminal //parserRuleSpec/RULE_REF
+ref nonterminal = [def nonterminal]
+//ruleref/RULE_REF
+//identifier/RULE_REF
+
+def terminal //lexerRuleSpec/TOKEN_REF
+ref terminal = [def terminal]
+//setElement.TOKEN_REF
+//terminal.TOKEN_REF
+//identifier.TOKEN_REF
+
+dependent files
+//optionsSpec/option/optionValue[../identifier/text() = 'tokenVocab']
+//delegateGrammars/delegateGrammar/identifier[..[count() != 3]]
