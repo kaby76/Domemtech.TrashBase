@@ -1,14 +1,28 @@
-def nonterminal //parserRuleSpec/RULE_REF
-ref nonterminal = [def nonterminal]
-//ruleref/RULE_REF
-//identifier/RULE_REF
 
-def terminal //lexerRuleSpec/TOKEN_REF
-ref terminal = [def terminal]
-//setElement.TOKEN_REF
-//terminal.TOKEN_REF
-//identifier.TOKEN_REF
+NonterminalDef
+	define(n)
+		RULE_REF[parent::parserRuleSpec])
+	find(n)
+		f.dependent_files.Select(d => d.find(n).defs()).ToList();
 
-dependent files
-//optionsSpec/option/optionValue[../identifier/text() = 'tokenVocab']
-//delegateGrammars/delegateGrammar/identifier[..[count() != 3]]
+NonterminalRef
+	define(n)
+		RULE_REF[parent::ruleref | parent::identifier]
+	find(n)
+		f.dependent_files.Select(d => d.find(n)).ToList();
+
+TerminalDef
+	define(n)
+		TOKEN_REF[parent::lexerRuleSpec]
+	find(n)
+		f.dependent_files.Select(d => d.find(n).defs()).ToList();
+
+TerminalRef
+	define(n)
+		TOKEN_REF[parent::setElement | parent::terminal | parent::identifier]
+	find(n)
+		f.dependent_files.Select(d => d.find(n)).ToList();
+
+dependent_files
+	//optionsSpec/option/optionValue[../identifier/text() = 'tokenVocab']
+	//delegateGrammars/delegateGrammar/identifier[..[count() != 3]]

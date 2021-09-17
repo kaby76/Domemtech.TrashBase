@@ -142,7 +142,6 @@
                             new StaticContextBuilder()).evaluate(
                             dynamicContext, new object[] { dynamicContext.Document })
                         .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree as TerminalNodeImpl);
-                    Antlr4.Runtime.Tree.IParseTree parent;
                     foreach (var id in nodes)
                     {
                         var token = id;

@@ -669,7 +669,6 @@
             Digraph<string, DirectedEdge<string>> g = new Digraph<string, DirectedEdge<string>>();
             foreach (var v in rules)
             {
-                bool ok = false;
                 var sym = v.Key;
                 var rule_graph = v.Value;
                 Stack<string> stack = new Stack<string>();
@@ -772,7 +771,6 @@
             foreach (var v in rules)
             {
                 // Find all paths from start to end for current rule.
-                bool ok = false;
                 var sym = v.Key;
                 var graph = v.Value;
                 HashSet<SymbolEdge> visited = new HashSet<SymbolEdge>();

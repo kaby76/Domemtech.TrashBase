@@ -246,7 +246,6 @@ namespace LanguageServer
                     }
                 default:
                     throw new Exception();
-                    break;
             }
             return g;
         }
