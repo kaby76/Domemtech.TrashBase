@@ -756,27 +756,94 @@
             // Check if initial file is a grammar.
             if (!(ParsingResultsFactory.Create(document) is Antlr4ParsingResults pd_parser))
                 return result;
-            var workspace = document.Workspace;
             ExtractGrammarType egt = new ExtractGrammarType();
             ParseTreeWalker.Default.Walk(egt, pd_parser.ParseTree);
-            bool is_grammar = egt.Type == ExtractGrammarType.GrammarType.Combined
+            bool is_grammar = egt.Type == ExtractGrammarType.GrammarType.Parser
+                || egt.Type == ExtractGrammarType.GrammarType.Combined
                 || egt.Type == ExtractGrammarType.GrammarType.Lexer;
             if (!is_grammar)
             {
-                return result;
+                throw new LanguageServerException("A grammar file is not selected. Please select one first.");
             }
 
             // Verify the defs for all LHS symbols.
             // Find rewrite rules, i.e., string literal to string symbol name.
             Dictionary<string, string> subs = new Dictionary<string, string>();
-
-            // Verify lexer rules match criteria for an acceptable replacement.
+            var stack = new Stack<Document>();
+            var workspace = document.Workspace;
+            var docs = new HashSet<Document>();
+            stack.Push(document);
+            while (stack.Any())
+            {
+                var doc = stack.Pop();
+                if (!(ParsingResultsFactory.Create(doc) is ParsingResults pd_doc)) continue;
+                if (docs.Contains(doc)) continue;
+                docs.Add(doc);
+                foreach (var c in pd_doc.Imports)
+                {
+                    Workspaces.Document d = workspace.FindDocument(c);
+                    if (d == null)
+                    {
+                        continue;
+                    }
+                    stack.Push(d);
+                }
+                _ = Antlr4ParsingResults.InverseImports.TryGetValue(doc.FullPath, out HashSet<string> inverse);
+                if (inverse != null)
+                {
+                    foreach (var c in inverse)
+                    {
+                        Workspaces.Document d = workspace.FindDocument(c);
+                        if (d == null)
+                        {
+                            continue;
+                        }
+                        stack.Push(d);
+                    }
+                }
+            }
+            // Grab lexer or combined grammar.
+            Document lexer_or_combined = null;
+            IParseTree tree = null;
+            Parser parser = null;
+            Lexer lexer = null;
+            foreach (var d in docs)
+            {
+                ExtractGrammarType x = new ExtractGrammarType();
+                ParseTreeWalker.Default.Walk(x, d.ParseTree);
+                bool got = x.Type == ExtractGrammarType.GrammarType.Combined
+                    || x.Type == ExtractGrammarType.GrammarType.Lexer;
+                if (got) {
+                    var xxxx = ParsingResultsFactory.Create(d) as ParsingResults;
+                    lexer_or_combined = d;
+                    parser = xxxx.Parser;
+                    lexer = xxxx.Lexer;
+                    tree = d.ParseTree;
+                    break;
+                }
+            }
+            if (lexer_or_combined == null)
+            {
+                throw new LanguageServerException("Need a lexer or combined grammar. Where is it?");
+            }
+            // Filter lexer rules for criteria for an acceptable replacement.
             List<string> old_names = new List<string>();
             List<string> new_names = new List<string>();
-            var (tree, parser, lexer) = (pd_parser.ParseTree, pd_parser.Parser, pd_parser.Lexer);
             var ate = new AntlrTreeEditing.AntlrDOM.ConvertToDOM();
             AntlrElement[] dom_literals;
-            using(AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext = ate.Try(tree, parser))
+            if (nodes == null)
+            {
+                var pr = ParsingResultsFactory.Create(lexer_or_combined);
+                using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext = new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
+                {
+                    org.eclipse.wst.xml.xpath2.processor.Engine engine = new org.eclipse.wst.xml.xpath2.processor.Engine();
+                    nodes = engine.parseExpression(
+                        @"//lexerRuleSpec/TOKEN_REF",
+                            new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
+                        .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree).ToList();
+                }
+            }
+            using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext = ate.Try(tree, parser))
             {
                 org.eclipse.wst.xml.xpath2.processor.Engine engine = new org.eclipse.wst.xml.xpath2.processor.Engine();
                 dom_literals = engine.parseExpression(
@@ -807,52 +874,11 @@
             }
 
             // Compute a list of files that are related to each other.
-            HashSet<Document> check_list = new HashSet<Document>();
-            var stack = new Stack<Document>();
-            stack.Push(document);
-            while (stack.Any())
-            {
-                var doc = stack.Pop();
-                if (!(ParsingResultsFactory.Create(doc) is ParsingResults pd_doc))
-                    continue;
-                check_list.Add(doc);
-
-                foreach (var c in pd_doc.Imports)
-                {
-                    Workspaces.Document d = workspace.FindDocument(c);
-                    if (d == null)
-                    {
-                        continue;
-                    }
-                    stack.Push(d);
-                }
-            }
-            stack.Push(document);
-            while (stack.Any())
-            {
-                var doc = stack.Pop();
-                if (!(ParsingResultsFactory.Create(doc) is Antlr4ParsingResults pd_doc))
-                    continue;
-                check_list.Add(doc);
-
-                _ = Antlr4ParsingResults.InverseImports.TryGetValue(doc.FullPath, out HashSet<string> inverse);
-
-                foreach (var c in inverse)
-                {
-                    Workspaces.Document d = workspace.FindDocument(c);
-                    if (d == null)
-                    {
-                        continue;
-                    }
-                    stack.Push(d);
-                }
-            }
-            if (!check_list.Any())
+            if (!docs.Any())
             {
                 throw new LanguageServerException("Got no docs for the request!");
             }
-
-            foreach (var doc in check_list)
+            foreach (var doc in docs)
             {
                 if (!(ParsingResultsFactory.Create(doc) is ParsingResults pd_doc))
                     continue;
@@ -2861,14 +2887,33 @@
 
             if (nodes != null)
             {
-                if (!nodes.Any())
+                var updated = new HashSet<IParseTree>();
+                foreach (var node in nodes)
                 {
-                    throw new LanguageServerException("XPath spec for LHS symbol empty.");
+                    bool got = false;
+                    // Make sure the node points to somewhere in a rule, and replace it 
+                    // with the node in the LHS of the rule, if not already point to that node.
+                    for (var p = node; p != null; p = p.Parent)
+                    {
+                        if (p is ANTLRv4Parser.ParserRuleSpecContext prsc)
+                        {
+                            updated.Add(prsc.RULE_REF());
+                            got = true;
+                            break;
+                        }
+                        else if (p is ANTLRv4Parser.LexerRuleSpecContext lrsc)
+                        {
+                            updated.Add(lrsc.TOKEN_REF());
+                            got = true;
+                            break;
+                        }
+                    }
+                    if (!got)
+                    {
+                        throw new LanguageServerException("XPath spec yielded a 'node' that doesn't point do a parser or lexer rule.");
+                    }
                 }
-                if (nodes.Count() > 1)
-                {
-                    throw new LanguageServerException("XPath spec for LHS symbol specifies more than one node.");
-                }
+                nodes = updated.ToList();
             }
             else
             {
@@ -7115,15 +7160,114 @@ and not(lexerRuleBlock//ebnfSuffix)
             var (text_before, other) = TreeEdits.TextToLeftOfLeaves(pd_parser.TokStream, pd_parser.ParseTree);
             foreach (var node in nodes)
             {
-		        var leaf = TreeEdits.Frontier(node).First();
+                var leaf = TreeEdits.Frontier(node).First();
                 var inserted_node = TreeEdits.InsertBefore(node, text);
                 // Nuke intertoken after text to next leaf node.
-		        text_before[inserted_node] = text_before[leaf];
-		        text_before[leaf] = " ";
+                text_before[inserted_node] = text_before[leaf];
+                text_before[leaf] = " ";
             }
 
             StringBuilder sb = new StringBuilder();
 
+            TreeEdits.Reconstruct(sb, pd_parser.ParseTree, text_before);
+            var new_code = sb.ToString();
+            if (new_code != pd_parser.Code)
+            {
+                result.Add(document.FullPath, new_code);
+            }
+            return result;
+        }
+
+        public static Dictionary<string, string> Replace(List<IParseTree> nodes, string text, Document document)
+        {
+            Dictionary<string, string> result = new Dictionary<string, string>();
+
+            // Check if initial file is a grammar.
+            if (!(ParsingResultsFactory.Create(document) is ParsingResults pd_parser))
+                throw new LanguageServerException("A grammar file is not selected. Please select one first.");
+
+            ExtractGrammarType egt = new ExtractGrammarType();
+            ParseTreeWalker.Default.Walk(egt, pd_parser.ParseTree);
+            bool is_grammar = egt.Type == ExtractGrammarType.GrammarType.Parser
+                              || egt.Type == ExtractGrammarType.GrammarType.Combined
+                              || egt.Type == ExtractGrammarType.GrammarType.Lexer;
+            if (!is_grammar)
+            {
+                throw new LanguageServerException("A grammar file is not selected. Please select one first.");
+            }
+
+            var (text_before, other) = TreeEdits.TextToLeftOfLeaves(pd_parser.TokStream, pd_parser.ParseTree);
+            foreach (var node in nodes)
+            {
+                var leaf = TreeEdits.Frontier(node).First();
+                var inserted_node = TreeEdits.Replace(node, text);
+                // Nuke intertoken after text to next leaf node.
+                text_before[inserted_node] = text_before[leaf];
+                text_before[leaf] = " ";
+            }
+
+            StringBuilder sb = new StringBuilder();
+
+            TreeEdits.Reconstruct(sb, pd_parser.ParseTree, text_before);
+            var new_code = sb.ToString();
+            if (new_code != pd_parser.Code)
+            {
+                result.Add(document.FullPath, new_code);
+            }
+            return result;
+        }
+
+        public static Dictionary<string, string> MoveAfter(IParseTree from, IParseTree to, Document document)
+        {
+            Dictionary<string, string> result = new Dictionary<string, string>();
+
+            // Check if initial file is a grammar.
+            if (!(ParsingResultsFactory.Create(document) is ParsingResults pd_parser))
+                throw new LanguageServerException("A grammar file is not selected. Please select one first.");
+
+            ExtractGrammarType egt = new ExtractGrammarType();
+            ParseTreeWalker.Default.Walk(egt, pd_parser.ParseTree);
+            bool is_grammar = egt.Type == ExtractGrammarType.GrammarType.Parser
+                              || egt.Type == ExtractGrammarType.GrammarType.Combined
+                              || egt.Type == ExtractGrammarType.GrammarType.Lexer;
+            if (!is_grammar)
+            {
+                throw new LanguageServerException("A grammar file is not selected. Please select one first.");
+            }
+
+            var (text_before, other) = TreeEdits.TextToLeftOfLeaves(pd_parser.TokStream, pd_parser.ParseTree);
+            TreeEdits.MoveAfter(from, to);
+            StringBuilder sb = new StringBuilder();
+            TreeEdits.Reconstruct(sb, pd_parser.ParseTree, text_before);
+            var new_code = sb.ToString();
+            if (new_code != pd_parser.Code)
+            {
+                result.Add(document.FullPath, new_code);
+            }
+            return result;
+        }
+
+        public static Dictionary<string, string> MoveBefore(IParseTree from, IParseTree to, Document document)
+        {
+            Dictionary<string, string> result = new Dictionary<string, string>();
+
+            // Check if initial file is a grammar.
+            if (!(ParsingResultsFactory.Create(document) is ParsingResults pd_parser))
+                throw new LanguageServerException("A grammar file is not selected. Please select one first.");
+
+            ExtractGrammarType egt = new ExtractGrammarType();
+            ParseTreeWalker.Default.Walk(egt, pd_parser.ParseTree);
+            bool is_grammar = egt.Type == ExtractGrammarType.GrammarType.Parser
+                              || egt.Type == ExtractGrammarType.GrammarType.Combined
+                              || egt.Type == ExtractGrammarType.GrammarType.Lexer;
+            if (!is_grammar)
+            {
+                throw new LanguageServerException("A grammar file is not selected. Please select one first.");
+            }
+
+            var (text_before, other) = TreeEdits.TextToLeftOfLeaves(pd_parser.TokStream, pd_parser.ParseTree);
+            TreeEdits.MoveBefore(from, to);
+            StringBuilder sb = new StringBuilder();
             TreeEdits.Reconstruct(sb, pd_parser.ParseTree, text_before);
             var new_code = sb.ToString();
             if (new_code != pd_parser.Code)
