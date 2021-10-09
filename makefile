@@ -15,4 +15,5 @@ clean:
 	rm -rf */obj */bin
 	rm -rf ${USERPROFILE}/.nuget/packages/Domemtech.TrashBase
 	rm -f *.nupkg *.snupkg
+	rm -rf nuget.config
 
