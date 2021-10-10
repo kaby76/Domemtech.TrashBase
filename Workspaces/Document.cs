@@ -1,6 +1,7 @@
 ﻿namespace Workspaces
 {
     using Antlr4.Runtime.Tree;
+    using System;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.IO;
@@ -103,6 +104,29 @@
                 throw new System.ArgumentNullException(nameof(name));
             }
             return null;
+        }
+
+        static Random random_number_generator = new Random();
+
+        public static Document CreateStringDocument(string input)
+        {
+            var random_number = random_number_generator.Next();
+            string file_name = "Dummy" + random_number + ".g4";
+            Document document = Workspaces.Workspace.Instance.FindDocument(file_name);
+            if (document == null)
+            {
+                document = new Workspaces.Document(file_name);
+                document.Code = input;
+                Project project = Workspaces.Workspace.Instance.FindProject("Misc");
+                if (project == null)
+                {
+                    project = new Project("Misc", "Misc", "Misc");
+                    Workspaces.Workspace.Instance.AddChild(project);
+                }
+                project.AddDocument(document);
+            }
+            document.Changed = true;
+            return document;
         }
     }
 }

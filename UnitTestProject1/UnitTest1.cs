@@ -17,29 +17,6 @@ namespace UnitTestProject1
     {
         private static int random_number = 0;
 
-        public static Document CreateStringDocument(string input)
-        {
-            string file_name = "Dummy" + random_number + ".g4";
-            Document document = Workspaces.Workspace.Instance.FindDocument(file_name);
-            if (document == null)
-            {
-                document = new Workspaces.Document(file_name);
-                document.Code = input;
-                Project project = Workspaces.Workspace.Instance.FindProject("Misc");
-                if (project == null)
-                {
-                    project = new Project("Misc", "Misc", "Misc");
-                    Workspaces.Workspace.Instance.AddChild(project);
-                }
-                project.AddDocument(document);
-            }
-            document.Changed = true;
-            _ = ParsingResultsFactory.Create(document);
-            var workspace = document.Workspace;
-            _ = new LanguageServer.Module().Compile(workspace);
-            return document;
-        }
-
         public static Document CheckDoc(string path)
         {
             string file_name = path;
@@ -229,7 +206,7 @@ namespace UnitTestProject1
         public void TestFindAllRefs()
         {
             var cwd = Directory.GetCurrentDirectory();
-            Document document = CreateStringDocument(@"grammar A;
+            Document document = Document.CreateStringDocument(@"grammar A;
 
 s
     : e
@@ -248,6 +225,9 @@ WS
     : [ \t\n]+ -> skip
     ;
 ");
+            _ = ParsingResultsFactory.Create(document);
+            var workspace = document.Workspace;
+            _ = new LanguageServer.Module().Compile(workspace);
             // Position at the "grammarSpec" rule, beginning of RHS symbol "grammarDecl".
             // All lines and columns are zero based in LSP.
             int line = 3;
@@ -382,7 +362,7 @@ D: 'uvw' 'xyz'+;
         public void TestUnfold()
         {
             var cwd = Directory.GetCurrentDirectory();
-            Document document = CreateStringDocument(@"grammar A;
+            Document document = Document.CreateStringDocument(@"grammar A;
 
 s
     : e
@@ -401,6 +381,9 @@ WS
     : [ \t\n]+ -> skip
     ;
 ");
+            _ = ParsingResultsFactory.Create(document);
+            var workspace = document.Workspace;
+            _ = new LanguageServer.Module().Compile(workspace);
             int start = new LanguageServer.Module().GetIndex(2, 0, document);
             int end = new LanguageServer.Module().GetIndex(5, 0, document);
             var found = LanguageServer.Transform.Unfold(start, end, document);
@@ -451,7 +434,10 @@ WS
     : [ \t\n]+ -> skip
     ;
 ";
-            Document document = CreateStringDocument(original);
+            Document document = Document.CreateStringDocument(original);
+            _ = ParsingResultsFactory.Create(document);
+            var workspace = document.Workspace;
+            _ = new LanguageServer.Module().Compile(workspace);
             int start = new LanguageServer.Module().GetIndex(6, 0, document);
             int end = new LanguageServer.Module().GetIndex(6, 0, document);
             var found = LanguageServer.Transform.Fold(start, end, document);
@@ -484,7 +470,7 @@ WS
         public void TestImport()
         {
             var cwd = Directory.GetCurrentDirectory();
-            Document document = CreateStringDocument(@"/*
+            Document document = Document.CreateStringDocument(@"/*
  [The ""BSD licence""]
  Copyright (c) 2007-2008 Terence Parr
  All rights reserved.
@@ -1527,6 +1513,9 @@ IDENTIFIER
     :   LETTER (LETTER|JavaIDDigit)*
     ;
 ");
+            _ = ParsingResultsFactory.Create(document);
+            var workspace = document.Workspace;
+            _ = new LanguageServer.Module().Compile(workspace);
             var imp = new LanguageServer.ConvertAntlr3();
             var results = imp.Try(document.FullPath, document.Code);
         }
