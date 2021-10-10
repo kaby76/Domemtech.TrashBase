@@ -122,6 +122,30 @@ b : | b 'b';
                 Document document = Document.CreateStringDocument(@"
 grammar kleene;
 
+xx  : xx yy | ;
+yy: 'b' ;
+");
+                _ = ParsingResultsFactory.Create(document);
+                var workspace = document.Workspace;
+                _ = new LanguageServer.Module().Compile(workspace);
+                Project project = _workspace.FindProject("Misc");
+                if (project == null)
+                {
+                    project = new Project("Misc", "Misc", "Misc");
+                    _workspace.AddChild(project);
+                }
+                project.AddDocument(document);
+                var pr = LanguageServer.ParsingResultsFactory.Create(document);
+                if (document.ParseTree == null)
+                {
+                    new LanguageServer.Module().Compile(_workspace);
+                }
+                var result = LanguageServer.Transform.ConvertRecursionToKleeneOperator(document);
+            }
+            {
+                Document document = Document.CreateStringDocument(@"
+grammar kleene;
+
 xx : 'a' xx | 'a';
 yy : yy 'b' | 'b' ;
 zz : | 'a' | 'a' zz;
