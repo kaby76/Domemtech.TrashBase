@@ -151,6 +151,19 @@ yy : yy 'b' | 'b' ;
 zz : | 'a' | 'a' zz;
 z2 : | 'b' | z2 'b';
 ");
+
+                // The Kleene rewrite currently produces
+                // xx : 'a' * 'a' ;
+                // yy: 'b' 'b' * ;
+                // zz: 'a' * ( | 'a');
+                // z2: ( | 'b') 'b' * ;
+                //
+                // This should be instead
+                // xx : 'a' + ;
+                // yy : 'b' + ;
+                // zz : 'a' * ;
+                // z2 : 'b' * ;
+
                 _ = ParsingResultsFactory.Create(document);
                 var workspace = document.Workspace;
                 _ = new LanguageServer.Module().Compile(workspace);
@@ -167,6 +180,9 @@ z2 : | 'b' | z2 'b';
                     new LanguageServer.Module().Compile(_workspace);
                 }
                 var result = LanguageServer.Transform.ConvertRecursionToKleeneOperator(document);
+           
+            
+            
             }
         }
     }

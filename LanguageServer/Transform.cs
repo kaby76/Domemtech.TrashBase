@@ -2574,6 +2574,9 @@
                 var socket2 = new ANTLRv4Parser.AltListContext(null, 0);
                 bool required_paren_socket1 = TreeEdits.Frontier(plug1).Count() > 1;
                 bool required_paren_socket2 = TreeEdits.Frontier(plug2).Count() > 1;
+                // If the two sub-expressions are equal, then instead of something
+                // like 'a' * 'a', we will optimize the result as 'a' +.
+                bool p1_eq_p2 = plug1.GetText() == plug2.GetText();
                 {
                     var new_rule_block_context = new ANTLRv4Parser.RuleBlockContext(new_a_rule, 0);
                     new_a_rule.AddChild(new_rule_block_context);
