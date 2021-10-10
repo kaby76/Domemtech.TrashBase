@@ -2508,10 +2508,72 @@
                     new_a_rule.AddChild(new_colon);
                     new_colon.Parent = new_a_rule;
                 }
+                var plug1 = new ANTLRv4Parser.AltListContext(null, 0);
+                var plug2 = new ANTLRv4Parser.AltListContext(null, 0);
+                {
+                    bool first1 = true;
+                    bool first2 = true;
+                    foreach (ANTLRv4Parser.AlternativeContext alt in EnumeratorOfAlts(rule))
+                    {
+                        ANTLRv4Parser.AtomContext atom = null;
+                        if (has_direct_left_recursion && !has_direct_right_recursion)
+                            atom = EnumeratorOfRHS(alt)?.FirstOrDefault();
+                        else
+                            atom = EnumeratorOfRHS(alt)?.LastOrDefault();
+                        if (lhs == atom?.GetText())
+                        {
+                            if (!first1)
+                            {
+                                var token4 = new CommonToken(ANTLRv4Lexer.OR) { Line = -1, Column = -1, Text = "|" };
+                                var new_or = new TerminalNodeImpl(token4);
+                                plug2.AddChild(new_or);
+                                new_or.Parent = plug2;
+                            }
+                            first1 = false;
+                            var l_alt = new ANTLRv4Parser.LabeledAltContext(null, 0);
+                            plug2.AddChild(l_alt);
+                            l_alt.Parent = plug2;
+                            var new_alt = new ANTLRv4Parser.AlternativeContext(null, 0);
+                            l_alt.AddChild(new_alt);
+                            new_alt.Parent = l_alt;
+                            var elements = alt.element();
+                            var i = (has_direct_left_recursion && !has_direct_right_recursion) ? 1 : 0;
+                            var j = (has_direct_left_recursion && !has_direct_right_recursion) ? elements.Length : elements.Length - 1;
+                            for (; i < j; ++i)
+                            {
+                                var element = elements[i];
+                                TreeEdits.CopyTreeRecursive(element, new_alt, text_before);
+                            }
+                        }
+                        else
+                        {
+                            if (!first2)
+                            {
+                                var token4 = new CommonToken(ANTLRv4Lexer.OR) { Line = -1, Column = -1, Text = "|" };
+                                var new_or = new TerminalNodeImpl(token4);
+                                plug1.AddChild(new_or);
+                                new_or.Parent = plug1;
+                            }
+                            first2 = false;
+                            var l_alt = new ANTLRv4Parser.LabeledAltContext(null, 0);
+                            plug1.AddChild(l_alt);
+                            l_alt.Parent = plug1;
+                            var new_alt = new ANTLRv4Parser.AlternativeContext(null, 0);
+                            l_alt.AddChild(new_alt);
+                            new_alt.Parent = l_alt;
+                            foreach (var element in alt.element())
+                            {
+                                TreeEdits.CopyTreeRecursive(element, new_alt, text_before);
+                            }
+                        }
+                    }
+                }
                 // Now have "A :"
                 var rule_alt_list = new ANTLRv4Parser.RuleAltListContext(null, 0);
-                var altlist1 = new ANTLRv4Parser.AltListContext(null, 0);
-                var altlist2 = new ANTLRv4Parser.AltListContext(null, 0);
+                var socket1 = new ANTLRv4Parser.AltListContext(null, 0);
+                var socket2 = new ANTLRv4Parser.AltListContext(null, 0);
+                bool required_paren_socket1 = TreeEdits.Frontier(plug1).Count() > 1;
+                bool required_paren_socket2 = TreeEdits.Frontier(plug2).Count() > 1;
                 {
                     var new_rule_block_context = new ANTLRv4Parser.RuleBlockContext(new_a_rule, 0);
                     new_a_rule.AddChild(new_rule_block_context);
@@ -2547,16 +2609,22 @@
                         var new_block = new ANTLRv4Parser.BlockContext(null, 0);
                         new_ebnf.AddChild(new_block);
                         new_block.Parent = new_ebnf;
-                        var lparen_token = new CommonToken(ANTLRv4Lexer.LPAREN) { Line = -1, Column = -1, Text = "(" };
-                        var new_lparen = new TerminalNodeImpl(lparen_token);
-                        new_block.AddChild(new_lparen);
-                        new_lparen.Parent = new_block;
-                        new_block.AddChild(altlist1);
-                        altlist1.Parent = new_block;
-                        var rparen_token = new CommonToken(ANTLRv4Lexer.RPAREN) { Line = -1, Column = -1, Text = ")" };
-                        var new_rparen = new TerminalNodeImpl(rparen_token);
-                        new_block.AddChild(new_rparen);
-                        new_rparen.Parent = new_block;
+                        if (required_paren_socket1)
+                        {
+                            var lparen_token = new CommonToken(ANTLRv4Lexer.LPAREN) { Line = -1, Column = -1, Text = "(" };
+                            var new_lparen = new TerminalNodeImpl(lparen_token);
+                            new_block.AddChild(new_lparen);
+                            new_lparen.Parent = new_block;
+                        }
+                        new_block.AddChild(socket1);
+                        socket1.Parent = new_block;
+                        if (required_paren_socket1)
+                        {
+                            var rparen_token = new CommonToken(ANTLRv4Lexer.RPAREN) { Line = -1, Column = -1, Text = ")" };
+                            var new_rparen = new TerminalNodeImpl(rparen_token);
+                            new_block.AddChild(new_rparen);
+                            new_rparen.Parent = new_block;
+                        }
                     }
                     {
                         var new_ebnf = new ANTLRv4Parser.EbnfContext(null, 0);
@@ -2575,16 +2643,22 @@
                         var new_star = new TerminalNodeImpl(star_token);
                         new_ebnfsuffix.AddChild(new_star);
                         new_star.Parent = new_ebnfsuffix;
-                        var lparen_token = new CommonToken(ANTLRv4Lexer.LPAREN) { Line = -1, Column = -1, Text = "(" };
-                        var new_lparen = new TerminalNodeImpl(lparen_token);
-                        new_block.AddChild(new_lparen);
-                        new_lparen.Parent = new_block;
-                        new_block.AddChild(altlist2);
-                        altlist2.Parent = new_block;
-                        var rparen_token = new CommonToken(ANTLRv4Lexer.RPAREN) { Line = -1, Column = -1, Text = ")" };
-                        var new_rparen = new TerminalNodeImpl(rparen_token);
-                        new_block.AddChild(new_rparen);
-                        new_rparen.Parent = new_block;
+                        if (required_paren_socket2)
+                        {
+                            var lparen_token = new CommonToken(ANTLRv4Lexer.LPAREN) { Line = -1, Column = -1, Text = "(" };
+                            var new_lparen = new TerminalNodeImpl(lparen_token);
+                            new_block.AddChild(new_lparen);
+                            new_lparen.Parent = new_block;
+                        }
+                        new_block.AddChild(socket2);
+                        socket2.Parent = new_block;
+                        if (required_paren_socket2)
+                        {
+                            var rparen_token = new CommonToken(ANTLRv4Lexer.RPAREN) { Line = -1, Column = -1, Text = ")" };
+                            var new_rparen = new TerminalNodeImpl(rparen_token);
+                            new_block.AddChild(new_rparen);
+                            new_rparen.Parent = new_block;
+                        }
                     }
                 }
                 {
@@ -2618,64 +2692,12 @@
                 //                                    <ebnfSuffix
                 //                                       STAR
                 //               >  >  >  >  >  >  >  >  ;  <eg>"
-                {
-                    bool first1 = true;
-                    bool first2 = true;
-                    foreach (ANTLRv4Parser.AlternativeContext alt in EnumeratorOfAlts(rule))
-                    {
-                        ANTLRv4Parser.AtomContext atom = null;
-                        if (has_direct_left_recursion && !has_direct_right_recursion)
-                            atom = EnumeratorOfRHS(alt)?.FirstOrDefault();
-                        else
-                            atom = EnumeratorOfRHS(alt)?.LastOrDefault();
-                        if (lhs == atom?.GetText())
-                        {
-                            if (!first1)
-                            {
-                                var token4 = new CommonToken(ANTLRv4Lexer.OR) { Line = -1, Column = -1, Text = "|" };
-                                var new_or = new TerminalNodeImpl(token4);
-                                altlist2.AddChild(new_or);
-                                new_or.Parent = altlist2;
-                            }
-                            first1 = false;
-                            var l_alt = new ANTLRv4Parser.LabeledAltContext(null, 0);
-                            altlist2.AddChild(l_alt);
-                            l_alt.Parent = altlist2;
-                            var new_alt = new ANTLRv4Parser.AlternativeContext(null, 0);
-                            l_alt.AddChild(new_alt);
-                            new_alt.Parent = l_alt;
-                            var elements = alt.element();
-                            var i = (has_direct_left_recursion && !has_direct_right_recursion) ? 1 : 0;
-                            var j = (has_direct_left_recursion && !has_direct_right_recursion) ? elements.Length : elements.Length - 1;
-                            for (; i < j; ++i)
-                            {
-                                var element = elements[i];
-                                TreeEdits.CopyTreeRecursive(element, new_alt, text_before);
-                            }
-                        }
-                        else
-                        {
-                            if (!first2)
-                            {
-                                var token4 = new CommonToken(ANTLRv4Lexer.OR) { Line = -1, Column = -1, Text = "|" };
-                                var new_or = new TerminalNodeImpl(token4);
-                                altlist1.AddChild(new_or);
-                                new_or.Parent = altlist1;
-                            }
-                            first2 = false;
-                            var l_alt = new ANTLRv4Parser.LabeledAltContext(null, 0);
-                            altlist1.AddChild(l_alt);
-                            l_alt.Parent = altlist1;
-                            var new_alt = new ANTLRv4Parser.AlternativeContext(null, 0);
-                            l_alt.AddChild(new_alt);
-                            new_alt.Parent = l_alt;
-                            foreach (var element in alt.element())
-                            {
-                                TreeEdits.CopyTreeRecursive(element, new_alt, text_before);
-                            }
-                        }
-                    }
-                }
+
+                plug1.Parent = socket1;
+                socket1.AddChild(plug1);
+                plug2.Parent = socket2;
+                socket2.AddChild(plug2);
+
                 return (IParseTree)new_a_rule;
             }
             else if (rule is ANTLRv4Parser.LexerRuleSpecContext r2)

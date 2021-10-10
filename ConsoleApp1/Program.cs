@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Algorithms;
 using System.Linq;
+using Workspaces;
 
 namespace ConsoleApp1
 {
@@ -68,33 +69,23 @@ namespace ConsoleApp1
 
         static void Main(string[] args)
         {
-            Digraph<string, SymbolEdge<string>> t = new Digraph<string, SymbolEdge<string>>();
-            t.AddVertex("1");
-            t.AddVertex("2");
-            t.AddVertex("3");
-            t.AddVertex("4");
-            t.AddStart("1");
-            t.AddEnd("3");
-            t.AddEnd("4");
-            t.AddEdge(new SymbolEdge<string>() { From = "1", To = "2", _symbol = "0" });
-            t.AddEdge(new SymbolEdge<string>() { From = "1", To = "3", _symbol = "" });
-            t.AddEdge(new SymbolEdge<string>() { From = "3", To = "2", _symbol = "" });
-            t.AddEdge(new SymbolEdge<string>() { From = "3", To = "4", _symbol = "0" });
-            t.AddEdge(new SymbolEdge<string>() { From = "4", To = "3", _symbol = "0" });
-            t.AddEdge(new SymbolEdge<string>() { From = "2", To = "2", _symbol = "1" });
-            t.AddEdge(new SymbolEdge<string>() { From = "2", To = "4", _symbol = "1" });
-            Digraph<MyHashSet<string>, SymbolEdge<MyHashSet<string>>> DFA = new Digraph<MyHashSet<string>, SymbolEdge<MyHashSet<string>>>();
-            MyHashSet<MyHashSet<string>> marked = new MyHashSet<MyHashSet<string>>();
-            MyHashSet<MyHashSet<string>> unmarked = new MyHashSet<MyHashSet<string>>();
-            foreach (var s in t.StartVertices)
+            var file_name = args[0];
+            Workspace _workspace = new Workspace();
+            Document document = new Workspaces.Document(file_name);
+            Project project = _workspace.FindProject("Misc");
+            if (project == null)
             {
-                var startingState = new MyHashSet<string>(new List<string> { s });
-                var new_dfa_state = EpsilonClosureOf(t, s);
-                DFA.AddVertex(new_dfa_state);
-                var hs = new MyHashSet<string>();
-                for (int i = new_dfa_state.Count - 1; i >= 0; --i) hs.Add(new_dfa_state.ElementAt(i));
-                DFA.AddVertex(hs);
+                project = new Project("Misc", "Misc", "Misc");
+                _workspace.AddChild(project);
             }
+            project.AddDocument(document);
+            var pr = LanguageServer.ParsingResultsFactory.Create(document);
+            if (document.ParseTree == null)
+            {
+                new LanguageServer.Module().Compile(_workspace);
+            }
+            var result = LanguageServer.Transform.ConvertRecursionToKleeneOperator(document);
+
         }
     }
 }
