@@ -2629,6 +2629,7 @@
                             new_rparen.Parent = new_block;
                         }
                     }
+                    if (!p1_eq_p2)
                     {
                         var new_ebnf = new ANTLRv4Parser.EbnfContext(null, 0);
                         element2.AddChild(new_ebnf);
@@ -2662,6 +2663,19 @@
                             new_block.AddChild(new_rparen);
                             new_rparen.Parent = new_block;
                         }
+                        plug1.Parent = socket1;
+                        socket1.AddChild(plug1);
+                        plug2.Parent = socket2;
+                        socket2.AddChild(plug2);
+                    }
+                    else
+                    {
+                        var star_token = new CommonToken(ANTLRv4Lexer.PLUS) { Line = -1, Column = -1, Text = "+" };
+                        var new_star = new TerminalNodeImpl(star_token);
+                        plug1.AddChild(new_star);
+                        new_star.Parent = plug1;
+                        plug1.Parent = socket1;
+                        socket1.AddChild(plug1);
                     }
                 }
                 {
@@ -2696,10 +2710,6 @@
                 //                                       STAR
                 //               >  >  >  >  >  >  >  >  ;  <eg>"
 
-                plug1.Parent = socket1;
-                socket1.AddChild(plug1);
-                plug2.Parent = socket2;
-                socket2.AddChild(plug2);
 
                 return (IParseTree)new_a_rule;
             }
