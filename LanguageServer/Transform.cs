@@ -2572,11 +2572,20 @@
                 var rule_alt_list = new ANTLRv4Parser.RuleAltListContext(null, 0);
                 var socket1 = new ANTLRv4Parser.AltListContext(null, 0);
                 var socket2 = new ANTLRv4Parser.AltListContext(null, 0);
+                // If the two sub-expressions are equal, then instead of
+                // like 'a' * 'a' or 'a' 'a' *, we will optimize the result
+                // as 'a' +.
+                var p1text = plug1.GetText();
+                var p2text = plug2.GetText();
+                bool p1_eq_p2 = p1text == p2text;
+                bool p1_bar_eq_p2
+                    = p1text + "|" == p2text
+                    || "|" + p1text == p2text;
+                bool p1_eq_p2_bar
+                    = p1text == "|" + p2text
+                    || p1text == p2text + "|";
                 bool required_paren_socket1 = TreeEdits.Frontier(plug1).Count() > 1;
                 bool required_paren_socket2 = TreeEdits.Frontier(plug2).Count() > 1;
-                // If the two sub-expressions are equal, then instead of something
-                // like 'a' * 'a', we will optimize the result as 'a' +.
-                bool p1_eq_p2 = plug1.GetText() == plug2.GetText();
                 {
                     var new_rule_block_context = new ANTLRv4Parser.RuleBlockContext(new_a_rule, 0);
                     new_a_rule.AddChild(new_rule_block_context);
@@ -2605,32 +2614,131 @@
                         new_alt.AddChild(element1);
                         element1.Parent = new_alt;
                     }
+                    if (p1_eq_p2)
                     {
-                        var new_ebnf = new ANTLRv4Parser.EbnfContext(null, 0);
-                        element1.AddChild(new_ebnf);
-                        new_ebnf.Parent = element1;
-                        var new_block = new ANTLRv4Parser.BlockContext(null, 0);
-                        new_ebnf.AddChild(new_block);
-                        new_block.Parent = new_ebnf;
-                        if (required_paren_socket1)
                         {
-                            var lparen_token = new CommonToken(ANTLRv4Lexer.LPAREN) { Line = -1, Column = -1, Text = "(" };
-                            var new_lparen = new TerminalNodeImpl(lparen_token);
-                            new_block.AddChild(new_lparen);
-                            new_lparen.Parent = new_block;
+                            var xxx = new ANTLRv4Parser.EbnfContext(null, 0);
+                            element1.AddChild(xxx);
+                            xxx.Parent = element1;
+                            var new_block = new ANTLRv4Parser.BlockContext(null, 0);
+                            xxx.AddChild(new_block);
+                            new_block.Parent = xxx;
+                            if (required_paren_socket1)
+                            {
+                                var lparen_token = new CommonToken(ANTLRv4Lexer.LPAREN) { Line = -1, Column = -1, Text = "(" };
+                                var new_lparen = new TerminalNodeImpl(lparen_token);
+                                new_block.AddChild(new_lparen);
+                                new_lparen.Parent = new_block;
+                            }
+                            new_block.AddChild(socket1);
+                            socket1.Parent = new_block;
+                            if (required_paren_socket1)
+                            {
+                                var rparen_token = new CommonToken(ANTLRv4Lexer.RPAREN) { Line = -1, Column = -1, Text = ")" };
+                                var new_rparen = new TerminalNodeImpl(rparen_token);
+                                new_block.AddChild(new_rparen);
+                                new_rparen.Parent = new_block;
+                            }
                         }
-                        new_block.AddChild(socket1);
-                        socket1.Parent = new_block;
-                        if (required_paren_socket1)
-                        {
-                            var rparen_token = new CommonToken(ANTLRv4Lexer.RPAREN) { Line = -1, Column = -1, Text = ")" };
-                            var new_rparen = new TerminalNodeImpl(rparen_token);
-                            new_block.AddChild(new_rparen);
-                            new_rparen.Parent = new_block;
-                        }
+                        var star_token = new CommonToken(ANTLRv4Lexer.PLUS) { Line = -1, Column = -1, Text = "+" };
+                        var new_star = new TerminalNodeImpl(star_token);
+                        plug1.AddChild(new_star);
+                        new_star.Parent = plug1;
+                        plug1.Parent = socket1;
+                        socket1.AddChild(plug1);
                     }
-                    if (!p1_eq_p2)
+                    else if (p1_bar_eq_p2)
                     {
+                        {
+                            var xxx = new ANTLRv4Parser.EbnfContext(null, 0);
+                            element1.AddChild(xxx);
+                            xxx.Parent = element1;
+                            var new_block = new ANTLRv4Parser.BlockContext(null, 0);
+                            xxx.AddChild(new_block);
+                            new_block.Parent = xxx;
+                            if (required_paren_socket1)
+                            {
+                                var lparen_token = new CommonToken(ANTLRv4Lexer.LPAREN) { Line = -1, Column = -1, Text = "(" };
+                                var new_lparen = new TerminalNodeImpl(lparen_token);
+                                new_block.AddChild(new_lparen);
+                                new_lparen.Parent = new_block;
+                            }
+                            new_block.AddChild(socket1);
+                            socket1.Parent = new_block;
+                            if (required_paren_socket1)
+                            {
+                                var rparen_token = new CommonToken(ANTLRv4Lexer.RPAREN) { Line = -1, Column = -1, Text = ")" };
+                                var new_rparen = new TerminalNodeImpl(rparen_token);
+                                new_block.AddChild(new_rparen);
+                                new_rparen.Parent = new_block;
+                            }
+                        }
+                        var star_token = new CommonToken(ANTLRv4Lexer.STAR) { Line = -1, Column = -1, Text = "*" };
+                        var new_star = new TerminalNodeImpl(star_token);
+                        plug1.AddChild(new_star);
+                        new_star.Parent = plug1;
+                        plug1.Parent = socket1;
+                        socket1.AddChild(plug1);
+                    }
+                    else if (p1_eq_p2_bar)
+                    {
+                        {
+                            var xxx = new ANTLRv4Parser.EbnfContext(null, 0);
+                            element1.AddChild(xxx);
+                            xxx.Parent = element1;
+                            var new_block = new ANTLRv4Parser.BlockContext(null, 0);
+                            xxx.AddChild(new_block);
+                            new_block.Parent = xxx;
+                            if (required_paren_socket2)
+                            {
+                                var lparen_token = new CommonToken(ANTLRv4Lexer.LPAREN) { Line = -1, Column = -1, Text = "(" };
+                                var new_lparen = new TerminalNodeImpl(lparen_token);
+                                new_block.AddChild(new_lparen);
+                                new_lparen.Parent = new_block;
+                            }
+                            new_block.AddChild(socket1);
+                            socket1.Parent = new_block;
+                            if (required_paren_socket2)
+                            {
+                                var rparen_token = new CommonToken(ANTLRv4Lexer.RPAREN) { Line = -1, Column = -1, Text = ")" };
+                                var new_rparen = new TerminalNodeImpl(rparen_token);
+                                new_block.AddChild(new_rparen);
+                                new_rparen.Parent = new_block;
+                            }
+                        }
+                        var star_token = new CommonToken(ANTLRv4Lexer.STAR) { Line = -1, Column = -1, Text = "*" };
+                        var new_star = new TerminalNodeImpl(star_token);
+                        plug2.AddChild(new_star);
+                        new_star.Parent = plug2;
+                        plug2.Parent = socket1;
+                        socket1.AddChild(plug2);
+                    }
+                    else
+                    {
+                        {
+                            var xxx = new ANTLRv4Parser.EbnfContext(null, 0);
+                            element1.AddChild(xxx);
+                            xxx.Parent = element1;
+                            var uuu = new ANTLRv4Parser.BlockContext(null, 0);
+                            xxx.AddChild(uuu);
+                            uuu.Parent = xxx;
+                            if (required_paren_socket1)
+                            {
+                                var lparen_token = new CommonToken(ANTLRv4Lexer.LPAREN) { Line = -1, Column = -1, Text = "(" };
+                                var new_lparen = new TerminalNodeImpl(lparen_token);
+                                uuu.AddChild(new_lparen);
+                                new_lparen.Parent = uuu;
+                            }
+                            uuu.AddChild(socket1);
+                            socket1.Parent = uuu;
+                            if (required_paren_socket1)
+                            {
+                                var rparen_token = new CommonToken(ANTLRv4Lexer.RPAREN) { Line = -1, Column = -1, Text = ")" };
+                                var new_rparen = new TerminalNodeImpl(rparen_token);
+                                uuu.AddChild(new_rparen);
+                                new_rparen.Parent = uuu;
+                            }
+                        }
                         var new_ebnf = new ANTLRv4Parser.EbnfContext(null, 0);
                         element2.AddChild(new_ebnf);
                         new_ebnf.Parent = element2;
@@ -2667,15 +2775,6 @@
                         socket1.AddChild(plug1);
                         plug2.Parent = socket2;
                         socket2.AddChild(plug2);
-                    }
-                    else
-                    {
-                        var star_token = new CommonToken(ANTLRv4Lexer.PLUS) { Line = -1, Column = -1, Text = "+" };
-                        var new_star = new TerminalNodeImpl(star_token);
-                        plug1.AddChild(new_star);
-                        new_star.Parent = plug1;
-                        plug1.Parent = socket1;
-                        socket1.AddChild(plug1);
                     }
                 }
                 {
