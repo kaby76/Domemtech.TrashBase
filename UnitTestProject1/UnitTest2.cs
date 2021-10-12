@@ -1,81 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using Algorithms;
+﻿using LanguageServer;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Linq;
 using Workspaces;
-using LanguageServer;
 
-namespace ConsoleApp1
+namespace UnitTestProject1
 {
-    public class SymbolEdge<T> : DirectedEdge<T>
+    [TestClass]
+    public class UnitTest2
     {
-        public SymbolEdge() { }
-
-        public string _symbol { get; set; }
-
-        public override string ToString()
+        [TestMethod]
+        public void Kleene1()
         {
-            return From + "->" + To + (_symbol == null ? " [ label=\"&#1013;\" ]" : " [label=\"" + _symbol + "\" ]") + ";";
-        }
-    }
-    public class MyHashSet<T> : HashSet<T>
-    {
-        public MyHashSet(IEnumerable<T> o) : base(o) { }
-        //public MyHashSet(T o) : base(o) { }
-        public MyHashSet() : base() { }
-        public override bool Equals(object obj)
-        {
-            if (obj == null) return false;
-            if (this.GetType() != obj.GetType()) return false;
-            var o = obj as MyHashSet<T>;
-            if (o == null) return false;
-            if (o.Count != this.Count) return false;
-            foreach (var c in this)
-            {
-                if (!o.Contains(c)) return false;
-            }
-            foreach (var c in o)
-            {
-                if (!this.Contains(c)) return false;
-            }
-            return true;
-        }
-        public override int GetHashCode()
-        {
-            return this.Count;
-        }
-    }
-    class Program
-    {
-        private static MyHashSet<string> EpsilonClosureOf(Digraph<string, SymbolEdge<string>> graph, string theState)
-        {
-            MyHashSet<string> result = new MyHashSet<string>();
-            Stack<string> s = new Stack<string>();
-            MyHashSet<string> visited = new MyHashSet<string>();
-            s.Push(theState);
-            while (s.Any())
-            {
-                var v = s.Pop();
-                if (visited.Contains(v)) continue;
-                visited.Add(v);
-                result.Add(v);
-                foreach (var o in graph.SuccessorEdges(v))
-                {
-                    if (!(o._symbol == null || o._symbol == "")) continue;
-                    s.Push(o.To);
-                }
-            }
-            return result;
-        }
-
-        static void Main(string[] args)
-        {
-            var file_name = args[0];
             Workspace _workspace = new Workspace();
             {
                 Document document = Document.CreateStringDocument(@"
 grammar kleene;
-
 a : | 'a' a;
 ");
                 _ = ParsingResultsFactory.Create(document);
@@ -94,11 +34,20 @@ a : | 'a' a;
                     new LanguageServer.Module().Compile(_workspace);
                 }
                 var result = LanguageServer.Transform.ConvertRecursionToKleeneOperator(document);
+                if (!(result.Count == 1 && result.First().Value == @"
+grammar kleene;
+a : 'a' * ;
+")) throw new Exception();
             }
+        }
+
+        [TestMethod]
+        public void Kleene2()
+        {
             {
+                Workspace _workspace = new Workspace();
                 Document document = Document.CreateStringDocument(@"
 grammar kleene;
-
 b : | b 'b';
 ");
                 _ = ParsingResultsFactory.Create(document);
@@ -117,11 +66,20 @@ b : | b 'b';
                     new LanguageServer.Module().Compile(_workspace);
                 }
                 var result = LanguageServer.Transform.ConvertRecursionToKleeneOperator(document);
+                if (!(result.Count == 1 && result.First().Value == @"
+grammar kleene;
+b : 'b' * ;
+")) throw new Exception();
             }
+        }
+
+        [TestMethod]
+        public void Kleene3()
+        {
             {
+                Workspace _workspace = new Workspace();
                 Document document = Document.CreateStringDocument(@"
 grammar kleene;
-
 xx  : xx yy | ;
 yy: 'b' ;
 ");
@@ -141,11 +99,21 @@ yy: 'b' ;
                     new LanguageServer.Module().Compile(_workspace);
                 }
                 var result = LanguageServer.Transform.ConvertRecursionToKleeneOperator(document);
+                if (!(result.Count == 1 && result.First().Value == @"
+grammar kleene;
+xx : yy * ;
+yy: 'b' ;
+")) throw new Exception();
             }
+        }
+
+        [TestMethod]
+        public void Kleene4()
+        {
             {
+                Workspace _workspace = new Workspace();
                 Document document = Document.CreateStringDocument(@"
 grammar kleene;
-
 xx : 'a' xx | 'a';
 yy : yy 'b' | 'b' ;
 zz : | 'a' | 'a' zz;
@@ -180,6 +148,13 @@ z2 : | 'b' | z2 'b';
                     new LanguageServer.Module().Compile(_workspace);
                 }
                 var result = LanguageServer.Transform.ConvertRecursionToKleeneOperator(document);
+                if (!(result.Count == 1 && result.First().Value == @"
+grammar kleene;
+xx : 'a' + ;
+yy : 'b' + ;
+zz : 'a' * ;
+z2 : 'b' * ;
+")) throw new Exception();
             }
         }
     }

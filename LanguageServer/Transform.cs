@@ -6468,76 +6468,43 @@
 
             // Get all intertoken text immediately for source reconstruction.
             var (text_before, other) = TreeEdits.TextToLeftOfLeaves(pd_parser.TokStream, pd_parser.ParseTree);
-
+            var old_code = pd_parser.Code;
             {
                 ParsingResults pd = pd_parser;
                 var pt = pd.ParseTree;
 
-                List<ANTLRv4Parser.AltListContext> altlists;
-                List<ANTLRv4Parser.ElementContext> elements;
-                List<ANTLRv4Parser.AltListContext> altlists2;
-                List<ANTLRv4Parser.ElementContext> elements2;
+                List<IParseTree> parens1;
+                List<IParseTree> parens2;
                 var (tree, parser, lexer) = (pd_parser.ParseTree, pd_parser.Parser, pd_parser.Lexer);
                 using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext = new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
                 {
                     org.eclipse.wst.xml.xpath2.processor.Engine engine = new org.eclipse.wst.xml.xpath2.processor.Engine();
 
-                    altlists = engine.parseExpression(
-                        "//(altList | labeledAlt)/alternative/element/ebnf[not(child::blockSuffix)]/block/altList[not(@ChildCount > 1)]",
+                    parens1 = engine.parseExpression(
+                        "//(altList | labeledAlt)/alternative/element/ebnf/block[altList[not(@ChildCount > 1)]]/(LPAREN | RPAREN)",
                         new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
-                        .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree as ANTLRv4Parser.AltListContext).ToList();
-                    altlists2 = engine.parseExpression(
-                        "//(altList | labeledAlt)[not(@ChildCount > 1)]/alternative[not(@ChildCount > 1)]/element/ebnf[not(child::blockSuffix)]/block/altList[@ChildCount > 1]",
+                        .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree).ToList();
+                    parens2 = engine.parseExpression(
+                        "//(altList | labeledAlt)[not(@ChildCount > 1)]/alternative[not(@ChildCount > 1)]/element/ebnf/block[altList[not(@ChildCount > 1)]]/(LPAREN | RPAREN)",
                         new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
-                        .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree as ANTLRv4Parser.AltListContext).ToList();
-                    elements = altlists.Select(t => t.Parent.Parent.Parent as ANTLRv4Parser.ElementContext).ToList();
-                    elements2 = altlists2.Select(t => t.Parent.Parent.Parent as ANTLRv4Parser.ElementContext).ToList();
-                    if (nodes != null)
-                    {
-                        altlists = altlists.Where(t => nodes.Contains(t)).ToList();
-                        elements = elements.Where(t => nodes.Select(u => u.Parent.Parent.Parent).Contains(t)).ToList();
-                        altlists2 = altlists2.Where(t => nodes.Contains(t)).ToList();
-                        elements2 = elements2.Where(t => nodes.Select(u => u.Parent.Parent.Parent).Contains(t)).ToList();
-                    }
-                }
-
-                for (int j = 0; j < altlists.Count; ++j)
-                {
-                    // Remove {altlist}/../../.. (an element), which is the "i'th" child.
-                    var altlist = altlists[j];
-                    var element = elements[j];
-                    var parent_alternative = element?.Parent as ANTLRv4Parser.AlternativeContext;
-                    int i = 0;
-                    for (; i < parent_alternative.ChildCount;)
-                    {
-                        if (parent_alternative.children[i] == element)
-                            break;
-                        ++i;
-                    }
-                    parent_alternative.children.RemoveAt(i);
-                    parent_alternative.children.Insert(i, altlist);
-                }
-                for (int j = 0; j < altlists2.Count; ++j)
-                {
-                    // Remove {altlist}/../../.. (an element), which is the "i'th" child.
-                    var altlist = altlists2[j];
-                    var element = elements2[j];
-                    var parent_alternative = element?.Parent as ANTLRv4Parser.AlternativeContext;
-                    int i = 0;
-                    for (; i < parent_alternative.ChildCount;)
-                    {
-                        if (parent_alternative.children[i] == element)
-                            break;
-                        ++i;
-                    }
-                    parent_alternative.children.RemoveAt(i);
-                    parent_alternative.children.Insert(i, altlist);
+                        .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree).ToList();
+                    //elements = parens1.Select(t => t.Parent.Parent.Parent as ANTLRv4Parser.ElementContext).ToList();
+                    //elements2 = parens2.Select(t => t.Parent.Parent.Parent as ANTLRv4Parser.ElementContext).ToList();
+                    //if (nodes != null)
+                    //{
+                    //    parens1 = parens1.Where(t => nodes.Contains(t)).ToList();
+                    //    elements = elements.Where(t => nodes.Select(u => u.Parent.Parent.Parent).Contains(t)).ToList();
+                    //    parens2 = parens2.Where(t => nodes.Contains(t)).ToList();
+                    //    elements2 = elements2.Where(t => nodes.Select(u => u.Parent.Parent.Parent).Contains(t)).ToList();
+                    //}
+                    TreeEdits.Delete(parens1);
+                    TreeEdits.Delete(parens2);
                 }
             }
             StringBuilder sb = new StringBuilder();
             TreeEdits.Reconstruct(sb, pd_parser.ParseTree, text_before);
             var new_code = sb.ToString();
-            if (new_code != pd_parser.Code)
+            if (new_code != old_code)
             {
                 result.Add(document.FullPath, new_code);
             }
