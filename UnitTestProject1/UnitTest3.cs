@@ -39,5 +39,25 @@ assignment : ( '=>' | '->' ) ? validID ( '+=' | '=' | '?=' ) assignableTerminal 
 // It should be assignment : ( '=>' | '->' ) ? validID ( '+=' | '=' | '?=' ) assignableTerminal ;
 ")) throw new Exception();
         }
+
+        [TestMethod]
+        public void Rup3()
+        {
+            Document document = Setup.OpenAndParse(@"
+grammar t3;
+a : ((a));
+b : ((a b)) c;
+c : (a b)* | c;
+d : ((a b) | c);
+");
+            var result = LanguageServer.Transform.RemoveUselessParentheses(document);
+            if (!(result.Count == 1 && result.First().Value == @"
+grammar t3;
+a : a;
+b : a b c;
+c : (a b)* | c;
+d : a b | c;
+")) throw new Exception();
+        }
     }
 }
