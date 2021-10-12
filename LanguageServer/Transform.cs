@@ -6442,7 +6442,7 @@
             return result;
         }
 
-        public static Dictionary<string, string> RemoveUselessParentheses(Document document, List<IParseTree> nodes = null)
+        public static Dictionary<string, string> RemoveUselessParentheses(Document document)
         {
             Dictionary<string, string> result = new Dictionary<string, string>();
             if (!(ParsingResultsFactory.Create(document) is ParsingResults pd_parser))
@@ -6456,23 +6456,12 @@
             {
                 throw new LanguageServerException("A grammar file is not selected. Please select one first.");
             }
-
-            if (nodes != null)
-            {
-                foreach (var n in nodes)
-                {
-                    if (!(n is ANTLRv4Parser.AltListContext))
-                        throw new Exception("Node isn't an Antlr4 altList type");
-                }
-            }
-
             // Get all intertoken text immediately for source reconstruction.
             var (text_before, other) = TreeEdits.TextToLeftOfLeaves(pd_parser.TokStream, pd_parser.ParseTree);
             var old_code = pd_parser.Code;
             {
                 ParsingResults pd = pd_parser;
                 var pt = pd.ParseTree;
-
                 List<IParseTree> parens1;
                 List<IParseTree> parens2;
                 var (tree, parser, lexer) = (pd_parser.ParseTree, pd_parser.Parser, pd_parser.Lexer);
@@ -6488,15 +6477,6 @@
                         "//(altList | labeledAlt)[not(@ChildCount > 1)]/alternative[not(@ChildCount > 1)]/element/ebnf/block[altList[not(@ChildCount > 1)]]/(LPAREN | RPAREN)",
                         new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
                         .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree).ToList();
-                    //elements = parens1.Select(t => t.Parent.Parent.Parent as ANTLRv4Parser.ElementContext).ToList();
-                    //elements2 = parens2.Select(t => t.Parent.Parent.Parent as ANTLRv4Parser.ElementContext).ToList();
-                    //if (nodes != null)
-                    //{
-                    //    parens1 = parens1.Where(t => nodes.Contains(t)).ToList();
-                    //    elements = elements.Where(t => nodes.Select(u => u.Parent.Parent.Parent).Contains(t)).ToList();
-                    //    parens2 = parens2.Where(t => nodes.Contains(t)).ToList();
-                    //    elements2 = elements2.Where(t => nodes.Select(u => u.Parent.Parent.Parent).Contains(t)).ToList();
-                    //}
                     TreeEdits.Delete(parens1);
                     TreeEdits.Delete(parens2);
                 }
@@ -6508,7 +6488,6 @@
             {
                 result.Add(document.FullPath, new_code);
             }
-
             return result;
         }
 
