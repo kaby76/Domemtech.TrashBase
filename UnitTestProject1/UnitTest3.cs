@@ -45,6 +45,19 @@ assignment : ( '=>' | '->' ) ? validID ( '+=' | '=' | '?=' ) assignableTerminal 
         {
             Document document = Setup.OpenAndParse(@"
 grammar t3;
+c : (a b)* | c;
+");
+            var result = LanguageServer.Transform.RemoveUselessParentheses(document);
+            if (!(result.Count == 1 && result.First().Value == @"
+grammar t3;
+c : (a b)* | c;
+")) throw new Exception();
+        }
+
+        public void Rup4()
+        {
+            Document document = Setup.OpenAndParse(@"
+grammar t3;
 a : ((a));
 b : ((a b)) c;
 c : (a b)* | c;

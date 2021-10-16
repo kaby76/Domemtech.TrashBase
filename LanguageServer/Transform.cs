@@ -6468,17 +6468,16 @@
                 using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext = new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
                 {
                     org.eclipse.wst.xml.xpath2.processor.Engine engine = new org.eclipse.wst.xml.xpath2.processor.Engine();
-
+                    // When can I remove "()"'s?
+                    // 1) If the enclosed element in the parentheses is just one item, regardless
+                    // if there is a suffix. E.g., (a)+, or (a), (x y z (a) b c).
+                    // 2) If there is more than one element, then the parentheses can't be followed
+                    // by a ?-, *-, +-operator. So, "(a b)+" is not equal to "a b+".
                     parens1 = engine.parseExpression(
-                        "//(altList | labeledAlt)/alternative/element/ebnf/block[altList[not(@ChildCount > 1)]]/(LPAREN | RPAREN)",
-                        new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
-                        .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree).ToList();
-                    parens2 = engine.parseExpression(
-                        "//(altList | labeledAlt)[not(@ChildCount > 1)]/alternative[not(@ChildCount > 1)]/element/ebnf/block[altList[not(@ChildCount > 1)]]/(LPAREN | RPAREN)",
+                        "//block[altList[alternative[count(element) = 1 and not(element/ebnf/block) or not(./../../../blockSuffix)]]]/(LPAREN | RPAREN)",
                         new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
                         .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree).ToList();
                     TreeEdits.Delete(parens1);
-                    TreeEdits.Delete(parens2);
                 }
             }
             StringBuilder sb = new StringBuilder();

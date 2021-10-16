@@ -75,8 +75,7 @@ namespace ConsoleApp1
             {
                 Document document = Document.CreateStringDocument(@"
 grammar kleene;
-
-a : | 'a' a;
+a : a ('a') a;
 ");
                 _ = ParsingResultsFactory.Create(document);
                 var workspace = document.Workspace;
@@ -93,13 +92,12 @@ a : | 'a' a;
                 {
                     new LanguageServer.Module().Compile(_workspace);
                 }
-                var result = LanguageServer.Transform.ConvertRecursionToKleeneOperator(document);
+                var result = LanguageServer.Transform.RemoveUselessParentheses(document);
             }
             {
                 Document document = Document.CreateStringDocument(@"
 grammar kleene;
-
-b : | b 'b';
+a : a ('a' b) a;
 ");
                 _ = ParsingResultsFactory.Create(document);
                 var workspace = document.Workspace;
@@ -116,14 +114,12 @@ b : | b 'b';
                 {
                     new LanguageServer.Module().Compile(_workspace);
                 }
-                var result = LanguageServer.Transform.ConvertRecursionToKleeneOperator(document);
+                var result = LanguageServer.Transform.RemoveUselessParentheses(document);
             }
             {
                 Document document = Document.CreateStringDocument(@"
 grammar kleene;
-
-xx  : xx yy | ;
-yy: 'b' ;
+a : a ('a' | b) a;
 ");
                 _ = ParsingResultsFactory.Create(document);
                 var workspace = document.Workspace;
@@ -140,30 +136,13 @@ yy: 'b' ;
                 {
                     new LanguageServer.Module().Compile(_workspace);
                 }
-                var result = LanguageServer.Transform.ConvertRecursionToKleeneOperator(document);
+                var result = LanguageServer.Transform.RemoveUselessParentheses(document);
             }
             {
                 Document document = Document.CreateStringDocument(@"
 grammar kleene;
-
-xx : 'a' xx | 'a';
-yy : yy 'b' | 'b' ;
-zz : | 'a' | 'a' zz;
-z2 : | 'b' | z2 'b';
+a : a ('a' b)? a;
 ");
-
-                // The Kleene rewrite currently produces
-                // xx : 'a' * 'a' ;
-                // yy: 'b' 'b' * ;
-                // zz: 'a' * ( | 'a');
-                // z2: ( | 'b') 'b' * ;
-                //
-                // This should be instead
-                // xx : 'a' + ;
-                // yy : 'b' + ;
-                // zz : 'a' * ;
-                // z2 : 'b' * ;
-
                 _ = ParsingResultsFactory.Create(document);
                 var workspace = document.Workspace;
                 _ = new LanguageServer.Module().Compile(workspace);
@@ -179,7 +158,7 @@ z2 : | 'b' | z2 'b';
                 {
                     new LanguageServer.Module().Compile(_workspace);
                 }
-                var result = LanguageServer.Transform.ConvertRecursionToKleeneOperator(document);
+                var result = LanguageServer.Transform.RemoveUselessParentheses(document);
             }
         }
     }
