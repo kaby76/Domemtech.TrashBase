@@ -19,7 +19,7 @@ bar: 'baz';
             var result = LanguageServer.Transform.RemoveUselessParentheses(document);
             if (!(result.Count == 1 && result.First().Value == @"
 grammar temp;
-foo:bar?; // <- can be safely replaced with `bar?`
+foo: bar?; // <- can be safely replaced with `bar?`
 bar: 'baz';
 "))
                 throw new Exception();
@@ -67,10 +67,10 @@ d : ((a b) | c);
             var result = LanguageServer.Transform.RemoveUselessParentheses(document);
             if (!(result.Count == 1 && result.First().Value == @"
 grammar t3;
-a :a;
-b :a b c;
+a : a;
+b : a b c;
 c : (a b)* | c;
-d :a b | c;
+d : a b | c;
 "))
                 throw new Exception();
         }
@@ -107,14 +107,14 @@ p : '+=' | '?=' ;
 p : a ( '+=' | '?=' ) ;
 p : a ( '+=' | '?=' ) ;
 p : a ( '+=' | '?=' ) ;
-a : a'a' a;
-a : a'a'? a;
-a :'a' b;
+a : a 'a' a;
+a : a 'a'? a;
+a : 'a' b;
 a : ('a' b)?;
 a : c 'a' b d;
 a : e ( 'a' | b) f;
-a : ('=>' |'->' )?;
-d :a b | c;
+a : ( '=>' | '->' )?;
+d : a b | c;
 d : (a b | c)?;
 d : x (a b | c) y;
 assignment : ( '=>' | '->' ) ? validID ( '+=' | '=' | '?=' ) assignableTerminal ;

@@ -6486,7 +6486,28 @@
                          */
                           new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
                             .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree).ToList();
-                        TreeEdits.Delete(parens1);
+
+                        // Delete parentheses, and adjust the "before_text" for
+                        // correct off-channel tokens for the remaining subtree.
+                        foreach (var p in parens1)
+                        {
+                            var term = p as TerminalNodeImpl;
+                            if (term.GetText() == "(")
+                            {
+                                var save = text_before[term];
+                                var parent = p.Parent;
+                                TerminalNodeImpl after = TreeEdits.NextToken(term);
+                                TreeEdits.Delete(p);
+                                if (after != null)
+                                {
+                                    text_before[after] = save;
+                                }
+                            }
+                            else
+                            {
+                                TreeEdits.Delete(p);
+                            }
+                        }
                     }
                 }
             }
