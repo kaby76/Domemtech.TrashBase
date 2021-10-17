@@ -6462,27 +6462,32 @@
             {
                 ParsingResults pd = pd_parser;
                 var pt = pd.ParseTree;
-                List<IParseTree> parens1;
-                List<IParseTree> parens2;
                 var (tree, parser, lexer) = (pd_parser.ParseTree, pd_parser.Parser, pd_parser.Lexer);
-                using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext = new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
                 {
-                    org.eclipse.wst.xml.xpath2.processor.Engine engine = new org.eclipse.wst.xml.xpath2.processor.Engine();
-                    // When can I remove "()"'s?
-                    // 1) If the enclosed element in the parentheses is just one item, regardless
-                    // if there is a suffix. E.g., (a)+, or (a), (x y z (a) b c).
-                    // 2) If there is more than one element, then the parentheses can't be followed
-                    // by a ?-, *-, +-operator. So, "(a b)+" is not equal to "a b+".
-                    parens1 = engine.parseExpression(
-                        @"//block
+                    List<IParseTree> parens1 = new List<IParseTree>();
+                    using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext = new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
+                    {
+                        org.eclipse.wst.xml.xpath2.processor.Engine engine = new org.eclipse.wst.xml.xpath2.processor.Engine();
+                        // When can I remove "()"'s?
+                        // 1) If the enclosed element in the parentheses is just one item, regardless
+                        // if there is a suffix. E.g., (a)+, or (a), (x y z (a) b c).
+                        // 2) If there is more than one element, then the parentheses can't be followed
+                        // by a ?-, *-, +-operator. So, "(a b)+" is not equal to "a b+".
+                        parens1 = engine.parseExpression(
+                            @"//block
                             [
-                            altList[count(alternative) = 1 and alternative[count(element) = 1]] or
-                            altList[count(alternative) = 1 and alternative[count(element) > 1 and not(./../../../blockSuffix)]]
+                               altList[count(alternative) = 1 and alternative[count(element) = 1]]
+                            or altList[count(alternative) = 1 and alternative[count(element) > 1 and not(./../../../blockSuffix)]]
+                            or altList[count(alternative) > 1 and alternative[count(element) = 1 and not(./../../../blockSuffix) and not(ancestor::alternative[count(element) > 1]) ]]
                             ]
                             /(LPAREN | RPAREN)",
-                        new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
-                        .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree).ToList();
-                    TreeEdits.Delete(parens1);
+                          //  or altList[count(alternative) > 1 and alternative[count(element) = 1 and not(./../../../blockSuffix) and ./../../../../../../alternative[count(element) = 1]]]
+                          /* or altList[count(alternative) > 1 and alternative[count(element) = 1 and not(./../../../blockSuffix) and ./../../../../../../alternative[count(element) = 1]]]
+                         */
+                          new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
+                            .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree).ToList();
+                        TreeEdits.Delete(parens1);
+                    }
                 }
             }
             StringBuilder sb = new StringBuilder();
