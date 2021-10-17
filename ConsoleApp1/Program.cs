@@ -74,74 +74,14 @@ namespace ConsoleApp1
             Workspace _workspace = new Workspace();
             {
                 Document document = Document.CreateStringDocument(@"
-grammar kleene;
+grammar t1;
 a : a ('a') a;
-");
-                _ = ParsingResultsFactory.Create(document);
-                var workspace = document.Workspace;
-                _ = new LanguageServer.Module().Compile(workspace);
-                Project project = _workspace.FindProject("Misc");
-                if (project == null)
-                {
-                    project = new Project("Misc", "Misc", "Misc");
-                    _workspace.AddChild(project);
-                }
-                project.AddDocument(document);
-                var pr = LanguageServer.ParsingResultsFactory.Create(document);
-                if (document.ParseTree == null)
-                {
-                    new LanguageServer.Module().Compile(_workspace);
-                }
-                var result = LanguageServer.Transform.RemoveUselessParentheses(document);
-            }
-            {
-                Document document = Document.CreateStringDocument(@"
-grammar kleene;
-a : a ('a' b) a;
-");
-                _ = ParsingResultsFactory.Create(document);
-                var workspace = document.Workspace;
-                _ = new LanguageServer.Module().Compile(workspace);
-                Project project = _workspace.FindProject("Misc");
-                if (project == null)
-                {
-                    project = new Project("Misc", "Misc", "Misc");
-                    _workspace.AddChild(project);
-                }
-                project.AddDocument(document);
-                var pr = LanguageServer.ParsingResultsFactory.Create(document);
-                if (document.ParseTree == null)
-                {
-                    new LanguageServer.Module().Compile(_workspace);
-                }
-                var result = LanguageServer.Transform.RemoveUselessParentheses(document);
-            }
-            {
-                Document document = Document.CreateStringDocument(@"
-grammar kleene;
-a : a ('a' | b) a;
-");
-                _ = ParsingResultsFactory.Create(document);
-                var workspace = document.Workspace;
-                _ = new LanguageServer.Module().Compile(workspace);
-                Project project = _workspace.FindProject("Misc");
-                if (project == null)
-                {
-                    project = new Project("Misc", "Misc", "Misc");
-                    _workspace.AddChild(project);
-                }
-                project.AddDocument(document);
-                var pr = LanguageServer.ParsingResultsFactory.Create(document);
-                if (document.ParseTree == null)
-                {
-                    new LanguageServer.Module().Compile(_workspace);
-                }
-                var result = LanguageServer.Transform.RemoveUselessParentheses(document);
-            }
-            {
-                Document document = Document.CreateStringDocument(@"
-grammar kleene;
-a : a ('a' b)? a;
+a : a ('a')? a;
+a : ('a' b);
+a : ('a' b)?;
+a : c ( 'a' b) d;
+a : e ( 'a' | b) f;
+a : ( (('=>')) | (('->')) )?;
 ");
                 _ = ParsingResultsFactory.Create(document);
                 var workspace = document.Workspace;

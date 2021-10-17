@@ -6474,7 +6474,12 @@
                     // 2) If there is more than one element, then the parentheses can't be followed
                     // by a ?-, *-, +-operator. So, "(a b)+" is not equal to "a b+".
                     parens1 = engine.parseExpression(
-                        "//block[altList[alternative[count(element) = 1 and not(element/ebnf/block) or not(./../../../blockSuffix)]]]/(LPAREN | RPAREN)",
+                        @"//block
+                            [
+                            altList[count(alternative) = 1 and alternative[count(element) = 1]] or
+                            altList[count(alternative) = 1 and alternative[count(element) > 1 and not(./../../../blockSuffix)]]
+                            ]
+                            /(LPAREN | RPAREN)",
                         new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
                         .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree).ToList();
                     TreeEdits.Delete(parens1);
