@@ -6481,9 +6481,6 @@
                             or altList[count(alternative) > 1 and alternative[count(element) = 1 and not(./../../../blockSuffix) and not(ancestor::alternative[count(element) > 1]) ]]
                             ]
                             /(LPAREN | RPAREN)",
-                          //  or altList[count(alternative) > 1 and alternative[count(element) = 1 and not(./../../../blockSuffix) and ./../../../../../../alternative[count(element) = 1]]]
-                          /* or altList[count(alternative) > 1 and alternative[count(element) = 1 and not(./../../../blockSuffix) and ./../../../../../../alternative[count(element) = 1]]]
-                         */
                           new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
                             .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree).ToList();
 
