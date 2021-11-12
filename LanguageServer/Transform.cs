@@ -2539,11 +2539,9 @@
                     {
                         for (int jj = 0; jj < alphas.Count; ++jj)
                         {
-                            StringBuilder sba = new StringBuilder();
-                            StringBuilder sbb = new StringBuilder();
-                            TreeEdits.Reconstruct(sba, alphas[jj], text_before);
-                            TreeEdits.Reconstruct(sbb, betas[jj], text_before);
-                            if (sba.ToString() != sbb.ToString())
+                            var r1 = alphas[jj]?.GetText()?.Trim();
+                            var r2 = betas[jj]?.GetText()?.Trim();
+                            if (r1 != r2)
                             {
                                 equal_alpha_beta = false;
                                 break;
@@ -2855,6 +2853,7 @@
 
         private static bool RequiresParens(List<IParseTree> alphas, Parser p)
         {
+            if (alphas.Count == 0) return false;
             if (alphas.Count > 1) return true;
             var v = alphas.First();
             var s = v.ToStringTree(p);
