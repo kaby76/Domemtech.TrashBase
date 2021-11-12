@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>Domemtech.TrashBase</id>
-        <version>2.2.0</version>
+        <version>3.0.0</version>
         <authors>Ken Domino</authors>
         <owners>domemtech</owners>
         <projectUrl>https://github.com/kaby76/Domemtech.TrashBase</projectUrl>
@@ -14,7 +14,7 @@
         <copyright>Copyright ©2021 Domemtech Inc</copyright>
         <tags>parsing antlr</tags>
         <dependencies>
-           <dependency id="Antlr4.Runtime.Standard" version="4.9.2" />
+           <dependency id="Antlr4.Runtime.Standard" version="4.9.3" />
            <dependency id="System.IO.Pipes" version="4.3.0" />
            <dependency id="System.IO.Pipes.AccessControl" version="5.0.0" />
            <dependency id="AntlrTreeEditing" version="2.9.0" />
