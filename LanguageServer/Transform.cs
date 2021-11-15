@@ -21,6 +21,7 @@
     using Microsoft.CodeAnalysis.Operations;
     using System.Collections.Immutable;
     using System.Collections;
+    using System.Text.RegularExpressions;
 
     public class Transform
     {
@@ -1311,12 +1312,20 @@
                 string new_lexer_ffn = current_dir + Path.DirectorySeparatorChar
                     + orig_name + "Lexer.g4";
                 string new_code_lexer = sb_lexer.ToString();
+                new_code_lexer = CleanupNewlines(new_code_lexer);
+                new_code_parser = CleanupNewlines(new_code_parser);
                 result.Add(new_parser_ffn, new_code_parser);
                 result.Add(new_lexer_ffn, new_code_lexer);
                 result.Add(g4_file_path, null);
             }
 
             return result;
+        }
+
+        private static string CleanupNewlines(string str)
+        {
+            Regex regex1 = new Regex("(?<![\r])[\n]");
+            return regex1.Replace(str, "\r\n");
         }
 
         public static Dictionary<string, string> CombineGrammars(Document document1, Document document2)
@@ -7222,7 +7231,7 @@ and not(lexerRuleBlock//ebnfSuffix)
             return result;
         }
 
-        public static Dictionary<string, string> MoveAfter(IParseTree from, IParseTree to, Document document)
+        public static Dictionary<string, string> MoveAfter(IEnumerable<IParseTree> from_list, IParseTree to, Document document)
         {
             Dictionary<string, string> result = new Dictionary<string, string>();
 
@@ -7241,7 +7250,7 @@ and not(lexerRuleBlock//ebnfSuffix)
             }
 
             var (text_before, other) = TreeEdits.TextToLeftOfLeaves(pd_parser.TokStream, pd_parser.ParseTree);
-            TreeEdits.MoveAfter(from, to);
+            TreeEdits.MoveAfter(from_list, to);
             StringBuilder sb = new StringBuilder();
             TreeEdits.Reconstruct(sb, pd_parser.ParseTree, text_before);
             var new_code = sb.ToString();
@@ -7252,7 +7261,7 @@ and not(lexerRuleBlock//ebnfSuffix)
             return result;
         }
 
-        public static Dictionary<string, string> MoveBefore(IParseTree from, IParseTree to, Document document)
+        public static Dictionary<string, string> MoveBefore(IEnumerable<IParseTree> from_list, IParseTree to, Document document)
         {
             Dictionary<string, string> result = new Dictionary<string, string>();
 
@@ -7271,7 +7280,7 @@ and not(lexerRuleBlock//ebnfSuffix)
             }
 
             var (text_before, other) = TreeEdits.TextToLeftOfLeaves(pd_parser.TokStream, pd_parser.ParseTree);
-            TreeEdits.MoveBefore(from, to);
+            TreeEdits.MoveBefore(from_list, to);
             StringBuilder sb = new StringBuilder();
             TreeEdits.Reconstruct(sb, pd_parser.ParseTree, text_before);
             var new_code = sb.ToString();
