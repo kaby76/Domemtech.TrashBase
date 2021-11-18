@@ -870,7 +870,16 @@
                     var l = allowable_lexer_rules[i];
                     var t = l.GetText();
                     if (nodes.Contains(l))
-                        subs.Add(dom_literals[i].AntlrIParseTree.GetText(), t);
+                    {
+                        if (!subs.ContainsKey(dom_literals[i].AntlrIParseTree.GetText()))
+                            subs.Add(dom_literals[i].AntlrIParseTree.GetText(), t);
+                        else
+                            System.Console.Error.WriteLine("Warning: multiple rules for RHS string "
+				    + dom_literals[i].AntlrIParseTree.GetText() + ". Rule "
+				    + t + " ignored, using "
+				    + subs[dom_literals[i].AntlrIParseTree.GetText()]
+				    + " instead.");
+                    }
                 }
             }
 
