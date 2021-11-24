@@ -70,12 +70,11 @@ namespace ConsoleApp1
 
         static void Main(string[] args)
         {
-            var file_name = args[0];
             Workspace _workspace = new Workspace();
             {
                 Document document = Document.CreateStringDocument(@"
 grammar t1;
-a : a ('a') a;
+a : a? 'b';
 ");
                 _ = ParsingResultsFactory.Create(document);
                 var workspace = document.Workspace;
@@ -92,7 +91,7 @@ a : a ('a') a;
                 {
                     new LanguageServer.Module().Compile(_workspace);
                 }
-                var result = LanguageServer.Transform.RemoveUselessParentheses(document);
+                var result = LanguageServer.Transform.ConvertRecursionToKleeneOperator(document);
             }
         }
     }
