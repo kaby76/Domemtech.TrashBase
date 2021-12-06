@@ -6555,78 +6555,74 @@
             }
 
             // Find keyword-like literals in lexer rules.
-            List<ANTLRv4Parser.LexerRuleSpecContext> to_check_lexer_rule_spec;
+            List<TerminalNodeImpl> to_check_lexer_rule_spec;
             var (tree, parser, lexer) = (pd_parser.ParseTree, pd_parser.Parser, pd_parser.Lexer);
             using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext = new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
             {
                 org.eclipse.wst.xml.xpath2.processor.Engine engine = new org.eclipse.wst.xml.xpath2.processor.Engine();
                 var dom_lexer_rule_spec = engine.parseExpression(
                         @"
-//lexerRuleSpec[lexerRuleBlock/lexerAltList[not(@ChildCount > 1)]/lexerAlt/lexerElements[not(@ChildCount > 1)]
-    /lexerElement[not(@ChildCount > 1)]/lexerAtom/terminal[not(@ChildCount > 1)]/STRING_LITERAL]",
+//lexerRuleSpec//STRING_LITERAL",
                         new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
                     .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement)).ToArray();
-                to_check_lexer_rule_spec = dom_lexer_rule_spec.Select(x => x.AntlrIParseTree as ANTLRv4Parser.LexerRuleSpecContext).ToList();
+                to_check_lexer_rule_spec = dom_lexer_rule_spec.Select(x => x.AntlrIParseTree as TerminalNodeImpl).ToList();
             }
             var (text_before, other) = TreeEdits.TextToLeftOfLeaves(pd_parser.TokStream, pd_parser.ParseTree);
             for (int i = 0; i < to_check_lexer_rule_spec.Count; ++i)
             {
-                var lexer_rule_spec = to_check_lexer_rule_spec[i];
-                if (lexer_rule_spec.FRAGMENT() != null) continue;
-                var lexer_elements = lexer_rule_spec?.lexerRuleBlock()?.lexerAltList()?.lexerAlt()[0]?.lexerElements();
-                var lexer_element = lexer_elements?.lexerElement();
-                // Verify
-                bool ok = true;
-                foreach (var element in lexer_element)
+                var str = to_check_lexer_rule_spec[i];
+                if (nodes != null && nodes.Any() && !nodes.Contains(str)) continue;
+                if (str.Parent is ANTLRv4Parser.CharacterRangeContext) continue;
+                if (str.Parent is ANTLRv4Parser.OptionValueContext) continue;
+                if (str.Parent is ANTLRv4Parser.ElementOptionContext) continue;
+                bool add_parens = false;
+                for (IParseTree p = str; p != null; p = p.Parent)
                 {
-                    var s = element.lexerAtom()?.terminal()?.STRING_LITERAL()?.GetText();
-                    if (s == null || s.Length <= 2)
+                    if (p is ANTLRv4Parser.LexerElementContext le)
                     {
-                        ok = false;
-                        break;
-                    }
-                    string new_str = "";
-                    foreach (var cc in s)
-                    {
-                        string rep = (Char.ToUpper(cc) == Char.ToLower(cc)) ? cc.ToString() : (Char.ToLower(cc).ToString() + Char.ToUpper(cc).ToString());
-                        new_str = new_str + rep;
-                    }
-                    if (new_str == s)
-                    {
-                        ok = false;
+                        if (le.ebnfSuffix() != null)
+                        {
+                            add_parens = true;
+                        }
                         break;
                     }
                 }
-                if (!ok) continue;
-
                 StringBuilder rep_sb = new StringBuilder();
-                foreach (var element in lexer_element)
+                var s_orig = str.GetText();
+                // Strip single quotes from string literal.
+                var s = s_orig.Substring(1).Substring(0, s_orig.Length - 2);
+                // Make new string of upper and lowercase chars, and symbols.
+                if (add_parens)
                 {
-                    var s_orig = element.lexerAtom()?.terminal()?.STRING_LITERAL()?.GetText();
-                    var s = s_orig.Substring(1).Substring(0, s_orig.Length - 2);
-                    string new_str = "";
-                    foreach (var cc in s)
+                    rep_sb.Append("(");
+                }
+                foreach (var cc in s)
+                {
+                    if (Char.IsLetter(cc))
                     {
                         string rep = (Char.ToUpper(cc) == Char.ToLower(cc)) ? cc.ToString() : (Char.ToLower(cc).ToString() + Char.ToUpper(cc).ToString());
-                        new_str = new_str + rep;
+                        rep_sb.Append(" [" + rep + "]");
                     }
-                    if (new_str == s)
+                    else if (cc == '[')
                     {
-                        rep_sb.Append(s_orig);
+                        rep_sb.Append("\\[");
+                    }
+                    else if (cc == ']')
+                    {
+                        rep_sb.Append("\\]");
+                    }
+                    else if (cc == '-')
+                    {
+                        rep_sb.Append("\\-");
                     }
                     else
                     {
-                        new_str = "";
-                        foreach (var cc in s)
-                        {
-                            string rep = (Char.ToUpper(cc) == Char.ToLower(cc)) ? cc.ToString() : (Char.ToLower(cc).ToString() + Char.ToUpper(cc).ToString());
-                            if (rep == "[") rep = "\\[";
-                            else if (rep == "]") rep = "\\]";
-                            else if (rep == "-") rep = "\\-";
-                            new_str = new_str + " [" + rep + "]";
-                        }
-                        rep_sb.Append(new_str);
+                        rep_sb.Append(cc);
                     }
+                }
+                if (add_parens)
+                {
+                    rep_sb.Append(" )");
                 }
                 var token = new CommonToken(ANTLRv4Lexer.STRING_LITERAL)
                 {
@@ -6638,8 +6634,7 @@
                 var construct = new CTree.Class1(pd_parser.Parser,
                     new Dictionary<string, object>()
                         {{"id", string_literal}});
-                var les = construct.CreateTree("( lexerElements ( lexerElement ( lexerAtom {id} )))");
-                TreeEdits.Replace(lexer_elements, les);
+                TreeEdits.Replace(str, string_literal);
             }
 
             StringBuilder sb = new StringBuilder();
