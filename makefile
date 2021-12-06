@@ -9,7 +9,7 @@ setup:
 	dotnet nuget add source $cwd/ --name nuget-base
 
 publish:
-	dotnet nuget push Domemtech.TrashBase.3.0.0.nupkg --api-key ${trashkey} --source https://api.nuget.org/v3/index.json
+	dotnet nuget push Domemtech.TrashBase.3.1.0.nupkg --api-key ${trashkey} --source https://api.nuget.org/v3/index.json
 
 clean:
 	rm -rf */obj */bin
