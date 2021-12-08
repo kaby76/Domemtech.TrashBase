@@ -875,10 +875,10 @@
                             subs.Add(dom_literals[i].AntlrIParseTree.GetText(), t);
                         else
                             System.Console.Error.WriteLine("Warning: multiple rules for RHS string "
-				    + dom_literals[i].AntlrIParseTree.GetText() + ". Rule "
-				    + t + " ignored, using "
-				    + subs[dom_literals[i].AntlrIParseTree.GetText()]
-				    + " instead.");
+                                + dom_literals[i].AntlrIParseTree.GetText() + ". Rule "
+                                + t + " ignored, using "
+                                + subs[dom_literals[i].AntlrIParseTree.GetText()]
+                                + " instead.");
                     }
                 }
             }
@@ -6596,8 +6596,9 @@
                 {
                     rep_sb.Append("(");
                 }
-                foreach (var cc in s)
+                for (int j = 0; j < s.Length; ++j)
                 {
+                    var cc = s[j];
                     if (Char.IsLetter(cc))
                     {
                         string rep = (Char.ToUpper(cc) == Char.ToLower(cc)) ? cc.ToString() : (Char.ToLower(cc).ToString() + Char.ToUpper(cc).ToString());
@@ -6605,19 +6606,24 @@
                     }
                     else if (cc == '[')
                     {
-                        rep_sb.Append("\\[");
+                        rep_sb.Append(@" [\[]");
                     }
                     else if (cc == ']')
                     {
-                        rep_sb.Append("\\]");
+                        rep_sb.Append(@" [\]]");
                     }
                     else if (cc == '-')
                     {
-                        rep_sb.Append("\\-");
+                        rep_sb.Append(@" [\-]");
+                    }
+                    else if (cc == '\\')
+                    {
+                        cc = s[++j];
+                        rep_sb.Append(@" [\" + cc + "]");
                     }
                     else
                     {
-                        rep_sb.Append(cc);
+                        rep_sb.Append(@" [" + cc + @"]");
                     }
                 }
                 if (add_parens)
@@ -7882,8 +7888,8 @@ and not(lexerRuleBlock//ebnfSuffix)
                             new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
                         .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree)
                         .ToArray();
-		            foreach (var n in nodes)
-		            {
+                    foreach (var n in nodes)
+                    {
                         // Get next sibling.
                         var sib = NextSib(n);
                         if (sib != null)
@@ -7896,8 +7902,8 @@ and not(lexerRuleBlock//ebnfSuffix)
                                 }
                             }
                         }
-			            TreeEdits.Delete(n);
-		            }
+                        TreeEdits.Delete(n);
+                    }
                 }
                 {
                     var nodes = engine.parseExpression(
