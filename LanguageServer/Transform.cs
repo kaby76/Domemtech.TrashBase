@@ -2445,380 +2445,160 @@
             // => A ->  (a1 | a2 | ... ) (b1 | b2 | ...)*;
             // Note, A on RHS cannot have any postfix operators.
             //
-            // A -> A? b1 | A? b2 | ...;
-            // => A -> (b1 | b2 | ...)+;
-            // Note, the rule cannot have any alts without A?.
+            // A -> A? b1 | A? b2 | ... | a1 | a2 | ...;
+            // A -> A b1 | b1 | A b2 | b2 | ... | a1 | a2 | ...;
+            // A -> b1 | b2 | ... | a1 | a2 | ... | A b1 | a b2 | ...; 
+            // A -> ( a1 | a2 | ... | b1 | b2 | ... ) (b1 | b2 | ...)* ;
+            // A on RHS must only be "A?".
             //
             // Right recursion:
-            // Convert A -> beta1 A | beta2 A | ... | alpha1 | alpha2 | ... ;
-            // into A ->   (beta1 | beta2 | ...)* (alpha1 | alpha2 | ... )
-
+            // Convert A -> b1 A | b2 A | ... | a1 | a2 | ... ;
+            // into A ->   (b1 | b2 | ...)* (a1 | a2 | ... )
+            //
+            // A -> a1 | a2 | ... | b1 A? | b2 A? | ...;
+            // A -> (b1 | b2 | ...)* (a1 | a2 | ... | b1 | b2 | ...)
+            // A on RHS must only be "A?".
+            //
+            // First, set up the new rule, less the RHS rewrite.
+            var new_a_rule = new ANTLRv4Parser.ParserRuleSpecContext(null, 0);
+            string lhs = "";
+            IParseTree colon;
             if (rule is ANTLRv4Parser.ParserRuleSpecContext r)
             {
-                var new_a_rule = new ANTLRv4Parser.ParserRuleSpecContext(null, 0);
-                var lhs = r.RULE_REF()?.GetText();
+                //parserRuleSpec: ruleModifiers? RULE_REF argActionBlock? ruleReturns? throwsSpec? localsSpec? rulePrequel* COLON ruleBlock SEMI exceptionGroup;
+                if (r.ruleModifiers() != null) TreeEdits.CopyTreeRecursive(r.ruleModifiers(), new_a_rule, text_before);
+                TreeEdits.CopyTreeRecursive(r.RULE_REF(), new_a_rule, text_before);
+                lhs = r.RULE_REF()?.GetText();
+                if (r.argActionBlock() != null) TreeEdits.CopyTreeRecursive(r.argActionBlock(), new_a_rule, text_before);
+                if (r.ruleReturns() != null) TreeEdits.CopyTreeRecursive(r.ruleReturns(), new_a_rule, text_before);
+                if (r.throwsSpec() != null) TreeEdits.CopyTreeRecursive(r.throwsSpec(), new_a_rule, text_before);
+                if (r.localsSpec() != null) TreeEdits.CopyTreeRecursive(r.localsSpec(), new_a_rule, text_before);
+                foreach (var rp in r.rulePrequel()) TreeEdits.CopyTreeRecursive(rp, new_a_rule, text_before);
+                colon = TreeEdits.CopyTreeRecursive(r.COLON(), new_a_rule, text_before);
+                TreeEdits.CopyTreeRecursive(r.SEMI(), new_a_rule, text_before);
+                if (r.exceptionGroup() != null) TreeEdits.CopyTreeRecursive(r.exceptionGroup(), new_a_rule, text_before);
+            }
+            else if (rule is ANTLRv4Parser.LexerRuleSpecContext lr)
+            {
+                if (lr.FRAGMENT() != null) TreeEdits.CopyTreeRecursive(lr.FRAGMENT(), new_a_rule, text_before);
+                TreeEdits.CopyTreeRecursive(lr.TOKEN_REF(), new_a_rule, text_before);
+                lhs = lr.TOKEN_REF()?.GetText();
+                colon = TreeEdits.CopyTreeRecursive(lr.COLON(), new_a_rule, text_before);
+                TreeEdits.CopyTreeRecursive(lr.SEMI(), new_a_rule, text_before);
+            }
+            else throw new Exception();
+
+            // Partition the alts into two collections, one
+            // contains the "alphas" and the other the "betas", which I
+            // describe above.
+            List<IParseTree> alphas = new List<IParseTree>();
+            List<IParseTree> betas = new List<IParseTree>();
+            bool q_operator = false;
+            foreach (ANTLRv4Parser.AlternativeContext alt in EnumeratorOfAlts(rule))
+            {
+                ANTLRv4Parser.ElementContext e = null;
+                if (has_direct_left_recursion && !has_direct_right_recursion)
                 {
-                    TreeEdits.CopyTreeRecursive(r.RULE_REF(), new_a_rule, text_before);
+                    e = EnumeratorOfRHS(alt)?.FirstOrDefault();
                 }
-                var token2 = new CommonToken(ANTLRv4Parser.COLON) { Line = -1, Column = -1, Text = ":" };
-                var new_colon = new TerminalNodeImpl(token2);
-                new_a_rule.AddChild(new_colon);
-                new_colon.Parent = new_a_rule;
-                // Now have "A :"
+                else
                 {
-                    // First, partition the alts into two collections, one
-                    // contains the "alphas" and the other the "betas" described
-                    // above.
-                    List<IParseTree> alphas = new List<IParseTree>();
-                    List<IParseTree> betas = new List<IParseTree>();
-                    bool q_operator = false;
-                    foreach (ANTLRv4Parser.AlternativeContext alt in EnumeratorOfAlts(rule))
-                    {
-                        ANTLRv4Parser.ElementContext e = null;
-                        if (has_direct_left_recursion && !has_direct_right_recursion)
-                        {
-                            e = EnumeratorOfRHS(alt)?.FirstOrDefault();
-                        }
-                        else
-                        {
-                            e = EnumeratorOfRHS(alt)?.LastOrDefault();
-                        }
-                        if (lhs == e?.GetText())
-                        {
-                            TreeEdits.Delete(e);
-                            betas.Add(alt);
-                        }
-                        else if (lhs == e?.atom().GetText())
-                        {
-                            if (e?.ebnfSuffix()?.GetText() != "?")
-                                return null;
-                            TreeEdits.Delete(e);
-                            betas.Add(alt);
-                            q_operator = true;
-                        }
-                        else
-                        {
-                            alphas.Add(alt);
-                        }
-                    }
-                    // Determine if alpha list equals beta list.
-                    bool equal_alpha_beta = true;
-                    if (alphas.Count == betas.Count)
-                    {
-                        for (int jj = 0; jj < alphas.Count; ++jj)
-                        {
-                            var r1 = alphas[jj]?.GetText()?.Trim();
-                            var r2 = betas[jj]?.GetText()?.Trim();
-                            if (r1 != r2)
-                            {
-                                equal_alpha_beta = false;
-                                break;
-                            }
-                        }
-                    }
-                    else
+                    e = EnumeratorOfRHS(alt)?.LastOrDefault();
+                }
+                if (lhs == e?.GetText())
+                {
+                    TreeEdits.Delete(e);
+                    betas.Add(alt);
+                }
+                else if (lhs == e?.atom().GetText())
+                {
+                    if (e?.ebnfSuffix()?.GetText() != "?")
+                        return null;
+                    TreeEdits.Delete(e);
+                    betas.Add(alt);
+                    q_operator = true;
+                }
+                else
+                {
+                    alphas.Add(alt);
+                }
+            }
+            // Determine if alpha list equals beta list.
+            bool equal_alpha_beta = true;
+            if (alphas.Count == betas.Count)
+            {
+                for (int jj = 0; jj < alphas.Count; ++jj)
+                {
+                    var r1 = alphas[jj]?.GetText()?.Trim();
+                    var r2 = betas[jj]?.GetText()?.Trim();
+                    if (r1 != r2)
                     {
                         equal_alpha_beta = false;
-                    }
-                    // Construct new rule.
-                    if (equal_alpha_beta)
-                    {
-                        bool first = true;
-                        StringBuilder sba = new StringBuilder();
-                        for (int jj = 0; jj < alphas.Count; ++jj)
-                        {
-                            if (!first)
-                                sba.Append(" |");
-                            TreeEdits.Reconstruct(sba, alphas[jj], text_before);
-                            first = false;
-                        }
-                        bool aparens = RequiresParens(alphas, parser);
-                        string a2 = (aparens ? " (" : "") + sba.ToString() + (aparens ? " )+" : "+");
-                        var a1 = TreeEdits.InsertAfter(new_colon, a2);
-                        text_before[a1] = "";
-                    }
-                    else
-                    {
-                        bool first = true;
-                        StringBuilder sba = new StringBuilder();
-                        for (int jj = 0; jj < alphas.Count; ++jj)
-                        {
-                            if (!first)
-                                sba.Append(" |");
-                            TreeEdits.Reconstruct(sba, alphas[jj], text_before);
-                            first = false;
-                        }
-                        StringBuilder sbb = new StringBuilder();
-                        first = true;
-                        for (int jj = 0; jj < betas.Count; ++jj)
-                        {
-                            if (!first)
-                                sbb.Append(" |");
-                            TreeEdits.Reconstruct(sbb, betas[jj], text_before);
-                            first = false;
-                        }
-                        string trim_sba = sba.ToString().Replace(" ","");
-                        string trim_sbb = sbb.ToString().Replace(" ", "");
-                        bool p1_eq_p2 = trim_sba == trim_sbb;
-                        bool p1_bar_eq_p2
-                            = trim_sba + "|" == trim_sbb
-                            || "|" + trim_sba == trim_sbb;
-                        bool p1_eq_p2_bar
-                            = trim_sba == "|" + trim_sbb
-                            || trim_sba == trim_sbb + "|";
-                        bool aparens = RequiresParens(alphas, parser);
-                        bool bparens = RequiresParens(betas, parser);
-                        if (has_direct_left_recursion && !has_direct_right_recursion)
-                        {
-                            if (p1_eq_p2_bar)
-                            {
-                                string b2 = (bparens ? " (" : "") + sbb.ToString() + (bparens ? " )+" : "+");
-                                var b1 = TreeEdits.InsertAfter(new_colon, b2);
-                                text_before[b1] = "";
-                            }
-                            else if (p1_bar_eq_p2)
-                            {
-                                string a2 = (aparens ? " (" : "") + sba.ToString() + (aparens ? " )+" : "+");
-                                var a1 = TreeEdits.InsertAfter(new_colon, a2);
-                                text_before[a1] = "";
-                            }
-                            else
-                            {
-                                string a2 = (aparens ? " (" : "") + sba.ToString() + (aparens ? " )" : "");
-                                var a1 = TreeEdits.InsertAfter(new_colon, a2);
-                                text_before[a1] = "";
-                                string op = q_operator ? "+" : "*";
-                                string b2 = (bparens ? " (" : "") + sbb.ToString() + (bparens ? " )" : "") + op;
-                                var b1 = TreeEdits.InsertAfter(a1, b2);
-                                text_before[b1] = "";
-                            }
-                        }
-                        else
-                        {
-                            if (p1_eq_p2_bar)
-                            {
-                                string b2 = (bparens ? " (" : "") + sbb.ToString() + (bparens ? " )+" : "+");
-                                var b1 = TreeEdits.InsertAfter(new_colon, b2);
-                                text_before[b1] = "";
-                            }
-                            else if (p1_bar_eq_p2)
-                            {
-                                string a2 = (aparens ? " (" : "") + sba.ToString() + (aparens ? " )+" : "+");
-                                var a1 = TreeEdits.InsertAfter(new_colon, a2);
-                                text_before[a1] = "";
-                            }
-                            else
-                            {
-                                string op = q_operator ? "+" : "*";
-                                string b2 = (bparens ? " (" : "") + sbb.ToString() + (bparens ? " )" : "") + op;
-                                var b1 = TreeEdits.InsertAfter(new_colon, b2);
-                                text_before[b1] = "";
-                                string a2 = (aparens ? " (" : "") + sba.ToString() + (aparens ? " )" : "");
-                                var a1 = TreeEdits.InsertAfter(b1, a2);
-                                text_before[a1] = "";
-                            }
-                        }
+                        break;
                     }
                 }
-                {
-                    TreeEdits.CopyTreeRecursive(r.exceptionGroup(), new_a_rule, text_before);
-                }
-                {
-                    var token3 = new CommonToken(ANTLRv4Parser.SEMI) { Line = -1, Column = -1, Text = ";" };
-                    var new_semi = new TerminalNodeImpl(token3);
-                    new_a_rule.AddChild(new_semi);
-                    new_semi.Parent = new_a_rule;
-                }
-                return (IParseTree)new_a_rule;
             }
-            else if (rule is ANTLRv4Parser.LexerRuleSpecContext r2)
+            else
             {
-                var new_a_rule = new ANTLRv4Parser.LexerRuleSpecContext(null, 0);
-                var lhs = r2.TOKEN_REF()?.GetText();
-                {
-                    TreeEdits.CopyTreeRecursive(r2.TOKEN_REF(), new_a_rule, text_before);
-                }
-                // Now have "A"
-                {
-                    var token2 = new CommonToken(ANTLRv4Parser.COLON) { Line = -1, Column = -1, Text = ":" };
-                    var new_colon = new TerminalNodeImpl(token2);
-                    new_a_rule.AddChild(new_colon);
-                    new_colon.Parent = new_a_rule;
-                }
-                // Now have "A :"
-                var rule_alt_list = new ANTLRv4Parser.RuleAltListContext(null, 0);
-                var altlist1 = new ANTLRv4Parser.AltListContext(null, 0);
-                var altlist2 = new ANTLRv4Parser.AltListContext(null, 0);
-                {
-                    var new_rule_block_context = new ANTLRv4Parser.RuleBlockContext(new_a_rule, 0);
-                    new_a_rule.AddChild(new_rule_block_context);
-                    new_rule_block_context.Parent = new_a_rule;
-                    new_rule_block_context.AddChild(rule_alt_list);
-                    rule_alt_list.Parent = new_rule_block_context;
-                    var l_alt = new ANTLRv4Parser.LabeledAltContext(null, 0);
-                    rule_alt_list.AddChild(l_alt);
-                    l_alt.Parent = rule_alt_list;
-                    var new_alt = new ANTLRv4Parser.AlternativeContext(null, 0);
-                    l_alt.AddChild(new_alt);
-                    new_alt.Parent = l_alt;
-                    var element1 = new ANTLRv4Parser.ElementContext(null, 0);
-                    var element2 = new ANTLRv4Parser.ElementContext(null, 0);
-                    if (has_direct_left_recursion && !has_direct_right_recursion)
-                    {
-                        new_alt.AddChild(element1);
-                        element1.Parent = new_alt;
-                        new_alt.AddChild(element2);
-                        element2.Parent = new_alt;
-                    }
-                    else
-                    {
-                        new_alt.AddChild(element2);
-                        element2.Parent = new_alt;
-                        new_alt.AddChild(element1);
-                        element1.Parent = new_alt;
-                    }
-                    {
-                        var new_ebnf = new ANTLRv4Parser.EbnfContext(null, 0);
-                        element1.AddChild(new_ebnf);
-                        new_ebnf.Parent = element1;
-                        var new_block = new ANTLRv4Parser.BlockContext(null, 0);
-                        new_ebnf.AddChild(new_block);
-                        new_block.Parent = new_ebnf;
-                        var lparen_token = new CommonToken(ANTLRv4Lexer.LPAREN) { Line = -1, Column = -1, Text = "(" };
-                        var new_lparen = new TerminalNodeImpl(lparen_token);
-                        new_block.AddChild(new_lparen);
-                        new_lparen.Parent = new_block;
-                        new_block.AddChild(altlist1);
-                        altlist1.Parent = new_block;
-                        var rparen_token = new CommonToken(ANTLRv4Lexer.RPAREN) { Line = -1, Column = -1, Text = ")" };
-                        var new_rparen = new TerminalNodeImpl(rparen_token);
-                        new_block.AddChild(new_rparen);
-                        new_rparen.Parent = new_block;
-                    }
-                    {
-                        var new_ebnf = new ANTLRv4Parser.EbnfContext(null, 0);
-                        element2.AddChild(new_ebnf);
-                        new_ebnf.Parent = element2;
-                        var new_block = new ANTLRv4Parser.BlockContext(null, 0);
-                        new_ebnf.AddChild(new_block);
-                        new_block.Parent = new_ebnf;
-                        var new_blocksuffix = new ANTLRv4Parser.BlockSuffixContext(null, 0);
-                        new_ebnf.AddChild(new_blocksuffix);
-                        new_blocksuffix.Parent = new_ebnf;
-                        var new_ebnfsuffix = new ANTLRv4Parser.EbnfSuffixContext(null, 0);
-                        new_blocksuffix.AddChild(new_ebnfsuffix);
-                        new_ebnfsuffix.Parent = new_blocksuffix;
-                        var star_token = new CommonToken(ANTLRv4Lexer.STAR) { Line = -1, Column = -1, Text = "*" };
-                        var new_star = new TerminalNodeImpl(star_token);
-                        new_ebnfsuffix.AddChild(new_star);
-                        new_star.Parent = new_ebnfsuffix;
-                        var lparen_token = new CommonToken(ANTLRv4Lexer.LPAREN) { Line = -1, Column = -1, Text = "(" };
-                        var new_lparen = new TerminalNodeImpl(lparen_token);
-                        new_block.AddChild(new_lparen);
-                        new_lparen.Parent = new_block;
-                        new_block.AddChild(altlist2);
-                        altlist2.Parent = new_block;
-                        var rparen_token = new CommonToken(ANTLRv4Lexer.RPAREN) { Line = -1, Column = -1, Text = ")" };
-                        var new_rparen = new TerminalNodeImpl(rparen_token);
-                        new_block.AddChild(new_rparen);
-                        new_rparen.Parent = new_block;
-                    }
-                }
-                {
-                    var token3 = new CommonToken(ANTLRv4Parser.SEMI) { Line = -1, Column = -1, Text = ";" };
-                    var new_semi = new TerminalNodeImpl(token3);
-                    new_a_rule.AddChild(new_semi);
-                    new_semi.Parent = new_a_rule;
-                }
-                //{
-                //    TreeEdits.CopyTreeRecursive(r.exceptionGroup(), new_a_rule, text_before);
-                //}
-                // Now have "A : <ruleBlock
-                //                  <ruleAltList
-                //                     <labeledAlt
-                //                        <alternative
-                //                           <element
-                //                              <ebnf
-                //                                 <block
-                //                                    '('
-                //                                       <altList1>
-                //                                    ')'
-                //                           >  >  >
-                //                           <element
-                //                              <ebnf
-                //                                 <block
-                //                                    '('
-                //                                       <altList2>
-                //                                    ')'
-                //                                 >
-                //                                 <blockSuffix
-                //                                    <ebnfSuffix
-                //                                       STAR
-                //               >  >  >  >  >  >  >  >  ;  <eg>"
-                {
-                    bool first1 = true;
-                    bool first2 = true;
-                    foreach (ANTLRv4Parser.LexerAltContext alt in EnumeratorOfLexerAlts(r2))
-                    {
-                        ANTLRv4Parser.LexerAtomContext atom = null;
-                        if (has_direct_left_recursion && !has_direct_right_recursion)
-                            atom = EnumeratorOfLexerRHS(alt)?.FirstOrDefault();
-                        else
-                            atom = EnumeratorOfLexerRHS(alt)?.LastOrDefault();
-                        if (lhs == atom?.GetText())
-                        {
-                            if (!first1)
-                            {
-                                var token4 = new CommonToken(ANTLRv4Lexer.OR) { Line = -1, Column = -1, Text = "|" };
-                                var new_or = new TerminalNodeImpl(token4);
-                                altlist2.AddChild(new_or);
-                                new_or.Parent = altlist2;
-                            }
-                            first1 = false;
-                            var l_alt = new ANTLRv4Parser.LabeledAltContext(null, 0);
-                            altlist2.AddChild(l_alt);
-                            l_alt.Parent = altlist2;
-                            var new_alt = new ANTLRv4Parser.AlternativeContext(null, 0);
-                            l_alt.AddChild(new_alt);
-                            new_alt.Parent = l_alt;
-                            var lelements = alt.lexerElements();
-                            var elements = lelements.lexerElement();
-                            var i = (has_direct_left_recursion && !has_direct_right_recursion) ? 1 : 0;
-                            var j = (has_direct_left_recursion && !has_direct_right_recursion) ? elements.Length : elements.Length - 1;
-                            for (; i < j; ++i)
-                            {
-                                var element = elements[i];
-                                TreeEdits.CopyTreeRecursive(element, new_alt, text_before);
-                            }
-                        }
-                        else
-                        {
-                            if (!first2)
-                            {
-                                var token4 = new CommonToken(ANTLRv4Lexer.OR) { Line = -1, Column = -1, Text = "|" };
-                                var new_or = new TerminalNodeImpl(token4);
-                                altlist1.AddChild(new_or);
-                                new_or.Parent = altlist1;
-                            }
-                            first2 = false;
-                            var l_alt = new ANTLRv4Parser.LabeledAltContext(null, 0);
-                            altlist1.AddChild(l_alt);
-                            l_alt.Parent = altlist1;
-                            var new_alt = new ANTLRv4Parser.AlternativeContext(null, 0);
-                            l_alt.AddChild(new_alt);
-                            new_alt.Parent = l_alt;
-                            var lelements = alt.lexerElements();
-                            var elements = lelements.lexerElement();
-                            foreach (var element in elements)
-                            {
-                                TreeEdits.CopyTreeRecursive(element, new_alt, text_before);
-                            }
-                        }
-                    }
-                }
-                return (IParseTree)new_a_rule;
+                equal_alpha_beta = false;
             }
-            return null;
+            // Finish up RHS
+            if (equal_alpha_beta)
+            {
+                var container = Make("+", alphas, text_before, parser);
+                TreeEdits.InsertAfter(colon, container);
+            }
+            else
+            {
+                if (has_direct_left_recursion && !has_direct_right_recursion)
+                {
+                    var a_container = q_operator
+                            ? Make("", alphas.Concat(betas).ToList(), text_before, parser)
+                            : Make("", alphas, text_before, parser);
+                    var b_container = Make("*", betas, text_before, parser);
+                    TreeEdits.InsertAfter(colon, b_container);
+                    TreeEdits.InsertAfter(colon, a_container);
+                }
+                else
+                {
+                    var a_container = q_operator
+                      ? Make("", alphas.Concat(betas).ToList(), text_before, parser)
+                      : Make("", alphas, text_before, parser);
+                    var b_container = Make("*", betas, text_before, parser);
+                    TreeEdits.InsertAfter(colon, a_container);
+                    TreeEdits.InsertAfter(colon, b_container);
+                }
+            }
+            return (IParseTree)new_a_rule;
+        }
+
+        private static IParseTree Make(string closure_op, List<IParseTree> syms, Dictionary<TerminalNodeImpl, string> text_before, Parser parser)
+        {
+            var container = new ANTLRv4Parser.BlockContext(null, 0);
+            bool first = true;
+            bool parens = RequiresParens(syms, parser);
+            var lp = new TerminalNodeImpl(new CommonToken(ANTLRv4Parser.LPAREN) { Line = -1, Column = -1, Text = "(" });
+            var rp = new TerminalNodeImpl(new CommonToken(ANTLRv4Parser.RPAREN) { Line = -1, Column = -1, Text = ")" });
+            var bar = new TerminalNodeImpl(new CommonToken(ANTLRv4Parser.OR) { Line = -1, Column = -1, Text = "|" });
+            if (parens) TreeEdits.CopyTreeRecursive(lp, container, text_before);
+            IParseTree last = null;
+            for (int jj = 0; jj < syms.Count; ++jj)
+            {
+                if (!first)
+                {
+                    TreeEdits.CopyTreeRecursive(bar, container, text_before);
+                    last = TreeEdits.CopyTreeRecursive(syms[jj], container, text_before);
+                }
+                else
+                {
+                    last = TreeEdits.CopyTreeRecursive(syms[jj], container, text_before);
+                    first = false;
+                }
+            }
+            if (parens) last = TreeEdits.CopyTreeRecursive(rp, container, text_before);
+            var a1 = TreeEdits.InsertAfter(last, closure_op);
+            text_before[a1] = "";
+            return container;
         }
 
         private static bool RequiresParens(List<IParseTree> alphas, Parser p)

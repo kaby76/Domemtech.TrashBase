@@ -74,52 +74,14 @@ namespace ConsoleApp1
             {
                 Document document = Document.CreateStringDocument(@"
 grammar t1;
-//a : a? 'b';
-//h_char_sequence :  h_char |  h_char_sequence h_char ;
-pe :  pri
-|  pe '[' e ']'
-|  pe '[' bil ']'
-|  pe '(' el ? ')'
-|  sts '(' el ? ')'
-|  ts '(' el ? ')'
-|  sts bil
-|  ts bil
-|  pe '.' 'template' ? ie
-|  pe '->' 'template' ? ie
-|  pe '.' pdn
-|  pe '->' pdn
-|  pe '++'
-|  pe '--'
-|  'dc' '<' ti '>' '(' e ')'
-|  'sc' '<' ti '>' '(' e ')'
-|  'rc' '<' ti '>' '(' e ')'
-|  'cc' '<' td '>' '(' e ')'
-|  'ti' '(' e ')'
-|  'ti' '(' ti ')' ;
-
-//pe :
-//(  pri
-//   |  sts '(' el ? ')'
-//   |  ts '(' el ? ')'
-//   |  sts bil
-//   |  ts bil
-//   |  'dc' '<' ti '>' '(' e ')'
-//   |  'sc' '<' ti '>' '(' e ')'
-//   |  'rc' '<' ti '>' '(' e ')'
-//   |  'cc' '<' td '>' '(' e ')'
-//   |  'ti' '(' e ')'
-//   |  'ti' '(' ti ')' )
-// ( '[' e ']'
-//   | '[' bil ']'
-//   | '(' el ? ')'
-//   | '.' 'template' ? ie
-//   | '->' 'template' ? ie
-//   | '.' pdn
-//   | '->' pdn
-//   | '++'
-//   | '--' )* ;
-
-
+a : 'b' | 'c' | 'd' | 'd' a ;
+// a : 'd'* ( 'b' | 'c' | 'd' ) ; << Should get this.
+b : 'b' | 'c' b? ;
+// a : 'c'* ('b' | 'c') ; << Should get this.
+c : 'b' | 'c' | 'd' | c 'd' ;
+//
+d : 'b' | d? 'c' ;
+//
 ");
                 _ = ParsingResultsFactory.Create(document);
                 var workspace = document.Workspace;
