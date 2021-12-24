@@ -26,7 +26,7 @@ namespace Algorithms
         private readonly IEnumerable<T> _work;
         private readonly IGraph<T, E> _graph;
         private Dictionary<T, Mark> _marked; // marked[v] = has v been marked in dfs?
-        private List<T> l;
+        Stack<T> stack = new Stack<T>();
 
         public TopologicalSort(IGraph<T, E> graph, IEnumerable<T> subset_vertices)
         {
@@ -40,7 +40,6 @@ namespace Algorithms
 
         public List<T> Topological_sort()
         {
-            l = new List<T>();
             _marked = new Dictionary<T, Mark>();
             foreach (T v in _graph.Vertices)
             {
@@ -60,9 +59,12 @@ namespace Algorithms
                     Dfs(v);
                 }
             }
+            List<T> l = stack.ToList();
+
             if (l.Count != _graph.Vertices.Count())
                 throw new Exception("Topological sort failed, not all vertices in the sort.");
-            return l;
+            
+             return l;
         }
 
         private void Dfs(T v)
@@ -80,7 +82,7 @@ namespace Algorithms
 
             _marked[v] = Mark.Permenent;
 
-            l.Add(v);
+            stack.Push(v);
         }
 
 
