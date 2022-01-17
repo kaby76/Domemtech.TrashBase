@@ -1,21 +1,13 @@
-
 // https://www.w3.org/TR/REC-xml/#sec-notation
+// https://www.bottlecaps.de/rr/ui
 
 parser grammar W3CebnfParser;
 
-options {
- tokenVocab = W3CebnfLexer;
-// contextSuperClass=AttributedParseTreeNode;
- }
+options { tokenVocab = W3CebnfLexer; }
 
-prods : prod+ EOF ;
-prod : lhs PPEQ rhs ;
-lhs : symbol ;
-rhs : alts ;
-symbol : SYMBOL ;
-alts : alt ( VP alt )* ;
-alt : element* ;
-element : block ( M block )*  ;
-block : atom suffix? ;
-atom : symbol | SET | STRING | OP alts CP ;
-suffix : Q Q? | S Q? | P Q? ;
+grammar_ : production* EOF ;
+production : SYMBOL CCEQ ( choice | CONSTRAINT ) ;
+choice : sequence_or_difference ( ALT sequence_or_difference)* ;
+sequence_or_difference : ( item ( M item | item* ))? ;
+item : primary ( Q | S | P )* ;
+primary : SYMBOL | STRING | HEX | SET | OP choice CP ;
