@@ -20,6 +20,7 @@ public class Class1 : JSON5BaseVisitor<object>
         if (node == null) return;
         var sb = new StringBuilder();
         sb.AppendLine("grammar foo;");
+        sb.AppendLine();
         using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext = new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(_tree, _parser))
         {
             org.eclipse.wst.xml.xpath2.processor.Engine engine = new org.eclipse.wst.xml.xpath2.processor.Engine();
@@ -32,7 +33,7 @@ public class Class1 : JSON5BaseVisitor<object>
                 var lhs = r.key()?.GetText().Replace("\"","");
                 var rhs = r.value();
                 sb.Append(Fix(lhs) + " : ");
-				manageRule(rhs, sb);
+				toEBNF(rhs, sb);
                 sb.Append(" ;");
                 sb.AppendLine();
                 sb.AppendLine();
@@ -96,14 +97,14 @@ public class Class1 : JSON5BaseVisitor<object>
 		return z;
 	}
 
-	private void manageRule(JSON5Parser.ValueContext value, StringBuilder sb)
+	private void toEBNF(JSON5Parser.ValueContext value, StringBuilder sb)
 	{
 		var t = TypeOf(value);
 		switch (t)
 		{
 			case "ALIAS":
 				sb.Append(" ( ");
-				manageRule(Context(value), sb);
+				toEBNF(Context(value), sb);
 				sb.Append(" ) ");
 				break;
 
@@ -115,7 +116,7 @@ public class Class1 : JSON5BaseVisitor<object>
 					foreach (var v in members)
 					{
 						if (!first) sb.Append(" | ");
-						manageRule(v, sb);
+						toEBNF(v, sb);
                         first = false;
 					}
 					sb.Append(" ) ");
@@ -124,13 +125,13 @@ public class Class1 : JSON5BaseVisitor<object>
 
             case "REPEAT":
                 sb.Append(" ( ");
-                manageRule(Context(value), sb);
+                toEBNF(Context(value), sb);
                 sb.Append(" )* ");
                 break;
 
             case "REPEAT1":
                 sb.Append(" ( ");
-                manageRule(Context(value), sb);
+                toEBNF(Context(value), sb);
                 sb.Append(" )+ ");
                 break;
 
@@ -142,12 +143,12 @@ public class Class1 : JSON5BaseVisitor<object>
                 // Fields are equivalent to rule element labels in Antlr.
                 // https://github.com/antlr/antlr4/blob/master/doc/parser-rules.md#rule-element-labels
                 sb.Append(" " + NameOf(value) + " = ");
-                manageRule(Context(value), sb);
+                toEBNF(Context(value), sb);
                 break;
 
            case "IMMEDIATE_TOKEN":
                 sb.Append(" ( /* no preceeding ws */ ");
-                manageRule(Context(value), sb);
+                toEBNF(Context(value), sb);
                 sb.Append(" ) ");
                 break;
 
@@ -163,7 +164,7 @@ public class Class1 : JSON5BaseVisitor<object>
             case "PREC_LEFT":
             case "PREC_RIGHT":
                 sb.Append(" ( ");
-                manageRule(Context(value), sb);
+                toEBNF(Context(value), sb);
                 sb.Append(" ) ");
                 break;
 
@@ -174,9 +175,7 @@ public class Class1 : JSON5BaseVisitor<object>
 					bool first = true;
 					foreach (var v in members)
 					{
-						if (!first) sb.Append(" | ");
-						manageRule(v, sb);
-                        first = false;
+						toEBNF(v, sb);
 					}
 					sb.Append(" ) ");
 				}
@@ -184,7 +183,7 @@ public class Class1 : JSON5BaseVisitor<object>
 
             case "TOKEN":
                 sb.Append(" ( ");
-                manageRule(Context(value), sb);
+                toEBNF(Context(value), sb);
                 sb.Append(" ) ");
                 break;
 
@@ -205,7 +204,8 @@ public class Class1 : JSON5BaseVisitor<object>
 
     string Fix(string before)
     {
-        return 'r' + before;
+        if (before.Length > 1 && before[0] == '_') before = before.Substring(1) + "_";
+        return before;
     }
 
     string ToLiteral(string input)
