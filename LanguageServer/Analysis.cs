@@ -96,11 +96,11 @@
             {
                 throw new LanguageServerException("A grammar file is not selected. Please select one first.");
             }
-            Transform.ExtractGrammarType egt = new Transform.ExtractGrammarType();
+            var egt = new ExtractGrammarType();
             ParseTreeWalker.Default.Walk(egt, pd_parser.ParseTree);
-            bool is_grammar = egt.Type == Transform.ExtractGrammarType.GrammarType.Parser
-                || egt.Type == Transform.ExtractGrammarType.GrammarType.Combined
-                || egt.Type == Transform.ExtractGrammarType.GrammarType.Lexer;
+            bool is_grammar = egt.Type == ExtractGrammarType.GrammarType.Parser
+                || egt.Type == ExtractGrammarType.GrammarType.Combined
+                || egt.Type == ExtractGrammarType.GrammarType.Lexer;
             if (!is_grammar)
             {
                 throw new LanguageServerException("A grammar file is not selected. Please select one first.");
@@ -243,11 +243,11 @@
             {
                 throw new LanguageServerException("A grammar file is not selected. Please select one first.");
             }
-            Transform.ExtractGrammarType egt = new Transform.ExtractGrammarType();
+            var egt = new ExtractGrammarType();
             ParseTreeWalker.Default.Walk(egt, pd_parser.ParseTree);
-            bool is_grammar = egt.Type == Transform.ExtractGrammarType.GrammarType.Parser
-                || egt.Type == Transform.ExtractGrammarType.GrammarType.Combined
-                || egt.Type == Transform.ExtractGrammarType.GrammarType.Lexer;
+            bool is_grammar = egt.Type == ExtractGrammarType.GrammarType.Parser
+                || egt.Type == ExtractGrammarType.GrammarType.Combined
+                || egt.Type == ExtractGrammarType.GrammarType.Lexer;
             if (!is_grammar)
             {
                 throw new LanguageServerException("A grammar file is not selected. Please select one first.");

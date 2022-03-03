@@ -25,39 +25,6 @@
 
     public class Transform
     {
-        public class ExtractGrammarType : ANTLRv4ParserBaseListener
-        {
-            public enum GrammarType
-            {
-                Combined,
-                Parser,
-                Lexer,
-                NotAGrammar
-            }
-
-            public GrammarType Type;
-
-            public ExtractGrammarType()
-            {
-            }
-
-            public override void EnterGrammarType([NotNull] ANTLRv4Parser.GrammarTypeContext context)
-            {
-                if (context.GetChild(0).GetText() == "parser")
-                {
-                    Type = GrammarType.Parser;
-                }
-                else if (context.GetChild(0).GetText() == "lexer")
-                {
-                    Type = GrammarType.Lexer;
-                }
-                else
-                {
-                    Type = GrammarType.Combined;
-                }
-            }
-        }
-
         public class LiteralsGrammar : ANTLRv4ParserBaseListener
         {
             public List<TerminalNodeImpl> Literals = new List<TerminalNodeImpl>();
