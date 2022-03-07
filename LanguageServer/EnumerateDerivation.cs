@@ -85,7 +85,7 @@ namespace LanguageServer
 
         public class Model
         {
-            Random random = new Random();
+            Random _random = new Random();
 
             public Model()
             {
@@ -96,18 +96,33 @@ namespace LanguageServer
                 if (alt is ANTLRv4Parser.RuleAltListContext t1)
                 {
                     int count = t1.labeledAlt().Length;
-                    int v = random.Next(count);
+                    int v = _random.Next(count);
                     return v;
                 }
                 else if (alt is ANTLRv4Parser.AlternativeContext t2)
                 {
                     int count = t2.element().Length;
-                    int v = random.Next(count);
+                    int v = _random.Next(count);
                     return v;
                 }
                 else
                 { }
                 return 0;
+            }
+
+            internal int ZeroOrMore(ANTLRv4Parser.EbnfContext context)
+            {
+                return _random.Next(10);
+            }
+
+            internal int OneOrMore(ANTLRv4Parser.EbnfContext context)
+            {
+                return _random.Next(10) + 1;
+            }
+
+            public int ZeroOrOne()
+            {
+                return _random.Next(2);
             }
         }
 
@@ -120,6 +135,129 @@ namespace LanguageServer
             public MyVisitor(List<ParserRuleContext> rules)
             {
                 _rules = rules;
+            }
+
+            public override IParseTree VisitAltList([NotNull] ANTLRv4Parser.AltListContext context)
+            {
+                var alts = context.alternative();
+                var alt = _model.Alt(context);
+                var result = VisitAlternative(alts[alt]);
+                return result;
+            }
+
+            public override IParseTree VisitAlternative([NotNull] ANTLRv4Parser.AlternativeContext context)
+            {
+                var cs = context.element();
+                foreach (var e in cs)
+                {
+                    _ = VisitElement(e);
+                }
+                return null;
+            }
+
+            public override IParseTree VisitElement([NotNull] ANTLRv4Parser.ElementContext context)
+            {
+                var le = context.labeledElement();
+                var at = context.atom();
+                var ebnf = context.ebnf();
+                if (at != null)
+                {
+                    return VisitAtom(at);
+                }
+                else if (le != null)
+                {
+                    return VisitLabeledElement(le);
+                }
+                else if (ebnf != null)
+                {
+                    return VisitEbnf(ebnf);
+                }
+                else throw new Exception();
+                return null;
+            }
+
+            public override IParseTree VisitLabeledElement([NotNull] ANTLRv4Parser.LabeledElementContext context)
+            {
+                var atom = context.atom();
+                var block = context.block();
+                if (atom != null)
+                {
+                    return VisitAtom(atom);
+                }
+                else if (block != null)
+                {
+                    return VisitBlock(block);
+                }
+                else throw new Exception();
+            }
+
+            public override IParseTree VisitEbnf([NotNull] ANTLRv4Parser.EbnfContext context)
+            {
+                var block = context.block();
+                var block_suffix = context.blockSuffix();
+                var str_block_suffix = "";
+                if (block_suffix != null)
+                {
+                    str_block_suffix = block_suffix.GetText();
+                    switch (str_block_suffix)
+                    {
+                        case "+":
+                        case "+?":
+                            {
+                                int times = _model.OneOrMore(context);
+                                for (int i = 0; i < times; i++) VisitBlock(block);
+                            }
+                            break;
+                        case "*":
+                        case "*?":
+                            {
+                                int times = _model.ZeroOrMore(context);
+                                for (int i = 0; i < times; i++) VisitBlock(block);
+                            }
+                            break;
+                        case "??":
+                        case "?":
+                            {
+                                int times = _model.ZeroOrOne();
+                                for (int i = 0; i < times; i++) VisitBlock(block);
+                            }
+                            break;
+                        default: throw new Exception();
+                    }
+                    return null;
+                }
+                else return VisitBlock(block);
+            }
+
+            public override IParseTree VisitAtom([NotNull] ANTLRv4Parser.AtomContext context)
+            {
+                var t = context.terminal();
+                var rr = context.ruleref();
+                var ns = context.notSet();
+                var dot = context.DOT();
+                if (t != null)
+                {
+                    return VisitTerminal(t);
+                }
+                else if (rr != null)
+                {
+                    return VisitRuleref(rr);
+                }
+                else if (ns != null)
+                {
+                    return VisitNotSet(ns);
+                }
+                else if (dot != null)
+                {
+                    // Create a random lexer rule symbol. TODO.
+                    return null;
+                }
+                else throw new Exception();
+            }
+
+            public override IParseTree VisitBlock([NotNull] ANTLRv4Parser.BlockContext context)
+            {
+                return VisitAltList(context.altList());
             }
 
             public override IParseTree VisitParserRuleSpec([NotNull] ANTLRv4Parser.ParserRuleSpecContext context)
@@ -154,63 +292,6 @@ namespace LanguageServer
             {
                 var c = context.alternative();
                 return VisitAlternative(c);
-            }
-
-            public override IParseTree VisitAlternative([NotNull] ANTLRv4Parser.AlternativeContext context)
-            {
-                var cs = context.element();
-                foreach (var e in cs)
-                {
-                    _ = VisitElement(e);
-                }
-                return null;
-            }
-
-            public override IParseTree VisitElement([NotNull] ANTLRv4Parser.ElementContext context)
-            {
-                var le = context.labeledElement();
-                var at = context.atom();
-                var ebnf = context.ebnf();
-                if (at != null)
-                {
-                    return VisitAtom(at);
-                }
-                else if (le != null)
-                {
-                    return VisitLabeledElement(le);
-                }
-                else if (ebnf != null)
-                {
-                    return VisitEbnf(ebnf);
-                }
-                else throw new Exception();
-                return null;
-            }
-
-            public override IParseTree VisitAtom([NotNull] ANTLRv4Parser.AtomContext context)
-            {
-                var t = context.terminal();
-                var rr = context.ruleref();
-                var ns = context.notSet();
-                var dot = context.DOT();
-                if (t != null)
-                {
-                    return VisitTerminal(t);
-                }
-                else if (rr != null)
-                {
-                    return VisitRuleref(rr);
-                }
-                else if (ns != null)
-                {
-                    return VisitNotSet(ns);
-                }
-                else if (dot != null)
-                {
-                    // Create a random lexer rule symbol. TODO.
-                    return null;
-                }
-                else throw new Exception();
             }
 
             public override IParseTree VisitTerminal([NotNull] ANTLRv4Parser.TerminalContext context)
@@ -248,6 +329,11 @@ namespace LanguageServer
                 var rule = _rules.Where(t => (t as ANTLRv4Parser.ParserRuleSpecContext)?.RULE_REF().GetText() == start).First() as ANTLRv4Parser.ParserRuleSpecContext;
                 var res = VisitParserRuleSpec(rule as ANTLRv4Parser.ParserRuleSpecContext);
                 return res;
+            }
+
+            public override IParseTree VisitNotSet([NotNull] ANTLRv4Parser.NotSetContext context)
+            {
+                throw new Exception();
             }
         }
     }

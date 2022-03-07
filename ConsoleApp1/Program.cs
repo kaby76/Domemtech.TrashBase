@@ -131,7 +131,7 @@ namespace ConsoleApp1
         {
             Document doc1 = CheckStringDoc(@"
 grammar t1;
-a : 'b' | 'c' | 'd' | 'd' a ;
+a : 'b' b | 'c' c | 'd' d | 'd' a | ('b' | 'c') ;
 b : 'b' | 'c' b? ;
 c : 'b' | 'c' | 'd' | c 'd' ;
 d : 'b' | d? 'c' ;
