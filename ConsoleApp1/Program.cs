@@ -4,6 +4,7 @@ using Algorithms;
 using System.Linq;
 using Workspaces;
 using LanguageServer;
+using System.IO;
 
 namespace ConsoleApp1
 {
@@ -68,8 +69,78 @@ namespace ConsoleApp1
             return result;
         }
 
+        public static Document CheckDoc(string path)
+        {
+            string file_name = path;
+            Document document = Workspaces.Workspace.Instance.FindDocument(file_name);
+            if (document == null)
+            {
+                document = new Workspaces.Document(file_name);
+                try
+                {   // Open the text file using a stream reader.
+                    using (StreamReader sr = new StreamReader(file_name))
+                    {
+                        // Read the stream to a string, and write the string to the console.
+                        string str = sr.ReadToEnd();
+                        document.Code = str;
+                    }
+                }
+                catch (IOException)
+                {
+                    throw new Exception("File does not exist.");
+                }
+                Project project = Workspaces.Workspace.Instance.FindProject("Misc");
+                if (project == null)
+                {
+                    project = new Project("Misc", "Misc", "Misc");
+                    Workspaces.Workspace.Instance.AddChild(project);
+                }
+                project.AddDocument(document);
+            }
+            document.Changed = true;
+            _ = ParsingResultsFactory.Create(document);
+            var workspace = document.Workspace;
+            var results = new LanguageServer.Module().Compile(workspace);
+            foreach (var result in results)
+            {
+                if (result.FullFileName == document.FullPath)
+                    document.ParseTree = result.ParseTree;
+            }
+            return document;
+        }
+
+        public static Document CheckStringDoc(string str)
+        {
+            Document document = Document.CreateStringDocument(str);
+            Project project = Workspaces.Workspace.Instance.FindProject("Misc");
+            if (project == null)
+            {
+                project = new Project("Misc", "Misc", "Misc");
+                Workspaces.Workspace.Instance.AddChild(project);
+            }
+            project.AddDocument(document);
+            document.Changed = true;
+            _ = ParsingResultsFactory.Create(document);
+            var workspace = document.Workspace;
+            var results = new LanguageServer.Module().Compile(workspace);
+            return document;
+        }
+
+
         static void Main(string[] args)
         {
+            Document doc1 = CheckStringDoc(@"
+grammar t1;
+a : 'b' | 'c' | 'd' | 'd' a ;
+b : 'b' | 'c' b? ;
+c : 'b' | 'c' | 'd' | c 'd' ;
+d : 'b' | d? 'c' ;
+");
+            var enumeration = new LanguageServer.EnumerateDerivation(doc1, "a");
+            enumeration.Enumerate(10);
+            return;
+
+
             Workspace _workspace = new Workspace();
             {
                 Document document = Document.CreateStringDocument(@"
