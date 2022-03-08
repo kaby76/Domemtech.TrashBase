@@ -99,15 +99,13 @@ namespace LanguageServer
                     int v = _random.Next(count);
                     return v;
                 }
-                else if (alt is ANTLRv4Parser.AlternativeContext t2)
+                else if (alt is ANTLRv4Parser.AltListContext t3)
                 {
-                    int count = t2.element().Length;
+                    int count = t3.alternative().Length;
                     int v = _random.Next(count);
                     return v;
                 }
-                else
-                { }
-                return 0;
+                else throw new Exception();
             }
 
             internal int ZeroOrMore(ANTLRv4Parser.EbnfContext context)
