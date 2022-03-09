@@ -72,12 +72,12 @@ namespace LanguageServer
                 MyVisitor mylist = new MyVisitor(_pd, _rules);
                 for (int i = 0; i < 10099; ++i)
                 {
-                    StringBuilder sb = new StringBuilder();
                     var rule = _rules.Where(t => (t as ANTLRv4Parser.ParserRuleSpecContext)?.RULE_REF().GetText() == _start).First() as ANTLRv4Parser.ParserRuleSpecContext;
                     var res = mylist.VisitParserRuleSpec(rule as ANTLRv4Parser.ParserRuleSpecContext);
-                    sb.Append(res.GetText());
-                    var gen = sb.ToString();
-                    System.Console.WriteLine(gen);
+                    StringBuilder sb = new StringBuilder();
+                    TreeEdits.Reconstruct(sb, res, new Dictionary<TerminalNodeImpl, string>());
+                    var new_code = sb.ToString();
+                    System.Console.WriteLine(new_code);
                 }
             }
             return "";
@@ -86,14 +86,6 @@ namespace LanguageServer
         public class Model
         {
             Random _random = new Random();
-
-            Dictionary<string, float> _alt_probabilities = new Dictionary<string, float>()
-            {
-                { "element[atom/ruleref/RULE_REF/text()='prequelConstruct']", 0.0f },
-                { "element[atom/ruleref/RULE_REF/text()='modeSpec']", 0.0f },
-            };
-            Dictionary<string, int> _closure_min = new Dictionary<string, int>();
-            Dictionary<string, int> _closure_max = new Dictionary<string, int>();
             private ParsingResults _pd;
             ConvertToDOM _convertToDOM;
             AntlrTreeEditing.AntlrDOM.AntlrDynamicContext _dynamicContext;
@@ -184,8 +176,8 @@ namespace LanguageServer
 
             public override IParseTree VisitElement([NotNull] ANTLRv4Parser.ElementContext context)
             {
-                if (_model.Skip(context, ".[atom/ruleref/RULE_REF/text()='prequelConstruct']"))
-                    return null;
+                if (_model.Skip(context, ".[atom/ruleref/RULE_REF/text()='prequelConstruct']")) return null;
+                if (_model.Skip(context, ".[atom/ruleref/RULE_REF/text()='modeSpec']")) return null;
                 var le = context.labeledElement();
                 var at = context.atom();
                 var ebnf = context.ebnf();
@@ -202,7 +194,6 @@ namespace LanguageServer
                     return VisitEbnf(ebnf);
                 }
                 else throw new Exception();
-                return null;
             }
 
             public override IParseTree VisitLabeledElement([NotNull] ANTLRv4Parser.LabeledElementContext context)
@@ -329,8 +320,8 @@ namespace LanguageServer
                 var str_lit = context.STRING_LITERAL();
                 if (token_ref != null)
                 {
-                    var str = token_ref.Symbol.Text.Substring(1, token_ref.Symbol.Text.Length - 2);
-                    var c = new TerminalNodeImpl(new CommonToken(token_ref.Symbol.Type) { Line = -1, Column = -1, Text = str });
+                    var str = token_ref.Symbol.Text;
+                    var c = new TerminalNodeImpl(new CommonToken(token_ref.Symbol.Type) { Line = -1, Column = -1, Text = str });                    
                     var p = _todo_stack.Peek();
                     p.AddChild(c);
                     return c;
