@@ -129,14 +129,15 @@ namespace ConsoleApp1
 
         static void Main(string[] args)
         {
-            Document doc1 = CheckStringDoc(@"
-grammar t1;
-a : 'b' b | 'c' c | 'd' d | 'd' a | ('b' | 'c') ;
-b : 'b' | 'c' b? ;
-c : 'b' | 'c' | 'd' | c 'd' ;
-d : 'b' | d? 'c' ;
-");
-            var enumeration = new LanguageServer.EnumerateDerivation(doc1, "a");
+            //            Document doc1 = CheckStringDoc(@"
+            //grammar t1;
+            //a : 'b' b | 'c' c | 'd' d | 'd' a | ('b' | 'c') ;
+            //b : 'b' | 'c' b? ;
+            //c : 'b' | 'c' | 'd' | c 'd' ;
+            //d : 'b' | d? 'c' ;
+            //");
+            Document doc1 = CheckDoc(@"c:/users/kenne/documents/github/grammars-upstream/antlr/antlr4/ANTLRv4Parser.g4");
+            var enumeration = new LanguageServer.EnumerateDerivation(doc1, "grammarSpec");
             enumeration.Enumerate(10);
             return;
 

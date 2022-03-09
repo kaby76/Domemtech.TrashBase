@@ -69,7 +69,7 @@ namespace LanguageServer
             }
             if (_start != null)
             {
-                MyVisitor mylist = new MyVisitor(_rules);
+                MyVisitor mylist = new MyVisitor(_pd, _rules);
                 for (int i = 0; i < 10099; ++i)
                 {
                     StringBuilder sb = new StringBuilder();
@@ -87,8 +87,25 @@ namespace LanguageServer
         {
             Random _random = new Random();
 
-            public Model()
+            Dictionary<string, float> _alt_probabilities = new Dictionary<string, float>()
             {
+                { "element[atom/ruleref/RULE_REF/text()='prequelConstruct']", 0.0f },
+                { "element[atom/ruleref/RULE_REF/text()='modeSpec']", 0.0f },
+            };
+            Dictionary<string, int> _closure_min = new Dictionary<string, int>();
+            Dictionary<string, int> _closure_max = new Dictionary<string, int>();
+            private ParsingResults _pd;
+            ConvertToDOM _convertToDOM;
+            AntlrTreeEditing.AntlrDOM.AntlrDynamicContext _dynamicContext;
+            org.eclipse.wst.xml.xpath2.processor.Engine _engine;
+
+            public Model(ParsingResults pd)
+            {
+                _pd = pd;
+                _convertToDOM = new AntlrTreeEditing.AntlrDOM.ConvertToDOM();
+                var (tree, parser, lexer) = (_pd.ParseTree, _pd.Parser, _pd.Lexer);
+                _dynamicContext = _convertToDOM.Try(tree, parser);
+                _engine = new org.eclipse.wst.xml.xpath2.processor.Engine();
             }
 
             public int Alt(IParseTree alt)
@@ -122,16 +139,28 @@ namespace LanguageServer
             {
                 return _random.Next(2);
             }
+
+            internal bool Skip(IParseTree context, string v)
+            {
+                var node = _convertToDOM.FindDomNode(context);
+                var res = _engine.parseExpression(
+                        v,
+                        new StaticContextBuilder()).evaluate(_dynamicContext, new object[] { node })
+                    .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree as ParserRuleContext).ToList();
+                if (res.Count == 0) return false;
+                else return true;
+            }
         }
 
         public class MyVisitor : LanguageServer.ANTLRv4ParserBaseVisitor<IParseTree>
         {
-            Model _model = new Model();
+            Model _model;
             Stack<ParserRuleContext> _todo_stack = new Stack<ParserRuleContext>();
             private List<ParserRuleContext> _rules;
 
-            public MyVisitor(List<ParserRuleContext> rules)
+            public MyVisitor(ParsingResults pd, List<ParserRuleContext> rules)
             {
+                _model = new Model(pd);
                 _rules = rules;
             }
 
@@ -155,6 +184,8 @@ namespace LanguageServer
 
             public override IParseTree VisitElement([NotNull] ANTLRv4Parser.ElementContext context)
             {
+                if (_model.Skip(context, ".[atom/ruleref/RULE_REF/text()='prequelConstruct']"))
+                    return null;
                 var le = context.labeledElement();
                 var at = context.atom();
                 var ebnf = context.ebnf();
