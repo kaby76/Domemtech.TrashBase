@@ -25,17 +25,22 @@ namespace LanguageServer
 {
     public class EnumerateDerivation
     {
-        private readonly Document _document;
-        private ParsingResults _pd;
-        private List<ParserRuleContext> _rules;
+        private readonly Document _parser_doc;
+        private readonly Document _lexer_doc;
+        private ParsingResults _pr_parser;
+        private ParsingResults _pr_lexer;
+        private List<ParserRuleContext> _prules;
+        private List<ParserRuleContext> _lrules;
         private string _start;
         Stack<ParserRuleContext> _todo_stack = new Stack<ParserRuleContext>();
         Stack<ParserRuleContext> _completed_stack = new Stack<ParserRuleContext>();
 
-        public EnumerateDerivation(Document document, string start)
+        public EnumerateDerivation(Document parser_doc, Document lexer_doc, string start)
         {
             // Check if initial file is a grammar.
-            if (!(ParsingResultsFactory.Create(document) is ParsingResults pd_parser))
+            if (!(ParsingResultsFactory.Create(parser_doc) is ParsingResults pd_parser))
+                throw new LanguageServerException("A grammar file is not selected. Please select one first.");
+            if (!(ParsingResultsFactory.Create(lexer_doc) is ParsingResults pd_lexer))
                 throw new LanguageServerException("A grammar file is not selected. Please select one first.");
 
             ExtractGrammarType egt = new ExtractGrammarType();
@@ -47,32 +52,51 @@ namespace LanguageServer
             {
                 throw new LanguageServerException("A grammar file is not selected. Please select one first.");
             }
-            _document = document;
-            if (!(ParsingResultsFactory.Create(_document) is ParsingResults pd_doc))
+            _parser_doc = parser_doc;
+            _lexer_doc = lexer_doc;
+            if (!(ParsingResultsFactory.Create(_parser_doc) is ParsingResults pr_parser))
                 throw new Exception("Cannot create parser doc.");
-            _pd = pd_doc;
+            _pr_parser = pr_parser;
+            if (!(ParsingResultsFactory.Create(_lexer_doc) is ParsingResults pr_lexer))
+                throw new Exception("Cannot create lexer doc.");
+            _pr_lexer = pr_lexer;
             _start = start;
         }
 
-        public string Enumerate(int depth)
+        public string Enumerate()
         {
-            var (tree, parser, lexer) = (_pd.ParseTree, _pd.Parser, _pd.Lexer);
-            using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext = new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(tree, parser))
             {
-                org.eclipse.wst.xml.xpath2.processor.Engine engine = new org.eclipse.wst.xml.xpath2.processor.Engine();
-                var rules = engine.parseExpression(
-                        @"//ruleSpec/parserRuleSpec",
-                        new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
-                    .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree as ParserRuleContext).ToList();
-                if (rules.Count == 0) throw new Exception("No rules.");
-                _rules = rules.ToList();
+                var (ptree, pparser, plexer) = (_pr_parser.ParseTree, _pr_parser.Parser, _pr_parser.Lexer);
+                using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext = new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(ptree, pparser))
+                {
+                    org.eclipse.wst.xml.xpath2.processor.Engine engine = new org.eclipse.wst.xml.xpath2.processor.Engine();
+                    var rules = engine.parseExpression(
+                            @"//ruleSpec/parserRuleSpec",
+                            new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
+                        .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree as ParserRuleContext).ToList();
+                    if (rules.Count == 0) throw new Exception("No rules.");
+                    _prules = rules.ToList();
+                }
+            }
+            {
+                var (ptree, pparser, plexer) = (_pr_lexer.ParseTree, _pr_lexer.Parser, _pr_lexer.Lexer);
+                using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext = new AntlrTreeEditing.AntlrDOM.ConvertToDOM().Try(ptree, pparser))
+                {
+                    org.eclipse.wst.xml.xpath2.processor.Engine engine = new org.eclipse.wst.xml.xpath2.processor.Engine();
+                    var rules = engine.parseExpression(
+                            @"//ruleSpec/lexerRuleSpec",
+                            new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
+                        .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree as ParserRuleContext).ToList();
+                    if (rules.Count == 0) throw new Exception("No rules.");
+                    _lrules = rules.ToList();
+                }
             }
             if (_start != null)
             {
-                MyVisitor mylist = new MyVisitor(_pd, _rules);
-                for (int i = 0; i < 10099; ++i)
+                MyVisitor mylist = new MyVisitor(_pr_parser, _prules, _pr_lexer, _lrules);
+                for (int i = 0; i < 10; ++i)
                 {
-                    var rule = _rules.Where(t => (t as ANTLRv4Parser.ParserRuleSpecContext)?.RULE_REF().GetText() == _start).First() as ANTLRv4Parser.ParserRuleSpecContext;
+                    var rule = _prules.Where(t => (t as ANTLRv4Parser.ParserRuleSpecContext)?.RULE_REF().GetText() == _start).First() as ANTLRv4Parser.ParserRuleSpecContext;
                     var res = mylist.VisitParserRuleSpec(rule as ANTLRv4Parser.ParserRuleSpecContext);
                     StringBuilder sb = new StringBuilder();
                     TreeEdits.Reconstruct(sb, res, new Dictionary<TerminalNodeImpl, string>());
@@ -86,17 +110,24 @@ namespace LanguageServer
         public class Model
         {
             Random _random = new Random();
-            private ParsingResults _pd;
             ConvertToDOM _convertToDOM;
-            AntlrTreeEditing.AntlrDOM.AntlrDynamicContext _dynamicContext;
+            AntlrTreeEditing.AntlrDOM.AntlrDynamicContext _pdynamicContext;
+            AntlrTreeEditing.AntlrDOM.AntlrDynamicContext _ldynamicContext;
             org.eclipse.wst.xml.xpath2.processor.Engine _engine;
+            public ParsingResults _pr_parser;
+            public List<ParserRuleContext> _prules;
+            public ParsingResults _pr_lexer;
+            public List<ParserRuleContext> _lrules;
 
-            public Model(ParsingResults pd)
+            public Model(ParsingResults pr_parser, List<ParserRuleContext> prules, ParsingResults pr_lexer, List<ParserRuleContext> lrules)
             {
-                _pd = pd;
+                _pr_parser = pr_parser;
+                _prules = prules;
+                _pr_lexer = pr_lexer;
+                _lrules = lrules;
                 _convertToDOM = new AntlrTreeEditing.AntlrDOM.ConvertToDOM();
-                var (tree, parser, lexer) = (_pd.ParseTree, _pd.Parser, _pd.Lexer);
-                _dynamicContext = _convertToDOM.Try(tree, parser);
+                _pdynamicContext = _convertToDOM.Try(_pr_parser.ParseTree, _pr_parser.Parser);
+                _ldynamicContext = _convertToDOM.Try(_pr_lexer.ParseTree, _pr_lexer.Parser);
                 _engine = new org.eclipse.wst.xml.xpath2.processor.Engine();
             }
 
@@ -117,12 +148,12 @@ namespace LanguageServer
                 else throw new Exception();
             }
 
-            internal int ZeroOrMore(ANTLRv4Parser.EbnfContext context)
+            internal int ZeroOrMore()
             {
                 return _random.Next(10);
             }
 
-            internal int OneOrMore(ANTLRv4Parser.EbnfContext context)
+            internal int OneOrMore()
             {
                 return _random.Next(10) + 1;
             }
@@ -132,15 +163,27 @@ namespace LanguageServer
                 return _random.Next(2);
             }
 
-            internal bool Skip(IParseTree context, string v)
+            internal bool Pattern(IParseTree context, string v)
             {
                 var node = _convertToDOM.FindDomNode(context);
                 var res = _engine.parseExpression(
                         v,
-                        new StaticContextBuilder()).evaluate(_dynamicContext, new object[] { node })
+                        new StaticContextBuilder()).evaluate(_pdynamicContext, new object[] { node })
                     .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree as ParserRuleContext).ToList();
                 if (res.Count == 0) return false;
                 else return true;
+            }
+
+            internal string FindLexerRuleString(ANTLRv4Parser.LexerRuleSpecContext context)
+            {
+                if (context == null) return null;
+                var node = _convertToDOM.FindDomNode(context);
+                var res = _engine.parseExpression(
+                        "lexerRuleBlock/lexerAltList/lexerAlt/lexerElements/lexerElement/lexerAtom/terminal/STRING_LITERAL",
+                        new StaticContextBuilder()).evaluate(_ldynamicContext, new object[] { node })
+                    .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree as TerminalNodeImpl).ToList();
+                if (res.Count == 1) return res.First().Symbol.Text.Substring(1, res.First().Symbol.Text.Length - 2);
+                else return null;
             }
         }
 
@@ -148,12 +191,9 @@ namespace LanguageServer
         {
             Model _model;
             Stack<ParserRuleContext> _todo_stack = new Stack<ParserRuleContext>();
-            private List<ParserRuleContext> _rules;
-
-            public MyVisitor(ParsingResults pd, List<ParserRuleContext> rules)
+            public MyVisitor(ParsingResults pr_parser, List<ParserRuleContext> prules, ParsingResults pr_lexer, List<ParserRuleContext> lrules)
             {
-                _model = new Model(pd);
-                _rules = rules;
+                _model = new Model(pr_parser, prules, pr_lexer, lrules);
             }
 
             public override IParseTree VisitAltList([NotNull] ANTLRv4Parser.AltListContext context)
@@ -176,17 +216,25 @@ namespace LanguageServer
 
             public override IParseTree VisitElement([NotNull] ANTLRv4Parser.ElementContext context)
             {
-                if (_model.Skip(context, ".[atom/ruleref/RULE_REF/text()='prequelConstruct']")) return null;
-                if (_model.Skip(context, ".[atom/ruleref/RULE_REF/text()='modeSpec']")) return null;
+                if (_model.Pattern(context, ".[atom/ruleref/RULE_REF/text()='prequelConstruct']")) return null;
+                if (_model.Pattern(context, ".[atom/ruleref/RULE_REF/text()='modeSpec']")) return null;
                 var le = context.labeledElement();
                 var at = context.atom();
                 var ebnf = context.ebnf();
+                var suffix = context.ebnfSuffix();
                 if (at != null)
                 {
-                    return VisitAtom(at);
+                    int times = 1;
+                    if (_model.Pattern(context, ".[atom/ruleref/RULE_REF/text()='atom' and ../element/ebnf/block/altList/alternative/element/atom/ruleref/RULE_REF/text()='ebnfSuffix']"))
+                        times = _model.ZeroOrMore();
+                    for (int i = 0; i < times; ++i) VisitAtom(at);
+                    return null;
                 }
                 else if (le != null)
                 {
+                    int times = 1;
+                    if (_model.Pattern(context, ".[atom/ruleref/RULE_REF/text()='labeledElement' and ../element/ebnf/block/altList/alternative/element/atom/ruleref/RULE_REF/text()='ebnfSuffix']"))
+                        times = _model.ZeroOrMore();
                     return VisitLabeledElement(le);
                 }
                 else if (ebnf != null)
@@ -224,14 +272,16 @@ namespace LanguageServer
                         case "+":
                         case "+?":
                             {
-                                int times = _model.OneOrMore(context);
+                                int times = _model.OneOrMore();
+                                System.Console.WriteLine("Times = " + times);
                                 for (int i = 0; i < times; i++) VisitBlock(block);
                             }
                             break;
                         case "*":
                         case "*?":
                             {
-                                int times = _model.ZeroOrMore(context);
+                                int times = _model.ZeroOrMore();
+                                System.Console.WriteLine("Times = " + times);
                                 for (int i = 0; i < times; i++) VisitBlock(block);
                             }
                             break;
@@ -239,6 +289,7 @@ namespace LanguageServer
                         case "?":
                             {
                                 int times = _model.ZeroOrOne();
+                                System.Console.WriteLine("Times = " + times);
                                 for (int i = 0; i < times; i++) VisitBlock(block);
                             }
                             break;
@@ -282,6 +333,7 @@ namespace LanguageServer
 
             public override IParseTree VisitParserRuleSpec([NotNull] ANTLRv4Parser.ParserRuleSpecContext context)
             {
+                System.Console.WriteLine(context.RULE_REF().GetText());
                 var result = new ParserRuleContext(null, 0);
                 if (_todo_stack.Count > 0)
                 {
@@ -321,7 +373,14 @@ namespace LanguageServer
                 if (token_ref != null)
                 {
                     var str = token_ref.Symbol.Text;
-                    var c = new TerminalNodeImpl(new CommonToken(token_ref.Symbol.Type) { Line = -1, Column = -1, Text = str });                    
+                    // Convert the token type to a string value.
+                    var rule = _model._lrules.Where(t => (t as ANTLRv4Parser.LexerRuleSpecContext)?.TOKEN_REF().GetText() == str).FirstOrDefault() as ANTLRv4Parser.LexerRuleSpecContext;
+                    var st = _model.FindLexerRuleString(rule);
+                    TerminalNodeImpl c;
+                    if(st != null)
+                        c = new TerminalNodeImpl(new CommonToken(token_ref.Symbol.Type) { Line = -1, Column = -1, Text = st });
+                    else
+                        c = new TerminalNodeImpl(new CommonToken(token_ref.Symbol.Type) { Line = -1, Column = -1, Text = str });
                     var p = _todo_stack.Peek();
                     p.AddChild(c);
                     return c;
@@ -346,7 +405,7 @@ namespace LanguageServer
             {
                 var rule_ref = context.RULE_REF();
                 var start = rule_ref.GetText();
-                var rule = _rules.Where(t => (t as ANTLRv4Parser.ParserRuleSpecContext)?.RULE_REF().GetText() == start).First() as ANTLRv4Parser.ParserRuleSpecContext;
+                var rule = _model._prules.Where(t => (t as ANTLRv4Parser.ParserRuleSpecContext)?.RULE_REF().GetText() == start).First() as ANTLRv4Parser.ParserRuleSpecContext;
                 var res = VisitParserRuleSpec(rule as ANTLRv4Parser.ParserRuleSpecContext);
                 return res;
             }
