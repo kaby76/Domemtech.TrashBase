@@ -139,6 +139,7 @@ namespace ConsoleApp1
             Document doc3 = CheckDoc(@"c:/users/kenne/documents/github/grammars-upstream/antlr/antlr4/LexBasic.g4");
             Document doc2 = CheckDoc(@"c:/users/kenne/documents/github/grammars-upstream/antlr/antlr4/ANTLRv4Lexer.g4");
             Document doc1 = CheckDoc(@"c:/users/kenne/documents/github/grammars-upstream/antlr/antlr4/ANTLRv4Parser.g4");
+            new LanguageServer.Module().Compile(Workspaces.Workspace.Instance);
             var enumeration = new LanguageServer.EnumerateDerivation(doc1, doc2, "grammarSpec");
             enumeration.Enumerate();
             return;

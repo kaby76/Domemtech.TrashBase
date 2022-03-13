@@ -145,6 +145,12 @@ namespace LanguageServer
                     int v = _random.Next(count);
                     return v;
                 }
+                else if (alt is ANTLRv4Parser.LexerAltListContext t4)
+                {
+                    int count = t4.lexerAlt().Length;
+                    int v = _random.Next(count);
+                    return v;
+                }
                 else throw new Exception();
             }
 
@@ -191,6 +197,7 @@ namespace LanguageServer
         {
             Model _model;
             Stack<ParserRuleContext> _todo_stack = new Stack<ParserRuleContext>();
+
             public MyVisitor(ParsingResults pr_parser, List<ParserRuleContext> prules, ParsingResults pr_lexer, List<ParserRuleContext> lrules)
             {
                 _model = new Model(pr_parser, prules, pr_lexer, lrules);
@@ -273,7 +280,7 @@ namespace LanguageServer
                         case "+?":
                             {
                                 int times = _model.OneOrMore();
-                                System.Console.WriteLine("Times = " + times);
+                                //System.Console.WriteLine("Times = " + times);
                                 for (int i = 0; i < times; i++) VisitBlock(block);
                             }
                             break;
@@ -281,7 +288,7 @@ namespace LanguageServer
                         case "*?":
                             {
                                 int times = _model.ZeroOrMore();
-                                System.Console.WriteLine("Times = " + times);
+                                //System.Console.WriteLine("Times = " + times);
                                 for (int i = 0; i < times; i++) VisitBlock(block);
                             }
                             break;
@@ -289,7 +296,7 @@ namespace LanguageServer
                         case "?":
                             {
                                 int times = _model.ZeroOrOne();
-                                System.Console.WriteLine("Times = " + times);
+                                //System.Console.WriteLine("Times = " + times);
                                 for (int i = 0; i < times; i++) VisitBlock(block);
                             }
                             break;
@@ -333,7 +340,7 @@ namespace LanguageServer
 
             public override IParseTree VisitParserRuleSpec([NotNull] ANTLRv4Parser.ParserRuleSpecContext context)
             {
-                System.Console.WriteLine(context.RULE_REF().GetText());
+                //System.Console.WriteLine(context.RULE_REF().GetText());
                 var result = new ParserRuleContext(null, 0);
                 if (_todo_stack.Count > 0)
                 {
@@ -366,6 +373,143 @@ namespace LanguageServer
                 return VisitAlternative(c);
             }
 
+            public override IParseTree VisitLexerRuleSpec([NotNull] ANTLRv4Parser.LexerRuleSpecContext context)
+            {
+                //System.Console.WriteLine(context.TOKEN_REF().GetText());
+                var result = new ParserRuleContext(null, 0);
+                if (_todo_stack.Count > 0)
+                {
+                    var p = _todo_stack.Peek();
+                    p.AddChild(result);
+                }
+                _todo_stack.Push(result);
+                var c = VisitLexerRuleBlock(context.lexerRuleBlock());
+                _todo_stack.Pop();
+                return result;
+            }
+
+            public override IParseTree VisitLexerRuleBlock([NotNull] ANTLRv4Parser.LexerRuleBlockContext context)
+            {
+                var c = VisitLexerAltList(context.lexerAltList());
+                return c;
+            }
+
+            public override IParseTree VisitLexerAltList([NotNull] ANTLRv4Parser.LexerAltListContext context)
+            {
+                var lexerAlts = context.lexerAlt();
+                var alt = _model.Alt(context);
+                var result = VisitLexerAlt(lexerAlts[alt]);
+                return result;
+            }
+
+            public override IParseTree VisitLexerAlt([NotNull] ANTLRv4Parser.LexerAltContext context)
+            {
+                var lexer_elements = context.lexerElements();
+                if (lexer_elements != null)
+                {
+                    return VisitLexerElements(lexer_elements);
+                }
+                return null;
+            }
+
+            public override IParseTree VisitLexerElements([NotNull] ANTLRv4Parser.LexerElementsContext context)
+            {
+                var cs = context.lexerElement();
+                foreach (var e in cs)
+                {
+                    _ = VisitLexerElement(e);
+                }
+                return null;
+            }
+
+            public override IParseTree VisitLexerElement([NotNull] ANTLRv4Parser.LexerElementContext context)
+            {
+                var le = context.labeledLexerElement();
+                var at = context.lexerAtom();
+                var lb = context.lexerBlock();
+                var ab = context.actionBlock();
+                var suffix = context.ebnfSuffix();
+                if (at != null)
+                {
+                    int times = 1;
+                    for (int i = 0; i < times; ++i) VisitLexerAtom(at);
+                    return null;
+                }
+                else if (le != null)
+                {
+                    int times = 1;
+                    return VisitLabeledLexerElement(le);
+                }
+                else if (lb != null)
+                {
+                    return VisitLexerBlock(lb);
+                }
+                else if (ab != null) { return null; }
+                else throw new Exception();
+            }
+
+            public override IParseTree VisitLexerAtom([NotNull] ANTLRv4Parser.LexerAtomContext context)
+            {
+                var cr = context.characterRange();
+                var t = context.terminal();
+                var ns = context.notSet();
+                var lcs = context.LEXER_CHAR_SET();
+                var d = context.DOT();
+                if (cr != null)
+                {
+                    return VisitCharacterRange(cr);
+                }
+                else if (t != null)
+                {
+                    return VisitTerminal(t);
+                }
+                else if (ns != null)
+                {
+                    return VisitNotSet(ns);
+                }
+                else if (lcs != null)
+                {
+                    var str = context.GetText();
+                    var c = new TerminalNodeImpl(new CommonToken(444) { Line = -1, Column = -1, Text = str });
+                    var p = _todo_stack.Peek();
+                    p.AddChild(c);
+                    return c;
+                    throw new Exception();
+                    return null;
+                }
+                else if (d != null)
+                {
+                    var str = context.GetText();
+                    var c = new TerminalNodeImpl(new CommonToken(444) { Line = -1, Column = -1, Text = str });
+                    var p = _todo_stack.Peek();
+                    p.AddChild(c);
+                    return c;
+                    throw new Exception();
+                    return null;
+                }
+                else throw new Exception();
+            }
+
+            public override IParseTree VisitLabeledLexerElement([NotNull] ANTLRv4Parser.LabeledLexerElementContext context)
+            {
+                var la = context.lexerAtom();
+                var lb = context.lexerBlock();
+                if (la != null)
+                {
+                    return VisitLexerAtom(la);
+                }
+                else if (lb != null)
+                {
+                    return VisitLexerBlock(lb);
+                }
+                else throw new Exception();
+            }
+
+            public override IParseTree VisitLexerBlock([NotNull] ANTLRv4Parser.LexerBlockContext context)
+            {
+                return VisitLexerAltList(context.lexerAltList());
+            }
+
             public override IParseTree VisitTerminal([NotNull] ANTLRv4Parser.TerminalContext context)
             {
                 var token_ref = context.TOKEN_REF();
@@ -373,6 +517,59 @@ namespace LanguageServer
                 if (token_ref != null)
                 {
                     var str = token_ref.Symbol.Text;
+                    if (str == "EOF") return null;
+                    if (str == "TOKEN_REF")
+                    {
+                        TerminalNodeImpl c2 = new TerminalNodeImpl(new CommonToken(token_ref.Symbol.Type) { Line = -1, Column = -1, Text = "TOKEN_REF" });
+                        var p2 = _todo_stack.Peek();
+                        p2.AddChild(c2);
+                        return c2;
+                    }
+                    if (str == "RULE_REF")
+                    {
+                        TerminalNodeImpl c2 = new TerminalNodeImpl(new CommonToken(token_ref.Symbol.Type) { Line = -1, Column = -1, Text = "RULE_REF" });
+                        var p2 = _todo_stack.Peek();
+                        p2.AddChild(c2);
+                        return c2;
+                    }
+                    if (str == "ARGUMENT_CONTENT")
+                    {
+                        return null;
+                    }
+                    var fn = token_ref.Symbol.TokenSource.SourceName;
+                    var fn_doc = Workspaces.Workspace.Instance.FindDocument(fn);
+                    if (!(ParsingResultsFactory.Create(fn_doc) is ParsingResults fn_doc_pr))
+                        throw new LanguageServerException("A grammar file is not selected. Please select one first.");
+                    var index = new LanguageServer.Module().GetIndex(token_ref.Symbol.Line-1, token_ref.Symbol.Column,
+                        fn_doc);
+                    var defs = new LanguageServer.Module().FindDefs(index, fn_doc);
+                    if (defs != null && defs.Count > 0)
+                    {
+                        Location d = defs[0];
+                        Workspaces.Range r = d.Range;
+                        var uri = d.Uri;
+                        if (!(ParsingResultsFactory.Create(uri) is ParsingResults def_doc))
+                            throw new Exception("Cannot create lexer doc.");
+                        IParseTree pt = Util.Find(r.Start.Value, uri);
+                        if (pt != null)
+                        {
+                            var par = pt.Parent as ANTLRv4Parser.LexerRuleSpecContext;
+                            if (par == null) return null;
+                            var res = VisitLexerRuleSpec(par);
+                            
+                            return res;
+
+                            //var st2 = _model.FindLexerRuleString(pt.Parent as ANTLRv4Parser.LexerRuleSpecContext);
+                            //TerminalNodeImpl c2;
+                            //if (st2 != null)
+                            //    c2 = new TerminalNodeImpl(new CommonToken(token_ref.Symbol.Type) { Line = -1, Column = -1, Text = st2 });
+                            //else
+                            //    c2 = new TerminalNodeImpl(new CommonToken(token_ref.Symbol.Type) { Line = -1, Column = -1, Text = str });
+                            //var p2 = _todo_stack.Peek();
+                            //p2.AddChild(c2);
+                            //return c2;
+                        }
+                    }
                     // Convert the token type to a string value.
                     var rule = _model._lrules.Where(t => (t as ANTLRv4Parser.LexerRuleSpecContext)?.TOKEN_REF().GetText() == str).FirstOrDefault() as ANTLRv4Parser.LexerRuleSpecContext;
                     var st = _model.FindLexerRuleString(rule);
@@ -412,6 +609,12 @@ namespace LanguageServer
 
             public override IParseTree VisitNotSet([NotNull] ANTLRv4Parser.NotSetContext context)
             {
+                var str = context.GetText();
+                var c = new TerminalNodeImpl(new CommonToken(444) { Line = -1, Column = -1, Text = str });
+                var p = _todo_stack.Peek();
+                p.AddChild(c);
+                return c;
+
                 throw new Exception();
             }
         }
