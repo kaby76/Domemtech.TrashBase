@@ -196,6 +196,7 @@ namespace LanguageServer
         public class MyVisitor : LanguageServer.ANTLRv4ParserBaseVisitor<IParseTree>
         {
             Model _model;
+            bool _debug = true;
             Stack<ParserRuleContext> _todo_stack = new Stack<ParserRuleContext>();
 
             public MyVisitor(ParsingResults pr_parser, List<ParserRuleContext> prules, ParsingResults pr_lexer, List<ParserRuleContext> lrules)
@@ -203,26 +204,49 @@ namespace LanguageServer
                 _model = new Model(pr_parser, prules, pr_lexer, lrules);
             }
 
+            public static int _value = 1;
+
+            private int PrintInfo(string where, IParseTree context, int old = 0)
+            {
+                var result = old == 0 ? _value++ : old;
+                StringBuilder sb = new StringBuilder();
+                if (context == null) sb.Append("null");
+                else TreeEdits.Reconstruct(sb, context, new Dictionary<TerminalNodeImpl, string>());
+                var new_code = sb.ToString();
+                System.Console.WriteLine(where + " " + result + " " + new_code);
+                return result;
+            }
+      
             public override IParseTree VisitAltList([NotNull] ANTLRv4Parser.AltListContext context)
             {
+                var match = PrintInfo("VisitAltList", context);
                 var alts = context.alternative();
                 var alt = _model.Alt(context);
+                //System.Console.WriteLine(alt);
                 var result = VisitAlternative(alts[alt]);
+                if (result == null)
+                { }
+                PrintInfo("-VisitAltList", _todo_stack.Peek(), match);
                 return result;
             }
 
             public override IParseTree VisitAlternative([NotNull] ANTLRv4Parser.AlternativeContext context)
             {
+                var match = PrintInfo("VisitAlternative", context);
                 var cs = context.element();
                 foreach (var e in cs)
                 {
                     _ = VisitElement(e);
                 }
+                PrintInfo("-VisitAlternative", _todo_stack.Peek(), match);
                 return null;
             }
 
             public override IParseTree VisitElement([NotNull] ANTLRv4Parser.ElementContext context)
             {
+                var match = PrintInfo("VisitElement", context);
+                if (_model.Pattern(context, "./atom/ruleref/RULE_REF[text()='ruleSpec']"))
+                { }
                 if (_model.Pattern(context, ".[atom/ruleref/RULE_REF/text()='prequelConstruct']")) return null;
                 if (_model.Pattern(context, ".[atom/ruleref/RULE_REF/text()='modeSpec']")) return null;
                 var le = context.labeledElement();
@@ -232,9 +256,12 @@ namespace LanguageServer
                 if (at != null)
                 {
                     int times = 1;
-                    if (_model.Pattern(context, ".[atom/ruleref/RULE_REF/text()='atom' and ../element/ebnf/block/altList/alternative/element/atom/ruleref/RULE_REF/text()='ebnfSuffix']"))
+                    if (_model.Pattern(context, ".[atom/ruleref/RULE_REF/text()='ruleSpec' and ./ebnfSuffix/STAR]"))
+                        times = _model.ZeroOrMore();
+                    else if (_model.Pattern(context, ".[atom/ruleref/RULE_REF/text()='atom' and ../element/ebnf/block/altList/alternative/element/atom/ruleref/RULE_REF/text()='ebnfSuffix']"))
                         times = _model.ZeroOrMore();
                     for (int i = 0; i < times; ++i) VisitAtom(at);
+                    PrintInfo("-VisitElement", _todo_stack.Peek(), match);
                     return null;
                 }
                 else if (le != null)
@@ -242,17 +269,22 @@ namespace LanguageServer
                     int times = 1;
                     if (_model.Pattern(context, ".[atom/ruleref/RULE_REF/text()='labeledElement' and ../element/ebnf/block/altList/alternative/element/atom/ruleref/RULE_REF/text()='ebnfSuffix']"))
                         times = _model.ZeroOrMore();
-                    return VisitLabeledElement(le);
+                    var result = VisitLabeledElement(le);
+                    PrintInfo("-VisitElement", _todo_stack.Peek(), match);
+                    return result;
                 }
                 else if (ebnf != null)
                 {
-                    return VisitEbnf(ebnf);
+                    var result = VisitEbnf(ebnf);
+                    PrintInfo("-VisitElement", _todo_stack.Peek(), match);
+                    return result;
                 }
                 else throw new Exception();
             }
 
             public override IParseTree VisitLabeledElement([NotNull] ANTLRv4Parser.LabeledElementContext context)
             {
+                PrintInfo("VisitLabeledElement", context);
                 var atom = context.atom();
                 var block = context.block();
                 if (atom != null)
@@ -268,6 +300,7 @@ namespace LanguageServer
 
             public override IParseTree VisitEbnf([NotNull] ANTLRv4Parser.EbnfContext context)
             {
+                PrintInfo("VisitEbnf", context);
                 var block = context.block();
                 var block_suffix = context.blockSuffix();
                 var str_block_suffix = "";
@@ -309,6 +342,7 @@ namespace LanguageServer
 
             public override IParseTree VisitAtom([NotNull] ANTLRv4Parser.AtomContext context)
             {
+                PrintInfo("VisitAtom", context);
                 var t = context.terminal();
                 var rr = context.ruleref();
                 var ns = context.notSet();
@@ -335,12 +369,13 @@ namespace LanguageServer
 
             public override IParseTree VisitBlock([NotNull] ANTLRv4Parser.BlockContext context)
             {
+                PrintInfo("VisitBlock", context);
                 return VisitAltList(context.altList());
             }
 
             public override IParseTree VisitParserRuleSpec([NotNull] ANTLRv4Parser.ParserRuleSpecContext context)
             {
-                //System.Console.WriteLine(context.RULE_REF().GetText());
+                var match = PrintInfo("VisitParserRuleSpec", context);
                 var result = new ParserRuleContext(null, 0);
                 if (_todo_stack.Count > 0)
                 {
@@ -349,32 +384,48 @@ namespace LanguageServer
                 }
                 _todo_stack.Push(result);
                 var c = VisitRuleBlock(context.ruleBlock());
+                PrintInfo("-VisitParserRuleSpec", _todo_stack.Peek(), match);
+                if (result.ChildCount == 0)
+                {
+                    System.Console.WriteLine(context.RULE_REF().GetText());
+                }
                 _todo_stack.Pop();
                 return result;
             }
 
             public override IParseTree VisitRuleBlock([NotNull] ANTLRv4Parser.RuleBlockContext context)
             {
+                var match = PrintInfo("VisitRuleBlock", context);
                 var c = VisitRuleAltList(context.ruleAltList());
+                PrintInfo("-VisitRuleBlock", _todo_stack.Peek(), match);
                 return c;
             }
 
             public override IParseTree VisitRuleAltList([NotNull] ANTLRv4Parser.RuleAltListContext context)
             {
+                var match = PrintInfo("VisitRuleAltList", context);
                 var labeledAlts = context.labeledAlt();
                 var alt = _model.Alt(context);
+                //System.Console.WriteLine("VisitRuleAltList");
+                //System.Console.WriteLine(alt);
                 var result = VisitLabeledAlt(labeledAlts[alt]);
+                //System.Console.WriteLine("return " + result == null);
+                PrintInfo("-VisitRuleAltList", _todo_stack.Peek(), match);
                 return result;
             }
 
             public override IParseTree VisitLabeledAlt([NotNull] ANTLRv4Parser.LabeledAltContext context)
             {
+                var match = PrintInfo("VisitLabeledAlt", context);
                 var c = context.alternative();
-                return VisitAlternative(c);
+                var result = VisitAlternative(c);
+                PrintInfo("-VisitLabeledAlt", _todo_stack.Peek(), match);
+                return result;
             }
 
             public override IParseTree VisitLexerRuleSpec([NotNull] ANTLRv4Parser.LexerRuleSpecContext context)
             {
+                var match = PrintInfo("VisitLexerRuleSpec", context);
                 //System.Console.WriteLine(context.TOKEN_REF().GetText());
                 var result = new ParserRuleContext(null, 0);
                 if (_todo_stack.Count > 0)
@@ -384,46 +435,58 @@ namespace LanguageServer
                 }
                 _todo_stack.Push(result);
                 var c = VisitLexerRuleBlock(context.lexerRuleBlock());
+                PrintInfo("-VisitLexerRuleSpec", _todo_stack.Peek(), match);
                 _todo_stack.Pop();
                 return result;
             }
 
             public override IParseTree VisitLexerRuleBlock([NotNull] ANTLRv4Parser.LexerRuleBlockContext context)
             {
+                var match = PrintInfo("VisitLexerRuleBlock", context);
                 var c = VisitLexerAltList(context.lexerAltList());
+                PrintInfo("-VisitLexerRuleBlock", _todo_stack.Peek(), match);
                 return c;
             }
 
             public override IParseTree VisitLexerAltList([NotNull] ANTLRv4Parser.LexerAltListContext context)
             {
+                var match = PrintInfo("VisitLexerAltList", context);
                 var lexerAlts = context.lexerAlt();
                 var alt = _model.Alt(context);
                 var result = VisitLexerAlt(lexerAlts[alt]);
+                PrintInfo("-VisitLexerAltList", _todo_stack.Peek(), match);
                 return result;
             }
 
             public override IParseTree VisitLexerAlt([NotNull] ANTLRv4Parser.LexerAltContext context)
             {
+                var match = PrintInfo("VisitLexerAlt", context);
                 var lexer_elements = context.lexerElements();
                 if (lexer_elements != null)
                 {
-                    return VisitLexerElements(lexer_elements);
+                    var result = VisitLexerElements(lexer_elements);
+                    PrintInfo("-VisitLexerAlt", _todo_stack.Peek(), match);
+                    return result;
                 }
+                PrintInfo("-VisitLexerAlt", _todo_stack.Peek(), match);
                 return null;
             }
 
             public override IParseTree VisitLexerElements([NotNull] ANTLRv4Parser.LexerElementsContext context)
             {
+                var match = PrintInfo("VisitLexerElements", context);
                 var cs = context.lexerElement();
                 foreach (var e in cs)
                 {
-                    _ = VisitLexerElement(e);
+                    var result = VisitLexerElement(e);
                 }
+                PrintInfo("-VisitLexerElements", _todo_stack.Peek(), match);
                 return null;
             }
 
             public override IParseTree VisitLexerElement([NotNull] ANTLRv4Parser.LexerElementContext context)
             {
+                var match = PrintInfo("VisitLexerElement", context);
                 var le = context.labeledLexerElement();
                 var at = context.lexerAtom();
                 var lb = context.lexerBlock();
@@ -433,23 +496,33 @@ namespace LanguageServer
                 {
                     int times = 1;
                     for (int i = 0; i < times; ++i) VisitLexerAtom(at);
+                    PrintInfo("-VisitLexerElement", _todo_stack.Peek(), match);
                     return null;
                 }
                 else if (le != null)
                 {
                     int times = 1;
-                    return VisitLabeledLexerElement(le);
+                    var result = VisitLabeledLexerElement(le);
+                    PrintInfo("-VisitLexerElement", _todo_stack.Peek(), match);
+                    return result;
                 }
                 else if (lb != null)
                 {
-                    return VisitLexerBlock(lb);
+                    var result = VisitLexerBlock(lb);
+                    PrintInfo("-VisitLexerElement", _todo_stack.Peek(), match);
+                    return result;
                 }
-                else if (ab != null) { return null; }
+                else if (ab != null)
+                {
+                    PrintInfo("-VisitLexerElement", _todo_stack.Peek(), match);
+                    return null;
+                }
                 else throw new Exception();
             }
 
             public override IParseTree VisitLexerAtom([NotNull] ANTLRv4Parser.LexerAtomContext context)
             {
+                var match = PrintInfo("VisitLexerAtom", context);
                 var cr = context.characterRange();
                 var t = context.terminal();
                 var ns = context.notSet();
@@ -457,61 +530,74 @@ namespace LanguageServer
                 var d = context.DOT();
                 if (cr != null)
                 {
-                    return VisitCharacterRange(cr);
+                    var result = VisitCharacterRange(cr);
+                    PrintInfo("-VisitLexerAtom", _todo_stack.Peek(), match);
+                    return result;
                 }
                 else if (t != null)
                 {
-                    return VisitTerminal(t);
+                    var result = VisitTerminal(t);
+                    PrintInfo("-VisitLexerAtom", _todo_stack.Peek(), match);
+                    return result;
                 }
                 else if (ns != null)
                 {
-                    return VisitNotSet(ns);
+                    var result = VisitNotSet(ns);
+                    PrintInfo("-VisitLexerAtom", _todo_stack.Peek(), match);
+                    return result;
                 }
                 else if (lcs != null)
                 {
                     var str = context.GetText();
-                    var c = new TerminalNodeImpl(new CommonToken(444) { Line = -1, Column = -1, Text = str });
+                    var result = new TerminalNodeImpl(new CommonToken(444) { Line = -1, Column = -1, Text = str });
                     var p = _todo_stack.Peek();
-                    p.AddChild(c);
-                    return c;
-                    throw new Exception();
-                    return null;
+                    p.AddChild(result);
+                    PrintInfo("-VisitLexerAtom", _todo_stack.Peek(), match);
+                    return result;
                 }
                 else if (d != null)
                 {
                     var str = context.GetText();
-                    var c = new TerminalNodeImpl(new CommonToken(444) { Line = -1, Column = -1, Text = str });
+                    var result = new TerminalNodeImpl(new CommonToken(444) { Line = -1, Column = -1, Text = str });
                     var p = _todo_stack.Peek();
-                    p.AddChild(c);
-                    return c;
-                    throw new Exception();
-                    return null;
+                    p.AddChild(result);
+                    PrintInfo("-VisitLexerAtom", _todo_stack.Peek(), match);
+                    return result;
                 }
                 else throw new Exception();
             }
 
             public override IParseTree VisitLabeledLexerElement([NotNull] ANTLRv4Parser.LabeledLexerElementContext context)
             {
+                var match = PrintInfo("VisitLabeledLexerElement", context);
                 var la = context.lexerAtom();
                 var lb = context.lexerBlock();
                 if (la != null)
                 {
-                    return VisitLexerAtom(la);
+                    var result = VisitLexerAtom(la);
+                    PrintInfo("-VisitLabeledLexerElement", _todo_stack.Peek(), match);
+                    return result;
                 }
                 else if (lb != null)
                 {
-                    return VisitLexerBlock(lb);
+                    var result = VisitLexerBlock(lb);
+                    PrintInfo("-VisitLabeledLexerElement", _todo_stack.Peek(), match);
+                    return result;
                 }
                 else throw new Exception();
             }
 
             public override IParseTree VisitLexerBlock([NotNull] ANTLRv4Parser.LexerBlockContext context)
             {
-                return VisitLexerAltList(context.lexerAltList());
+                var match = PrintInfo("VisitLexerBlock", context);
+                var result = VisitLexerAltList(context.lexerAltList());
+                PrintInfo("-VisitLexerBlock", _todo_stack.Peek(), match);
+                return result;
             }
 
             public override IParseTree VisitTerminal([NotNull] ANTLRv4Parser.TerminalContext context)
             {
+                var match = PrintInfo("VisitTerminal", context);
                 var token_ref = context.TOKEN_REF();
                 var str_lit = context.STRING_LITERAL();
                 if (token_ref != null)
@@ -520,20 +606,23 @@ namespace LanguageServer
                     if (str == "EOF") return null;
                     if (str == "TOKEN_REF")
                     {
-                        TerminalNodeImpl c2 = new TerminalNodeImpl(new CommonToken(token_ref.Symbol.Type) { Line = -1, Column = -1, Text = "TOKEN_REF" });
+                        TerminalNodeImpl result = new TerminalNodeImpl(new CommonToken(token_ref.Symbol.Type) { Line = -1, Column = -1, Text = "TOKEN_REF" });
                         var p2 = _todo_stack.Peek();
-                        p2.AddChild(c2);
-                        return c2;
+                        p2.AddChild(result);
+                        PrintInfo("-VisitTerminal", _todo_stack.Peek(), match);
+                        return result;
                     }
                     if (str == "RULE_REF")
                     {
-                        TerminalNodeImpl c2 = new TerminalNodeImpl(new CommonToken(token_ref.Symbol.Type) { Line = -1, Column = -1, Text = "RULE_REF" });
+                        TerminalNodeImpl result = new TerminalNodeImpl(new CommonToken(token_ref.Symbol.Type) { Line = -1, Column = -1, Text = "RULE_REF" });
                         var p2 = _todo_stack.Peek();
-                        p2.AddChild(c2);
-                        return c2;
+                        p2.AddChild(result);
+                        PrintInfo("-VisitTerminal", _todo_stack.Peek(), match);
+                        return result;
                     }
                     if (str == "ARGUMENT_CONTENT")
                     {
+                        PrintInfo("-VisitTerminal", _todo_stack.Peek(), match);
                         return null;
                     }
                     var fn = token_ref.Symbol.TokenSource.SourceName;
@@ -556,7 +645,7 @@ namespace LanguageServer
                             var par = pt.Parent as ANTLRv4Parser.LexerRuleSpecContext;
                             if (par == null) return null;
                             var res = VisitLexerRuleSpec(par);
-                            
+                            PrintInfo("-VisitTerminal", _todo_stack.Peek(), match);
                             return res;
 
                             //var st2 = _model.FindLexerRuleString(pt.Parent as ANTLRv4Parser.LexerRuleSpecContext);
@@ -580,6 +669,7 @@ namespace LanguageServer
                         c = new TerminalNodeImpl(new CommonToken(token_ref.Symbol.Type) { Line = -1, Column = -1, Text = str });
                     var p = _todo_stack.Peek();
                     p.AddChild(c);
+                    PrintInfo("-VisitTerminal", _todo_stack.Peek(), match);
                     return c;
                 }
                 else if (str_lit != null)
@@ -588,34 +678,51 @@ namespace LanguageServer
                     var c = new TerminalNodeImpl(new CommonToken(str_lit.Symbol.Type) { Line = -1, Column = -1, Text = str });
                     var p = _todo_stack.Peek();
                     p.AddChild(c);
+                    PrintInfo("-VisitTerminal", _todo_stack.Peek(), match);
                     return c;
                 }
+                PrintInfo("-VisitTerminal", _todo_stack.Peek(), match);
                 return null;
             }
 
             public override IParseTree VisitTerminal(ITerminalNode node)
             {
+                PrintInfo("VisitTerminal", node);
                 throw new Exception();
             }
 
             public override IParseTree VisitRuleref([NotNull] ANTLRv4Parser.RulerefContext context)
             {
+                var match = PrintInfo("VisitRuleref", context);
                 var rule_ref = context.RULE_REF();
                 var start = rule_ref.GetText();
+                if (start == "exceptionGroup") return null;
+                else if (start == "exceptionHandler") return null;
+                else if (start == "finallyClause") return null;
+                else if (start == "argActionBlock") return null;
+                else if (start == "ruleModifiers") return null;
+                else if (start == "ruleReturns") return null;
+                else if (start == "throwsSpec") return null;
+                else if (start == "localsSpec") return null;
+                else if (start == "rulePrequel") return null;
+                else if (start == "elementOptions") return null;
+                else if (start == "optionsSpec") return null;
+
                 var rule = _model._prules.Where(t => (t as ANTLRv4Parser.ParserRuleSpecContext)?.RULE_REF().GetText() == start).First() as ANTLRv4Parser.ParserRuleSpecContext;
-                var res = VisitParserRuleSpec(rule as ANTLRv4Parser.ParserRuleSpecContext);
-                return res;
+                var result = VisitParserRuleSpec(rule as ANTLRv4Parser.ParserRuleSpecContext);
+                PrintInfo("VisitRuleref", _todo_stack.Peek(), match);
+                return result;
             }
 
             public override IParseTree VisitNotSet([NotNull] ANTLRv4Parser.NotSetContext context)
             {
+                var match = PrintInfo("VisitNotSet", context);
                 var str = context.GetText();
-                var c = new TerminalNodeImpl(new CommonToken(444) { Line = -1, Column = -1, Text = str });
+                var result = new TerminalNodeImpl(new CommonToken(444) { Line = -1, Column = -1, Text = str });
                 var p = _todo_stack.Peek();
-                p.AddChild(c);
-                return c;
-
-                throw new Exception();
+                p.AddChild(result);
+                PrintInfo("-VisitNotSet", _todo_stack.Peek(), match);
+                return result;
             }
         }
     }
