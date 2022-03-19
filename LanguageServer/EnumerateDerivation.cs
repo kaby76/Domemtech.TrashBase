@@ -3,6 +3,7 @@ using Antlr4.Runtime;
 using Antlr4.Runtime.Misc;
 using Antlr4.Runtime.Tree;
 using AntlrTreeEditing.AntlrDOM;
+using Utils;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -32,8 +33,6 @@ namespace LanguageServer
         private List<ParserRuleContext> _prules;
         private List<ParserRuleContext> _lrules;
         private string _start;
-        Stack<ParserRuleContext> _todo_stack = new Stack<ParserRuleContext>();
-        Stack<ParserRuleContext> _completed_stack = new Stack<ParserRuleContext>();
 
         public EnumerateDerivation(Document parser_doc, Document lexer_doc, string start)
         {
@@ -197,7 +196,8 @@ namespace LanguageServer
         {
             Model _model;
             bool _debug = true;
-            Stack<ParserRuleContext> _todo_stack = new Stack<ParserRuleContext>();
+            StackQueue<ParserRuleContext> _todo_stack = new StackQueue<ParserRuleContext>();
+            StackQueue<IParseTree> _completed_stack = new StackQueue<IParseTree>();
 
             public MyVisitor(ParsingResults pr_parser, List<ParserRuleContext> prules, ParsingResults pr_lexer, List<ParserRuleContext> lrules)
             {
@@ -209,6 +209,7 @@ namespace LanguageServer
             private int PrintInfo(string where, IParseTree context, int old = 0)
             {
                 var result = old == 0 ? _value++ : old;
+                //return result;
                 StringBuilder sb = new StringBuilder();
                 if (context == null) sb.Append("null");
                 else TreeEdits.Reconstruct(sb, context, new Dictionary<TerminalNodeImpl, string>());
@@ -376,18 +377,46 @@ namespace LanguageServer
             public override IParseTree VisitParserRuleSpec([NotNull] ANTLRv4Parser.ParserRuleSpecContext context)
             {
                 var match = PrintInfo("VisitParserRuleSpec", context);
+                string name_of_rule = context.RULE_REF().GetText();
+                switch (name_of_rule)
+                {
+                    case "exceptionGroup":
+                    case "exceptionHandler":
+                    case "finallyClause":
+                    case "argActionBlock":
+                    case "ruleModifiers":
+                    case "ruleReturns":
+                    case "throwsSpec":
+                    case "localsSpec":
+                    case "rulePrequel":
+                    case "elementOptions":
+                    case "optionsSpec":
+                        System.Console.WriteLine("Skip");
+                        return null;
+                    default: break;
+                }
                 var result = new ParserRuleContext(null, 0);
+                _todo_stack.Push(result);
+                for (; ; )
+                {
+                    var c = VisitRuleBlock(context.ruleBlock());
+                    PrintInfo("-VisitParserRuleSpec", _todo_stack.Peek(), match);
+                    if (result.GetText().Trim() == "")
+                    {
+                        // Repeat for certain rules if they return empty string.
+                        if (name_of_rule == "lexerAlt")
+                            continue;
+                    }
+                    if (result.ChildCount == 0)
+                    {
+                        System.Console.WriteLine(context.RULE_REF().GetText());
+                    }
+                    break;
+                }
                 if (_todo_stack.Count > 0)
                 {
                     var p = _todo_stack.Peek();
                     p.AddChild(result);
-                }
-                _todo_stack.Push(result);
-                var c = VisitRuleBlock(context.ruleBlock());
-                PrintInfo("-VisitParserRuleSpec", _todo_stack.Peek(), match);
-                if (result.ChildCount == 0)
-                {
-                    System.Console.WriteLine(context.RULE_REF().GetText());
                 }
                 _todo_stack.Pop();
                 return result;
@@ -696,18 +725,6 @@ namespace LanguageServer
                 var match = PrintInfo("VisitRuleref", context);
                 var rule_ref = context.RULE_REF();
                 var start = rule_ref.GetText();
-                if (start == "exceptionGroup") return null;
-                else if (start == "exceptionHandler") return null;
-                else if (start == "finallyClause") return null;
-                else if (start == "argActionBlock") return null;
-                else if (start == "ruleModifiers") return null;
-                else if (start == "ruleReturns") return null;
-                else if (start == "throwsSpec") return null;
-                else if (start == "localsSpec") return null;
-                else if (start == "rulePrequel") return null;
-                else if (start == "elementOptions") return null;
-                else if (start == "optionsSpec") return null;
-
                 var rule = _model._prules.Where(t => (t as ANTLRv4Parser.ParserRuleSpecContext)?.RULE_REF().GetText() == start).First() as ANTLRv4Parser.ParserRuleSpecContext;
                 var result = VisitParserRuleSpec(rule as ANTLRv4Parser.ParserRuleSpecContext);
                 PrintInfo("VisitRuleref", _todo_stack.Peek(), match);
