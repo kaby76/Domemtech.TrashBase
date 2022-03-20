@@ -433,12 +433,12 @@ namespace LanguageServer
             public override IParseTree VisitRuleAltList([NotNull] ANTLRv4Parser.RuleAltListContext context)
             {
                 var match = PrintInfo("VisitRuleAltList", context);
+                var str = context.GetText();
+                if (str.Trim() == "lexerAltList")
+                { }
                 var labeledAlts = context.labeledAlt();
                 var alt = _model.Alt(context);
-                //System.Console.WriteLine("VisitRuleAltList");
-                //System.Console.WriteLine(alt);
                 var result = VisitLabeledAlt(labeledAlts[alt]);
-                //System.Console.WriteLine("return " + result == null);
                 PrintInfo("-VisitRuleAltList", _todo_stack.Peek(), match);
                 return result;
             }
