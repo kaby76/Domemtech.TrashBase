@@ -17,5 +17,5 @@ else
 fi
 echo "$machine"
 echo "$cwd"
-dotnet nuget add source $cwd/ --name nuget-base
+dotnet nuget add source "$cwd/" --name nuget-base
 dotnet nuget list source

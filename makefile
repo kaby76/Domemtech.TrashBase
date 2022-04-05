@@ -4,9 +4,7 @@ build:
 	dotnet build
 	nuget pack base.nuspec
 	nuget pack base.nuspec -Symbols -SymbolPackageFormat snupkg
-
-setup:
-	dotnet nuget add source $cwd/ --name nuget-base
+	bash setup.sh
 
 publish:
 	dotnet nuget push Domemtech.TrashBase.3.4.0.nupkg --api-key ${trashkey} --source https://api.nuget.org/v3/index.json

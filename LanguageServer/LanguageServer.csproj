@@ -58,7 +58,7 @@
 <!--                <PackageReference Include="Antlr4BuildTasks" Version="8.17">
                     <PrivateAssets>all</PrivateAssets>
                 </PackageReference> -->
-    <PackageReference Include="AntlrTreeEditing" Version="4.3.0" />
+    <PackageReference Include="AntlrTreeEditing" Version="4.4.0" />
     <PackageReference Include="Domemtech.Symtab" Version="0.0.1" />
     <PackageReference Include="cs-codebuff" Version="4.0.0" />
 
