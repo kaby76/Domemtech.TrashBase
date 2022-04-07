@@ -17,7 +17,7 @@
            <dependency id="Antlr4.Runtime.Standard" version="4.9.3" />
            <dependency id="System.IO.Pipes" version="4.3.0" />
            <dependency id="System.IO.Pipes.AccessControl" version="5.0.0" />
-           <dependency id="AntlrTreeEditing" version="4.4.0" />
+           <dependency id="AntlrTreeEditing" version="4.5.0" />
            <dependency id="Domemtech.Symtab" version="0.0.1" />
            <dependency id="Microsoft.CodeAnalysis.Common" version="3.8.0" />
            <dependency id="Microsoft.CodeAnalysis.CSharp" version="3.8.0" />

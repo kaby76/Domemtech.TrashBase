@@ -13,7 +13,7 @@ namespace UnitTestProject1
     [TestClass]
     public class UnitTest1
     {
-        private static int random_number = 0;
+        //private static int random_number = 0;
 
         public static Document CheckDoc(string path)
         {

@@ -6,37 +6,56 @@
     using Antlr4.Runtime;
     using Antlr4.Runtime.Misc;
 
-    public class MyTokenStream : ITokenStream
+    public class MyTokenStream : BufferedTokenStream, ITokenStream
     {
-        private ITokenSource _tokenSource;
-        protected internal List<IToken> tokens;
+        public ITokenSource _tokenSource;
+        protected new internal List<IToken> tokens;
         protected internal int n;
-        protected internal int p = 0;
+        protected new internal int p = 0;
         protected internal int numMarkers = 0;
         protected internal IToken lastToken;
         protected internal IToken lastTokenBufferStart;
         protected internal int currentTokenIndex = 0;
 
+        public class FuckYouAntlr : ITokenSource
+        {
+            public FuckYouAntlr() { }
+            public int Line => throw new NotImplementedException();
+            public int Column => throw new NotImplementedException();
+            public ICharStream InputStream => throw new NotImplementedException();
+            public string SourceName => throw new NotImplementedException();
+            public ITokenFactory TokenFactory { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+            [return: NotNull]
+            public IToken NextToken()
+            {
+                throw new NotImplementedException();
+            }
+        }
+
         public MyTokenStream()
+            : base(new FuckYouAntlr())
         {
             this.tokens = new List<IToken>();
             n = 0;
+            this._tokenSource = null;
         }
 
         public MyTokenStream(string t)
+            : base(new FuckYouAntlr())
         {
             Text = t;
             this.tokens = new List<IToken>();
             n = 0;
+            this._tokenSource = null;
         }
 
-        public virtual List<IToken> GetTokens
+        public override IList<IToken> GetTokens()
         {
-            get { return tokens; }
-            set { tokens = value; }
+            return tokens;
         }
 
-        public virtual IToken Get(int i)
+        public override IToken Get(int i)
         {
             int bufferStartIndex = GetBufferStartIndex();
             if (i < bufferStartIndex || i >= bufferStartIndex + n)
@@ -46,7 +65,7 @@
             return tokens[i - bufferStartIndex];
         }
 
-        public virtual IToken LT(int i)
+        public override IToken LT(int i)
         {
             if (i == -1)
             {
@@ -66,37 +85,33 @@
             return tokens[index];
         }
 
-        public virtual int LA(int i)
+        public override int LA(int i)
         {
             return LT(i).Type;
         }
 
-        public virtual ITokenSource TokenSource
+        public override ITokenSource TokenSource
         {
             get
             {
                 return _tokenSource;
             }
-            set
-            {
-                _tokenSource = value;
-            }
         }
 
         [return: NotNull]
-        public virtual string GetText()
+        public override string GetText()
         {
             return string.Empty;
         }
 
         [return: NotNull]
-        public virtual string GetText(RuleContext ctx)
+        public override string GetText(RuleContext ctx)
         {
             return GetText(ctx.SourceInterval);
         }
 
         [return: NotNull]
-        public virtual string GetText(IToken start, IToken stop)
+        public override string GetText(IToken start, IToken stop)
         {
             if (start != null && stop != null)
             {
@@ -105,7 +120,7 @@
             throw new NotSupportedException("The specified start and stop symbols are not supported.");
         }
 
-        public virtual void Consume()
+        public override void Consume()
         {
             if (LA(1) == TokenConstants.EOF)
             {
@@ -127,8 +142,9 @@
             Sync(1);
         }
 
-        protected internal virtual void Sync(int want)
+        protected new internal virtual bool Sync(int i)
         {
+            return true;
         }
 
         protected internal virtual int Fill(int n)
@@ -146,7 +162,7 @@
             n++;
         }
 
-        public virtual int Mark()
+        public override int Mark()
         {
             if (numMarkers == 0)
             {
@@ -157,7 +173,7 @@
             return mark;
         }
 
-        public virtual void Release(int marker)
+        public override void Release(int marker)
         {
             int expectedMark = -numMarkers;
             if (marker != expectedMark)
@@ -181,7 +197,7 @@
             }
         }
 
-        public virtual int Index
+        public override int Index
         {
             get
             {
@@ -189,7 +205,7 @@
             }
         }
 
-        public virtual void Seek(int index)
+        public override void Seek(int index)
         {
             // seek to absolute index
             if (index == currentTokenIndex)
@@ -226,7 +242,7 @@
             }
         }
 
-        public virtual int Size
+        public override int Size
         {
             get
             {
@@ -234,7 +250,7 @@
             }
         }
 
-        public virtual string SourceName
+        public override string SourceName
         {
             get
             {
@@ -245,7 +261,7 @@
         public string Text { get; set; }
 
         [return: NotNull]
-        public virtual string GetText(Interval interval)
+        public override string GetText(Interval interval)
         {
             int bufferStartIndex = GetBufferStartIndex();
             int bufferStopIndex = bufferStartIndex + tokens.Count - 1;
@@ -269,6 +285,76 @@
         protected internal int GetBufferStartIndex()
         {
             return currentTokenIndex - p;
+        }
+
+        public override IList<IToken> GetHiddenTokensToLeft(int tokenIndex, int channel)
+        {
+            if (tokenIndex < 0 || tokenIndex >= tokens.Count)
+            {
+                throw new ArgumentOutOfRangeException(tokenIndex + " not in 0.." + (tokens.Count - 1));
+            }
+            if (tokenIndex == 0)
+            {
+                // obviously no tokens can appear before the first token
+                return null;
+            }
+            int prevOnChannel = PreviousTokenOnChannel(tokenIndex - 1, Lexer.DefaultTokenChannel);
+            if (prevOnChannel == tokenIndex - 1)
+            {
+                return null;
+            }
+            // if none onchannel to left, prevOnChannel=-1 then from=0
+            int from = prevOnChannel + 1;
+            int to = tokenIndex - 1;
+            return FilterForChannel(from, to, channel);
+        }
+
+        protected internal new int PreviousTokenOnChannel(int i, int channel)
+        {
+            //Sync(i);
+            if (i >= Size)
+            {
+                // the EOF token is on every channel
+                return Size - 1;
+            }
+            while (i >= 0)
+            {
+                IToken token = tokens[i];
+                if (token.Type == TokenConstants.EOF || token.Channel == channel)
+                {
+                    return i;
+                }
+                i--;
+            }
+            return i;
+        }
+
+        protected internal new IList<IToken> FilterForChannel(int from, int to, int channel)
+        {
+            IList<IToken> hidden = new List<IToken>();
+            for (int i = from; i <= to; i++)
+            {
+                IToken t = tokens[i];
+                if (channel == -1)
+                {
+                    if (t.Channel != Lexer.DefaultTokenChannel)
+                    {
+                        hidden.Add(t);
+                    }
+                }
+                else
+                {
+                    if (t.Channel == channel)
+                    {
+                        hidden.Add(t);
+                    }
+                }
+            }
+            if (hidden.Count == 0)
+            {
+                return null;
+            }
+            return hidden;
         }
     }
 }

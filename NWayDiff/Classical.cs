@@ -28,8 +28,8 @@ namespace NWayDiff
             }
             else if (comparer.Equals(a[i-1], b[j-1]))
             {
-                T xxx = a[i - 1];
-                int oldi = i;
+                //T xxx = a[i - 1];
+                //int oldi = i;
                 while (i > 0 && j > 0 && comparer.Equals(a[i-1], b[j-1]))
                 {
                     --i;
@@ -38,7 +38,7 @@ namespace NWayDiff
                 List<T> result = classical_lcs(a, b, i, j, memo);
                 throw new Exception();
                 // result.insert(result.end(), a.begin() + i, a.begin() + oldi);
-                return result;
+                //return result;
             }
             else
             {

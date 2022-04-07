@@ -837,10 +837,10 @@
                 fake_char_stream2.Text = out_token_stream2.Text;
                 fake_char_stream2.SourceName = ffn;
                 MyLexer lexer2 = new MyLexer(null);
-                lexer2.InputStream = fake_char_stream2;
+                lexer2._inputstream = fake_char_stream2;
                 lexer2._vocabulary = lexer.Vocabulary as Vocabulary;
                 lexer2._channelNames = lexer.ChannelNames;
-                out_token_stream2.TokenSource = lexer2;
+                out_token_stream2._tokenSource = lexer2;
                 var s2 = new Stack<IParseTree>();
                 s2.Push(pt);
                 while (s2.Any())
@@ -931,8 +931,8 @@
                 fake_char_stream3.Text = out_token_stream3.Text;
                 fake_char_stream3.SourceName = ffn;
                 MyLexer lexer3 = new MyLexer(null);
-                lexer3.InputStream = fake_char_stream3;
-                out_token_stream3.TokenSource = lexer3;
+                lexer3._inputstream = fake_char_stream3;
+                out_token_stream3._tokenSource = lexer3;
                 var s3 = new Stack<IParseTree>();
                 s3.Push(pt);
                 while (s3.Any())

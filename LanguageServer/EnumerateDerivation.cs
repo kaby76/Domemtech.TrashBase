@@ -195,7 +195,7 @@ namespace LanguageServer
         public class MyVisitor : LanguageServer.ANTLRv4ParserBaseVisitor<IParseTree>
         {
             Model _model;
-            bool _debug = true;
+            //bool _debug = true;
             StackQueue<ParserRuleContext> _todo_stack = new StackQueue<ParserRuleContext>();
             StackQueue<IParseTree> _completed_stack = new StackQueue<IParseTree>();
 
@@ -530,7 +530,7 @@ namespace LanguageServer
                 }
                 else if (le != null)
                 {
-                    int times = 1;
+                    //int times = 1;
                     var result = VisitLabeledLexerElement(le);
                     PrintInfo("-VisitLexerElement", _todo_stack.Peek(), match);
                     return result;

@@ -11,15 +11,16 @@
         public IList<IToken> Tokens { get; set; }
         public int CurrentToken { get; set; }
 
-        public int Line => throw new NotImplementedException();
+        public override int Line => throw new NotImplementedException();
 
-        public int Column => throw new NotImplementedException();
+        public override int Column => throw new NotImplementedException();
 
-        public ICharStream InputStream { get; set; }
+        public ICharStream _inputstream;
+        public new ICharStream InputStream { get { return _inputstream; } }
 
-        public string SourceName => throw new NotImplementedException();
+        public override string SourceName => throw new NotImplementedException();
 
-        public ITokenFactory TokenFactory
+        public override ITokenFactory TokenFactory
         {
             get => throw new NotImplementedException();
             set => throw new NotImplementedException();
@@ -62,7 +63,7 @@
         }
 
         [return: NotNull]
-        public IToken NextToken()
+        public override IToken NextToken()
         {
             if (CurrentToken < Tokens.Count)
                 return Tokens[CurrentToken++];
