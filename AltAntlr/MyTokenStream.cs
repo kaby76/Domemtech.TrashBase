@@ -356,5 +356,11 @@
             }
             return hidden;
         }
+
+        public void Delete()
+        {
+            tokens.RemoveAt(currentTokenIndex);
+            n--;
+        }
     }
 }

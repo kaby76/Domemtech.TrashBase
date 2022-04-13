@@ -15,3 +15,6 @@ clean:
 	rm -f *.nupkg *.snupkg
 	rm -rf nuget.config
 	dotnet nuget remove source nuget-base 2>&1 > /dev/null
+
+bump:
+	

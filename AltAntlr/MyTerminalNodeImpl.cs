@@ -15,5 +15,14 @@
         {
             get { return _sourceInterval; }
         }
+
+        /// <summary>
+        /// Start token stream index (not char stream index).
+        /// </summary>
+        public int Start { get; set; }
+        /// <summary>
+        /// Stop token stream index (not char stream index).
+        /// </summary>
+        public int Stop { get; set; }
     }
 }
