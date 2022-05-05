@@ -133,7 +133,7 @@
                 {
                     Type = ANTLRv4Lexer.TOKEN_REF;
                 }
-                else
+            if (char.IsLower(firstChar))
                 {
                     Type = ANTLRv4Lexer.RULE_REF;
                 }
@@ -155,5 +155,11 @@
 
         private bool InParserRule => CurrentRuleType == ANTLRv4Lexer.RULE_REF;
 
+      public override void Reset()
+    {
+	    CurrentRuleType = TokenConstants.InvalidType;
+	    _insideOptionsBlock = false;
+        base.Reset();
     }
+  }
 }
