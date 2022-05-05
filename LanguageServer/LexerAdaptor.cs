@@ -38,7 +38,12 @@
          * can only occur in lexical rules and arg actions cannot occur.
          */
         private static int PREQUEL_CONSTRUCT = -10;
-        private int CurrentRuleType { get; set; } = TokenConstants.InvalidType;
+        private static int OPTIONS_CONSTRUCT = -11;
+        private int CurrentRuleType
+        {
+            get;
+            set;
+        } = TokenConstants.InvalidType;
         private bool insideOptionsBlock = false;
 
         protected void handleBeginArgument()
@@ -98,14 +103,25 @@
             { // enter prequel construct ending with an RBRACE
                 CurrentRuleType = PREQUEL_CONSTRUCT;
             }
+            else if (Type == ANTLRv4Lexer.OPTIONS && CurrentRuleType == ANTLRv4Lexer.TOKEN_REF)
+            {
+                CurrentRuleType = OPTIONS_CONSTRUCT;
+            }
             else if (Type == ANTLRv4Lexer.RBRACE && CurrentRuleType == PREQUEL_CONSTRUCT)
             { // exit prequel construct
                 CurrentRuleType = TokenConstants.InvalidType;
+            }
+            else if (Type == ANTLRv4Lexer.RBRACE && CurrentRuleType == OPTIONS_CONSTRUCT)
+            { // exit options
+                CurrentRuleType = ANTLRv4Lexer.TOKEN_REF;
             }
             else if (Type == ANTLRv4Lexer.AT && CurrentRuleType == TokenConstants.InvalidType)
             { // enter action
                 CurrentRuleType = ANTLRv4Lexer.AT;
             }
+	        else if (Type == ANTLRv4Lexer.SEMI && CurrentRuleType == OPTIONS_CONSTRUCT)
+	        { // ';' in options { .... }. Don't change anything.
+	        }
             else if (Type == ANTLRv4Lexer.END_ACTION && CurrentRuleType == ANTLRv4Lexer.AT)
             { // exit action
                 CurrentRuleType = TokenConstants.InvalidType;
