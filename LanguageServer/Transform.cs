@@ -5117,6 +5117,32 @@
             return result;
         }
 
+        public static Dictionary<string, string> Unfold(
+            List<TerminalNodeImpl> replace_these,
+            List<IParseTree> all_sources,
+            Parser parser,
+            Lexer Lexer)
+        {
+            Dictionary<string, string> result = new Dictionary<string, string>();
+            Dictionary<string, IParseTree> rhs_replacement = new Dictionary<string, IParseTree>();
+            foreach (var @ref in replace_these)
+            {
+                org.eclipse.wst.xml.xpath2.processor.Engine engine = new org.eclipse.wst.xml.xpath2.processor.Engine();
+                var ate = new AntlrTreeEditing.AntlrDOM.ConvertToDOM();
+                using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext = ate.Try(all_sources, parser))
+                {
+                    var nodes = engine.parseExpression(
+                        @"//lexerRuleSpec[TOKEN_REF/text() = '" + @ref.GetText() + "']",
+                            new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
+                        .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree).ToList();
+                    if (nodes.Count > 1 || nodes.Count == 0)
+                        continue;
+
+                }
+            }
+            return result;
+        }
+
         static int fold_number = 0;
 
         public static Dictionary<string, string> Fold(List<IParseTree> nodes, Document document)

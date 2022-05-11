@@ -158,7 +158,6 @@
       public override void Reset()
     {
 	    CurrentRuleType = TokenConstants.InvalidType;
-	    _insideOptionsBlock = false;
         base.Reset();
     }
   }
