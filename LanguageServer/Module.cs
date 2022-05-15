@@ -860,7 +860,7 @@
             return g;
         }
 
-        public List<ParsingResults> Compile(Workspace workspace)
+        public List<ParsingResults> Compile(Workspace workspace, bool reparse = true)
         {
             try
             {
@@ -900,7 +900,7 @@
                     // workspace changes.
                     foreach (ParsingResults v in diff)
                     {
-                        v.Parse();
+                        if (reparse) v.Parse();
                         v.GetGrammarBasics();
                     }
 

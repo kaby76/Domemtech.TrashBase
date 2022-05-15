@@ -17,7 +17,5 @@
             : base(parent, invokingState)
         {
         }
-
-        public ParsingResults ParserDetails { get; set; }
     }
 }

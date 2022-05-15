@@ -4388,247 +4388,6 @@
             return result;
         }
 
-
-        //public static IParseTree Unfold(List<IParseTree> spans, IParseTree tree)
-        //{
-        //    Dictionary<string, string> result = new Dictionary<string, string>();
-
-        //    // Check if initial file is a grammar.
-        //    if (!(ParserDetailsFactory.Create(document) is AntlrGrammarDetails pd_parser))
-        //        throw new LanguageServerException("A grammar file is not selected. Please select one first.");
-        //    ExtractGrammarType egt = new ExtractGrammarType();
-        //    ParseTreeWalker.Default.Walk(egt, pd_parser.ParseTree);
-        //    bool is_grammar = egt.Type == ExtractGrammarType.GrammarType.Parser
-        //                      || egt.Type == ExtractGrammarType.GrammarType.Combined
-        //                      || egt.Type == ExtractGrammarType.GrammarType.Lexer;
-        //    if (!is_grammar)
-        //    {
-        //        throw new LanguageServerException("A grammar file is not selected. Please select one first.");
-        //    }
-
-        //    var defs = Module.GetDefsLeaf(document);
-        //    bool is_cursor_on_def = false;
-        //    TerminalNodeImpl def = null;
-        //    bool is_cursor_on_ref = false;
-        //    IEnumerable<TerminalNodeImpl> refs = null;
-        //    foreach (var d in defs)
-        //    {
-        //        bool a = IsContainedBy(d.Symbol.StartIndex, d.Symbol.StopIndex + 1, start, end);
-        //        if (!a)
-        //            continue;
-
-        //        is_cursor_on_def = true;
-        //        // This means that user wants to unfold all occurrences on RHS,
-        //        // not a specific instance.
-        //        // This means that user wants to unfold a specific
-        //        // instance of a RHS symbol.
-        //        def = d;
-        //        break;
-        //    }
-        //    {
-        //        refs = Module.GetRefsLeaf(document);
-        //        refs = refs
-        //            .Where(r =>
-        //            {
-        //                pd_parser.Attributes.TryGetValue(r, out IList<CombinedScopeSymbol> list_value);
-        //                if (list_value == null) return false;
-        //                if (list_value.Count > 1) return false;
-        //                var value = list_value.First();
-        //                if (value == null) return false;
-        //                Symtab.ISymbol sym = value as Symtab.ISymbol;
-        //                if (sym == null) return false;
-        //                List<Symtab.ISymbol> list_of_syms = new List<Symtab.ISymbol>() { sym };
-        //                if (sym is RefSymbol) list_of_syms = sym.resolve();
-        //                if (list_of_syms.Count > 1) return false;
-        //                var s = list_of_syms.First();
-        //                if (!(s is NonterminalSymbol)) return false;
-        //                string def_file = s.file;
-        //                if (def_file == null) return false;
-        //                Workspaces.Document def_document = Workspaces.Workspace.Instance.FindDocument(def_file);
-        //                if (def_document == null) return false;
-        //                ParserDetails def_pd = ParserDetailsFactory.Create(def_document);
-        //                if (def_pd == null) return false;
-        //                return true;
-        //            }).ToList();
-        //        refs = refs
-        //            .Where(r =>
-        //            {
-        //                // Pick refs that are for def or overlap [start, end].
-        //                if (is_cursor_on_def)
-        //                {
-        //                    pd_parser.Attributes.TryGetValue(r, out IList<CombinedScopeSymbol> list_value);
-        //                    if (list_value == null) return false;
-        //                    if (list_value.Count > 1) return false;
-        //                    var value = list_value.First();
-        //                    if (value == null) return false;
-        //                    Symtab.ISymbol sym = value as Symtab.ISymbol;
-        //                    if (sym == null) return false;
-        //                    List<Symtab.ISymbol> list_of_syms = new List<Symtab.ISymbol>() { sym };
-        //                    if (sym is RefSymbol) list_of_syms = sym.resolve();
-        //                    if (list_of_syms.Count > 1) return false;
-        //                    var s = list_of_syms.First();
-        //                    if (s.Token.InputStream.SourceName != def.Symbol.InputStream.SourceName) return false;
-        //                    if (s.Token.TokenIndex != def.Symbol.TokenIndex) return false;
-        //                    return true;
-        //                }
-        //                else
-        //                {
-        //                    IToken ta = pd_parser.TokStream.Get(r.SourceInterval.a);
-        //                    var st = ta.StartIndex;
-        //                    var ed = ta.StopIndex + 1;
-        //                    bool a = IsOverlapping(st, ed, start, end);
-        //                    return a;
-        //                }
-        //            }).ToList();
-        //        if (!refs.Any())
-        //        {
-        //            return result;
-        //        }
-        //        is_cursor_on_ref = true;
-        //    }
-
-        //    if (!(is_cursor_on_def || is_cursor_on_ref))
-        //    {
-        //        throw new LanguageServerException("Please position the cursor on either a LHS symbol (which means "
-        //                                          + " to replace all RHS occurrences of the symbol), or on a RHS symbol (which means"
-        //                                          + " to replace the specific RHS occurrence of the symbol, then try again.");
-        //    }
-
-
-        //    if (!refs.Any())
-        //    {
-        //        // You can't replace a symbol if there's no use.
-        //        // Note that there's always one use as long as there's a
-        //        // definition.
-        //        throw new LanguageServerException("There is no use of the symbol "
-        //            //       + sym.name + ". Position the cursor to another symbol and try again."
-        //            );
-        //    }
-
-        //    // Get all intertoken text immediately for source reconstruction.
-        //    var (text_before, other) = TreeEdits.TextToLeftOfLeaves(pd_parser.TokStream, pd_parser.ParseTree);
-
-        //    // Substitute RHS into all applied occurrences.
-        //    foreach (var re in refs)
-        //    {
-        //        pd_parser.Attributes.TryGetValue(re, out IList<CombinedScopeSymbol> list_value);
-        //        if (list_value == null) continue;
-        //        if (list_value.Count > 1) continue;
-        //        var value = list_value.First();
-        //        if (value == null) continue;
-        //        Symtab.ISymbol sym = value as Symtab.ISymbol;
-        //        if (sym == null) continue;
-        //        List<Symtab.ISymbol> list_of_syms = new List<Symtab.ISymbol>() { sym };
-        //        if (sym is RefSymbol) list_of_syms = sym.resolve();
-        //        if (list_of_syms.Count > 1) continue;
-        //        var x = list_of_syms.First();
-        //        if (!(x is NonterminalSymbol)) continue;
-        //        // Find rule based on token for defining occurrence.
-        //        var def_token = x.Token;
-        //        var def_leaf = pd_parser.AllNodes.Where(
-        //            z =>
-        //            {
-        //                var z2 = z as TerminalNodeImpl;
-        //                if (z2 == null) return false;
-        //                return z2.Symbol?.TokenIndex == def_token.TokenIndex;
-        //            }).FirstOrDefault();
-        //        IParseTree rule;
-        //        for (rule = def_leaf; rule != null; rule = rule.Parent)
-        //        {
-        //            if (rule is ANTLRv4Parser.ParserRuleSpecContext)
-        //                break;
-        //        }
-        //        // For symbol rule.RULE_REF(), replace occurrence in parse tree
-        //        // with modified RHS list.
-        //        var parser_rule = rule as ANTLRv4Parser.ParserRuleSpecContext;
-        //        if (re.Symbol.InputStream.SourceName != pd_parser.FullFileName) continue;
-        //        var td = document;
-        //        AntlrGrammarDetails pd = ParserDetailsFactory.Create(td) as AntlrGrammarDetails;
-        //        var rhs = parser_rule.ruleBlock();
-        //        var pt = pd.ParseTree;
-        //        var sym_pt = LanguageServer.Util.Find(start, td);
-        //        if (sym_pt == null) throw new Exception("Inexplicably can't find document symbol in DoFold.");
-
-        //        var s = Module.GetDocumentSymbol(re.Symbol.StartIndex, td);
-        //        if (s == null) throw new Exception("Inexplicably can't find document symbol in DoFold.");
-
-        //        TreeEdits.Replace(pt,
-        //        (in IParseTree t, out bool c) =>
-        //        {
-        //            c = true;
-        //            if (!(t is ANTLRv4Parser.ElementContext))
-        //                return null;
-        //            var u = t as ANTLRv4Parser.ElementContext;
-        //            var id = u.atom()?.ruleref()?.RULE_REF();
-        //            if (id == null) return null;
-        //            if (id.GetText() != s.name) return null;
-        //            if (!(id is TerminalNodeImpl)) return null;
-        //            var tni = id as TerminalNodeImpl;
-        //            if (tni.Payload.StartIndex == re.Symbol.StartIndex
-        //                && tni.Payload.StopIndex == re.Symbol.StopIndex)
-        //            {
-        //                var element_p = t;
-        //                var alternative_p = t.Parent;
-        //                var element = element_p as ANTLRv4Parser.ElementContext;
-        //                var alternative = alternative_p as ANTLRv4Parser.AlternativeContext;
-        //                var ebnf_suffix = element.ebnfSuffix();
-
-        //                bool modified = false;
-        //                int i = 0;
-        //                for (; i < alternative.ChildCount; ++i)
-        //                {
-        //                    if (alternative.children[i] == element)
-        //                    {
-        //                        modified = true;
-        //                        break;
-        //                    }
-        //                }
-        //                if (!modified) return null;
-
-        //                var env = new Dictionary<string, object>();
-        //                if (ebnf_suffix != null)
-        //                    env.Add("suffix", TreeEdits.CopyTreeRecursive(ebnf_suffix, null, text_before));
-        //                env.Add("lparen", new TerminalNodeImpl(new CommonToken(ANTLRv4Lexer.LPAREN) { Line = -1, Column = -1, Text = "(" }));
-        //                env.Add("rparen", new TerminalNodeImpl(new CommonToken(ANTLRv4Lexer.RPAREN) { Line = -1, Column = -1, Text = ")" }));
-        //                var ruleAltList = rhs.ruleAltList();
-        //                bool first = true;
-        //                List<IParseTree> rhses = new List<IParseTree>();
-        //                foreach (var labeledAlt in ruleAltList.labeledAlt())
-        //                {
-        //                    if (!first)
-        //                    {
-        //                        var token4 = new CommonToken(ANTLRv4Lexer.OR) { Line = -1, Column = -1, Text = "|" };
-        //                        var new_or = new TerminalNodeImpl(token4);
-        //                        rhses.Add(new_or);
-        //                    }
-        //                    first = false;
-        //                    var a = labeledAlt.alternative();
-        //                    rhses.Add(TreeEdits.CopyTreeRecursive(a, null, text_before));
-        //                }
-        //                env.Add("rhses", rhses);
-
-        //                var construct = new CTree.Class1(pd_parser.Parser, env);
-        //                var res = construct.CreateTree(
-        //                        "( element ( ebnf ( block {lparen} ( altList {rhses} ) {rparen}) {suffix}))")
-        //                    as ANTLRv4Parser.ElementContext;
-
-        //                return res;
-        //            }
-        //            return null;
-        //        });
-        //    }
-
-        //    StringBuilder sb = new StringBuilder();
-        //    TreeEdits.Reconstruct(sb, pd_parser.ParseTree, text_before);
-        //    var new_code = sb.ToString();
-        //    if (new_code != pd_parser.Code)
-        //    {
-        //        result.Add(document.FullPath, new_code);
-        //    }
-
-        //    return result;
-        //}
-
         public static Dictionary<string, string> Unfold(int start, int end, Document document)
         {
             Dictionary<string, string> result = new Dictionary<string, string>();
@@ -4876,7 +4635,7 @@
             return result;
         }
 
-        public static Dictionary<string, string> Unfold(List<TerminalNodeImpl> nodes, Document document)
+        public static void Unfold(List<TerminalNodeImpl> nodes, Document document)
         {
             Dictionary<string, string> result = new Dictionary<string, string>();
 
@@ -4898,18 +4657,36 @@
             // or it is on a symbol in the RHS of the rule, which means the
             // user wants to unroll this specific applied occurrence of the rule.
 
-            List<TerminalNodeImpl> defs = new List<TerminalNodeImpl>();
-            List<TerminalNodeImpl> refs = new List<TerminalNodeImpl>();
+            Dictionary<TerminalNodeImpl, IParseTree> defs = new Dictionary<TerminalNodeImpl, IParseTree>();
 
             foreach (var n in nodes)
             {
-                if (pd_parser.Refs.TryGetValue(n, out int vd))
-                    refs.Add(n);
-                if (pd_parser.Defs.TryGetValue(n, out int vr))
-                    defs.Add(n);
+                var d = GetDef(n, pd_parser);
+                if (d == null || d.Count == 0 || d.Count > 1) continue;
+                var def = d.First();
+                string def_file = def.file;
+                if (def_file == null) continue;
+                var workspace = document.Workspace;
+                Document doc2 = workspace.FindDocument(def_file);
+                if (doc2 == null) continue;
+                if (!(ParsingResultsFactory.Create(doc2) is ParsingResults pd2)) continue;
+                var tree = pd2.ParseTree;
+                if (tree == null) continue;
+                var lhs = def.Token;
+                if (lhs == null) continue;
+                TerminalNodeImpl lhs_term = TreeEdits.Find(lhs.First(), tree);
+                if (lhs_term == null) continue;
+                if (lhs_term.Parent is ANTLRv4Parser.ParserRuleSpecContext p1)
+                {
+                    defs[n] = p1.ruleBlock();
+                }
+                else if (lhs_term.Parent is ANTLRv4Parser.LexerRuleSpecContext p2)
+                {
+                    defs[n] = p2.lexerRuleBlock();
+                }
             }
 
-            if (defs.Count == 0 && refs.Count == 0)
+            if (defs.Count == 0)
             {
                 throw new LanguageServerException("Please position the cursor on either a LHS symbol (which means"
                                                   + " to replace all RHS occurrences of the symbol), or on a RHS symbol (which means"
@@ -4920,201 +4697,11 @@
             var (text_before, other) = TreeEdits.TextToLeftOfLeaves(pd_parser.TokStream, pd_parser.ParseTree);
 
             // Substitute RHS into all applied occurrences.
-            foreach (var re in refs)
+            foreach (var re in nodes)
             {
-                pd_parser.Attributes.TryGetValue(re, out IList<CombinedScopeSymbol> list_value);
-                if (list_value == null) continue;
-                if (list_value.Count > 1) continue;
-                var value = list_value.First();
-                if (value == null) continue;
-                Domemtech.Symtab.ISymbol sym = value as Domemtech.Symtab.ISymbol;
-                if (sym == null) continue;
-                List<Domemtech.Symtab.ISymbol> list_of_syms = new List<Domemtech.Symtab.ISymbol>() { sym };
-                if (sym is RefSymbol) list_of_syms = sym.resolve();
-                if (list_of_syms.Count > 1) continue;
-                var x = list_of_syms.First();
-                // Find rule based on token for defining occurrence.
-                var def_token = x.Token;
-                var def_leaf = pd_parser.AllNodes.Where(
-                    z =>
-                    {
-                        var z2 = z as TerminalNodeImpl;
-                        if (z2 == null) return false;
-                        return z2.Symbol?.TokenIndex == def_token.First().TokenIndex;
-                    }).FirstOrDefault();
-                IParseTree rule;
-                for (rule = def_leaf; rule != null; rule = rule.Parent)
-                {
-                    if (rule is ANTLRv4Parser.ParserRuleSpecContext)
-                        break;
-                    if (rule is ANTLRv4Parser.LexerRuleSpecContext)
-                        break;
-                }
-                // For symbol rule.RULE_REF(), replace occurrence in parse tree
-                // with modified RHS list.
-                if (rule is ANTLRv4Parser.ParserRuleSpecContext parser_rule)
-                {
-                    if (re.Symbol.InputStream.SourceName != pd_parser.FullFileName) continue;
-                    var td = document;
-                    ParsingResults pd = ParsingResultsFactory.Create(td) as ParsingResults;
-                    var rhs = parser_rule.ruleBlock();
-                    var pt = pd.ParseTree;
-
-                    var s = new Module().GetDocumentSymbol(re.Symbol.StartIndex, td);
-                    if (s == null) throw new Exception("Inexplicably can't find document symbol in DoFold.");
-
-                    TreeEdits.Replace(pt,
-                    (in IParseTree t, out bool c) =>
-                    {
-                        c = true;
-                        if (!(t is ANTLRv4Parser.ElementContext))
-                            return null;
-                        var u = t as ANTLRv4Parser.ElementContext;
-                        var id = u.atom()?.ruleref()?.RULE_REF();
-                        if (id == null) return null;
-                        if (id.GetText() != s.name) return null;
-                        if (!(id is TerminalNodeImpl)) return null;
-                        var tni = id as TerminalNodeImpl;
-                        if (tni.Payload.StartIndex == re.Symbol.StartIndex
-                            && tni.Payload.StopIndex == re.Symbol.StopIndex)
-                        {
-                            var element_p = t;
-                            var alternative_p = t.Parent;
-                            var element = element_p as ANTLRv4Parser.ElementContext;
-                            var alternative = alternative_p as ANTLRv4Parser.AlternativeContext;
-                            var ebnf_suffix = element.ebnfSuffix();
-
-                            bool modified = false;
-                            int i = 0;
-                            for (; i < alternative.ChildCount; ++i)
-                            {
-                                if (alternative.children[i] == element)
-                                {
-                                    modified = true;
-                                    break;
-                                }
-                            }
-                            if (!modified) return null;
-
-                            var env = new Dictionary<string, object>();
-                            if (ebnf_suffix != null)
-                                env.Add("suffix", TreeEdits.CopyTreeRecursive(ebnf_suffix, null, text_before));
-                            env.Add("lparen", new TerminalNodeImpl(new CommonToken(ANTLRv4Lexer.LPAREN) { Line = -1, Column = -1, Text = "(" }));
-                            env.Add("rparen", new TerminalNodeImpl(new CommonToken(ANTLRv4Lexer.RPAREN) { Line = -1, Column = -1, Text = ")" }));
-                            var ruleAltList = rhs.ruleAltList();
-                            bool first = true;
-                            List<IParseTree> rhses = new List<IParseTree>();
-                            foreach (var labeledAlt in ruleAltList.labeledAlt())
-                            {
-                                if (!first)
-                                {
-                                    var token4 = new CommonToken(ANTLRv4Lexer.OR) { Line = -1, Column = -1, Text = "|" };
-                                    var new_or = new TerminalNodeImpl(token4);
-                                    rhses.Add(new_or);
-                                }
-                                first = false;
-                                var a = labeledAlt.alternative();
-                                rhses.Add(TreeEdits.CopyTreeRecursive(a, null, text_before));
-                            }
-                            env.Add("rhses", rhses);
-
-                            var construct = new CTree.Class1(pd_parser.Parser, env);
-                            var res = construct.CreateTree(
-                                    "( element ( ebnf ( block {lparen} ( altList {rhses} ) {rparen}) {suffix}))")
-                                as ANTLRv4Parser.ElementContext;
-
-                            return res;
-                        }
-                        return null;
-                    });
-                }
-                else if (rule is ANTLRv4Parser.LexerRuleSpecContext lexer_rule)
-                {
-                    if (re.Symbol.InputStream.SourceName != pd_parser.FullFileName) continue;
-                    var td = document;
-                    ParsingResults pd = ParsingResultsFactory.Create(td) as ParsingResults;
-                    var rhs = lexer_rule.lexerRuleBlock();
-                    var pt = pd.ParseTree;
-
-                    var s = new Module().GetDocumentSymbol(re.Symbol.StartIndex, td);
-                    if (s == null) throw new Exception("Inexplicably can't find document symbol in DoFold.");
-
-                    TreeEdits.Replace(pt,
-                    (in IParseTree t, out bool c) =>
-                    {
-                        c = true;
-                        if (!(t is ANTLRv4Parser.ElementContext))
-                            return null;
-                        var u = t as ANTLRv4Parser.ElementContext;
-                        var id = u.atom()?.terminal()?.TOKEN_REF();
-                        if (id == null) return null;
-                        if (id.GetText() != s.name) return null;
-                        if (!(id is TerminalNodeImpl)) return null;
-                        var tni = id as TerminalNodeImpl;
-                        if (tni.Payload.StartIndex == re.Symbol.StartIndex
-                            && tni.Payload.StopIndex == re.Symbol.StopIndex)
-                        {
-                            var element_p = t;
-                            var alternative_p = t.Parent;
-                            var element = element_p as ANTLRv4Parser.ElementContext;
-                            var alternative = alternative_p as ANTLRv4Parser.AlternativeContext;
-                            var ebnf_suffix = element.ebnfSuffix();
-
-                            bool modified = false;
-                            int i = 0;
-                            for (; i < alternative.ChildCount; ++i)
-                            {
-                                if (alternative.children[i] == element)
-                                {
-                                    modified = true;
-                                    break;
-                                }
-                            }
-                            if (!modified) return null;
-
-                            var env = new Dictionary<string, object>();
-                            if (ebnf_suffix != null)
-                                env.Add("suffix", TreeEdits.CopyTreeRecursive(ebnf_suffix, null, text_before));
-                            env.Add("lparen", new TerminalNodeImpl(new CommonToken(ANTLRv4Lexer.LPAREN) { Line = -1, Column = -1, Text = "(" }));
-                            env.Add("rparen", new TerminalNodeImpl(new CommonToken(ANTLRv4Lexer.RPAREN) { Line = -1, Column = -1, Text = ")" }));
-                            var ruleAltList = rhs.lexerAltList();
-                            bool first = true;
-                            List<IParseTree> rhses = new List<IParseTree>();
-                            foreach (var lexerAlt in ruleAltList.lexerAlt())
-                            {
-                                if (!first)
-                                {
-                                    var token4 = new CommonToken(ANTLRv4Lexer.OR) { Line = -1, Column = -1, Text = "|" };
-                                    var new_or = new TerminalNodeImpl(token4);
-                                    rhses.Add(new_or);
-                                }
-                                first = false;
-                                var a = lexerAlt.lexerElements();
-                                rhses.Add(TreeEdits.CopyTreeRecursive(a, null, text_before));
-                            }
-                            env.Add("rhses", rhses);
-
-                            var construct = new CTree.Class1(pd_parser.Parser, env);
-                            var res = construct.CreateTree(
-                                    "( element ( ebnf ( block {lparen} ( altList {rhses} ) {rparen}) {suffix}))")
-                                as ANTLRv4Parser.ElementContext;
-
-                            return res;
-                        }
-                        return null;
-                    });
-                }
+                var def = defs[re];
+                TreeEdits.Replace(re, def);
             }
-
-            StringBuilder sb = new StringBuilder();
-            TreeEdits.Reconstruct(sb, pd_parser.ParseTree, text_before);
-            var new_code = sb.ToString();
-            if (new_code != pd_parser.Code)
-            {
-                result.Add(document.FullPath, new_code);
-            }
-
-            return result;
         }
 
         public static Dictionary<string, string> Unfold(

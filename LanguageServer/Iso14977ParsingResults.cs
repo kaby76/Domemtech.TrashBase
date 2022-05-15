@@ -800,7 +800,8 @@
                 byte[] byteArray = Encoding.UTF8.GetBytes(newcode);
                 AntlrInputStream ais = new AntlrInputStream(
                     new StreamReader(new MemoryStream(byteArray))
-                    .ReadToEnd()) { name = ffn };
+                    .ReadToEnd())
+                { name = ffn };
                 var lexer = new Iso14977Lexer(ais);
                 CommonTokenStream cts = new CommonTokenStream(lexer);
                 var parser = new Iso14977Parser(cts);
@@ -1093,25 +1094,6 @@
                 pd.Parser = parser;
                 pd.Lexer = lexer;
                 pd.ParseTree = pt;
-                Stack<IParseTree> stack = new Stack<IParseTree>();
-                stack.Push(pt);
-                while (stack.Any())
-                {
-                    var x = stack.Pop();
-                    if (x is TerminalNodeImpl leaf)
-                    {
-                    }
-                    else
-                    {
-                        var y = x as AttributedParseTreeNode;
-                        if (y != null) y.ParserDetails = pd;
-                        for (int i = 0; i < x.ChildCount; ++i)
-                        {
-                            var c = x.GetChild(i);
-                            if (c != null) stack.Push(c);
-                        }
-                    }
-                }
             }
         }
 
