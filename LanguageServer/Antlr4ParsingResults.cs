@@ -64,13 +64,15 @@
             Passes.Add(() =>
             {
                 if (ParseTree == null) return false;
-                ParseTreeWalker.Default.Walk(new Pass2Listener(this), ParseTree);
+                var list = new Pass2Listener(this);
+                list.Walk(ParseTree);
                 return false;
             });
             Passes.Add(() =>
             {
                 if (ParseTree == null) return false;
-                ParseTreeWalker.Default.Walk(new Pass3Listener(this), ParseTree);
+                var list = new Pass3Listener(this);
+                list.Walk(ParseTree);
                 return false;
             });
         }
@@ -903,7 +905,8 @@
                 ParsingResults.InverseImports.Add(this.FullFileName, new HashSet<string>());
             }
             if (ParseTree == null) return;
-            ParseTreeWalker.Default.Walk(new Pass0Listener(this), ParseTree);
+            var list = new Pass0Listener(this);
+            list.Walk(ParseTree);
             var workspace = this.Item.Workspace;
             foreach (KeyValuePair<string, HashSet<string>> dep in ParsingResults.InverseImports)
             {
@@ -919,7 +922,7 @@
             }
         }
 
-        public class Pass0Listener : ANTLRv4ParserBaseListener
+        public class Pass0Listener
         {
             private readonly ParsingResults _pd;
             private bool saw_tokenVocab_option = false;
@@ -932,6 +935,27 @@
 
             private GrammarType Type;
 
+            public void Walk(IParseTree ctx)
+            {
+                if (ctx is ParserRuleContext node)
+                {
+                    if (node.RuleIndex == ANTLRv4Parser.RULE_grammarType)
+                        EnterGrammarType(node);
+                    else if (node.RuleIndex == ANTLRv4Parser.RULE_option)
+                        EnterOption(node);
+                    else if (node.RuleIndex == ANTLRv4Parser.RULE_delegateGrammar)
+                        EnterDelegateGrammar(node);
+                    else if (node.RuleIndex == ANTLRv4Parser.RULE_rules)
+                        EnterRules(node);
+                    for (int i = 0; i < node.ChildCount; i++)
+                    {
+                        Walk(node.GetChild(i));
+                    }
+                }
+                else if (ctx is TerminalNodeImpl term)
+                    ;
+            }
+
             public Pass0Listener(ParsingResults pd)
             {
                 _pd = pd;
@@ -941,7 +965,7 @@
                 }
             }
 
-            public override void EnterGrammarType([NotNull] ANTLRv4Parser.GrammarTypeContext context)
+            public void EnterGrammarType(IParseTree context /* [NotNull] ANTLRv4Parser.GrammarTypeContext context */)
             {
                 if (context.GetChild(0).GetText() == "parser")
                 {
@@ -957,7 +981,7 @@
                 }
             }
 
-            public override void EnterOption([NotNull] ANTLRv4Parser.OptionContext context)
+            public void EnterOption(IParseTree context /* [NotNull] ANTLRv4Parser.OptionContext context */ )
             {
                 if (context.ChildCount < 3)
                 {
@@ -1006,7 +1030,7 @@
                 saw_tokenVocab_option = true;
             }
 
-            public override void EnterDelegateGrammar([NotNull] ANTLRv4Parser.DelegateGrammarContext context)
+            public void EnterDelegateGrammar(IParseTree context /* [NotNull] ANTLRv4Parser.DelegateGrammarContext context */)
             {
                 if (context.ChildCount < 1)
                 {
@@ -1049,7 +1073,7 @@
                 }
             }
 
-            public override void EnterRules([NotNull] ANTLRv4Parser.RulesContext context)
+            public void EnterRules(IParseTree context /* [NotNull] ANTLRv4Parser.RulesContext context */)
             {
                 if (saw_tokenVocab_option)
                 {
@@ -1126,13 +1150,34 @@
             }
         }
 
-        public class Pass2Listener : ANTLRv4ParserBaseListener
+        public class Pass2Listener
         {
             private readonly ParsingResults _pd;
 
             public Pass2Listener(ParsingResults pd)
             {
                 _pd = pd;
+            }
+
+            public void Walk(IParseTree ctx)
+            {
+                if (ctx is ParserRuleContext node)
+                {
+                    if (node.RuleIndex == ANTLRv4Parser.RULE_grammarSpec)
+                        EnterGrammarSpec(node);
+                    else if (node.RuleIndex == ANTLRv4Parser.RULE_parserRuleSpec)
+                        EnterParserRuleSpec(node);
+                    else if (node.RuleIndex == ANTLRv4Parser.RULE_lexerRuleSpec)
+                        EnterLexerRuleSpec(node);
+                    else if (node.RuleIndex == ANTLRv4Parser.RULE_identifier)
+                        EnterIdentifier(node);
+                    for (int i = 0; i < node.ChildCount; i++)
+                    {
+                        Walk(node.GetChild(i));
+                    }
+                }
+                else if (ctx is TerminalNodeImpl term)
+                    ;
             }
 
             public IParseTree NearestScope(IParseTree node)
@@ -1169,12 +1214,12 @@
                 return null;
             }
 
-            public override void EnterGrammarSpec([NotNull] ANTLRv4Parser.GrammarSpecContext context)
+            public void EnterGrammarSpec(IParseTree context /* [NotNull] ANTLRv4Parser.GrammarSpecContext context */)
             {
                 _pd.Attributes[context] = new List<CombinedScopeSymbol>() { (CombinedScopeSymbol)_pd.RootScope };
             }
 
-            public override void EnterParserRuleSpec([NotNull] ANTLRv4Parser.ParserRuleSpecContext context)
+            public void EnterParserRuleSpec(IParseTree context /* [NotNull] ANTLRv4Parser.ParserRuleSpecContext context */)
             {
                 int i;
                 for (i = 0; i < context.ChildCount; ++i)
@@ -1204,7 +1249,7 @@
                 _pd.Attributes[context.GetChild(i)] = new List<CombinedScopeSymbol>() { s };
             }
 
-            public override void EnterLexerRuleSpec([NotNull] ANTLRv4Parser.LexerRuleSpecContext context)
+            public void EnterLexerRuleSpec(IParseTree context /* [NotNull] ANTLRv4Parser.LexerRuleSpecContext context */)
             {
                 int i;
                 for (i = 0; i < context.ChildCount; ++i)
@@ -1234,7 +1279,7 @@
                 _pd.Attributes[context.GetChild(i)] = new List<CombinedScopeSymbol>() { s };
             }
 
-            public override void EnterIdentifier([NotNull] ANTLRv4Parser.IdentifierContext context)
+            public void EnterIdentifier(IParseTree context /* [NotNull] ANTLRv4Parser.IdentifierContext context */)
             {
                 if (context.Parent is ANTLRv4Parser.ModeSpecContext)
                 {
@@ -1282,7 +1327,7 @@
             }
         }
 
-        public class Pass3Listener : ANTLRv4ParserBaseListener
+        public class Pass3Listener
         {
             private readonly ParsingResults _pd;
 
@@ -1291,28 +1336,53 @@
                 _pd = pd;
             }
 
-            public override void EnterTerminal([NotNull] ANTLRv4Parser.TerminalContext context)
+            public void Walk(IParseTree ctx)
             {
-                if (context.TOKEN_REF() != null)
+                if (ctx is ParserRuleContext node)
                 {
-                    string id = context.TOKEN_REF().GetText();
+                    if (node.RuleIndex == ANTLRv4Parser.RULE_terminal)
+                        EnterTerminal(node);
+                    else if (node.RuleIndex == ANTLRv4Parser.RULE_ruleref)
+                        EnterRuleref(node);
+                    else if (node.RuleIndex == ANTLRv4Parser.RULE_identifier)
+                        EnterIdentifier(node);
+                    for (int i = 0; i < node.ChildCount; i++)
+                    {
+                        Walk(node.GetChild(i));
+                    }
+                }
+                else if (ctx is TerminalNodeImpl term)
+                    ;
+            }
+
+            public void EnterTerminal(IParseTree context /* [NotNull] ANTLRv4Parser.TerminalContext context */)
+            {
+                var c = context.GetChild(0);
+                var d = c as TerminalNodeImpl;
+                if (d == null) return;
+                var typ = d.Symbol.Type;
+                if (typ == ANTLRv4Parser.TOKEN_REF)
+                {
+                    string id = d.GetText();
                     List<ISymbol> list = _pd.RootScope.LookupType(id).ToList();
                     if (!list.Any())
                     {
-                        ISymbol sym = new TerminalSymbol(id, new List<IToken>() { context.TOKEN_REF().Symbol });
+                        ISymbol sym = new TerminalSymbol(id, new List<IToken>() { d.Symbol });
                         _pd.RootScope.define(ref sym);
                         list = _pd.RootScope.LookupType(id).ToList();
                     }
                     List<CombinedScopeSymbol> new_attrs = new List<CombinedScopeSymbol>();
-                    CombinedScopeSymbol s = new RefSymbol(new List<IToken>() { context.TOKEN_REF().Symbol }, list);
+                    CombinedScopeSymbol s = new RefSymbol(new List<IToken>() { d.Symbol }, list);
                     new_attrs.Add(s);
-                    _pd.Attributes[context.TOKEN_REF()] = new_attrs;
+                    _pd.Attributes[c] = new_attrs;
                 }
             }
 
-            public override void EnterRuleref([NotNull] ANTLRv4Parser.RulerefContext context)
+            public void EnterRuleref(IParseTree context /* [NotNull] ANTLRv4Parser.RulerefContext context */)
             {
-                TerminalNodeImpl first = context.RULE_REF() as TerminalNodeImpl;
+                var c = context.GetChild(0);
+                var first = c as TerminalNodeImpl;
+                if (first == null) return;
                 string id = first.GetText();
                 List<ISymbol> list = _pd.RootScope.LookupType(id).ToList();
                 if (!list.Any())
@@ -1327,7 +1397,7 @@
                 _pd.Attributes[first] = new_attrs;
             }
 
-            public override void EnterIdentifier([NotNull] ANTLRv4Parser.IdentifierContext context)
+            public void EnterIdentifier(IParseTree context /* [NotNull] ANTLRv4Parser.IdentifierContext context */)
             {
                 if (context.Parent is ANTLRv4Parser.LexerCommandExprContext && context.Parent.Parent is ANTLRv4Parser.LexerCommandContext)
                 {

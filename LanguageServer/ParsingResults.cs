@@ -139,7 +139,7 @@
                 throw new NotImplementedException();
             }
         }
-        public virtual CommonTokenStream TokStream { get; set; } = null;
+        public virtual BufferedTokenStream TokStream { get; set; } = null;
 
 
         protected static readonly Dictionary<string, IScope> _scopes = new Dictionary<string, IScope>();

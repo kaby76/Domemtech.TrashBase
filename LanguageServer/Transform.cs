@@ -4676,13 +4676,32 @@
                 if (lhs == null) continue;
                 TerminalNodeImpl lhs_term = TreeEdits.Find(lhs.First(), tree);
                 if (lhs_term == null) continue;
-                if (lhs_term.Parent is ANTLRv4Parser.ParserRuleSpecContext p1)
+                var parent = lhs_term.Parent;
+                if (parent == null) continue;
+                var p = parent as ParserRuleContext;
+                if (p.RuleIndex == ANTLRv4Parser.RULE_parserRuleSpec)
                 {
-                    defs[n] = p1.ruleBlock();
+                    for (int i = 0; i < p.ChildCount; ++i)
+                    {
+                        var c = p.GetChild(i) as ParserRuleContext;
+                        if (c != null && c.RuleIndex == ANTLRv4Parser.RULE_ruleBlock)
+                        {
+                            defs[n] = c;
+                            break;
+                        }
+                    }
                 }
-                else if (lhs_term.Parent is ANTLRv4Parser.LexerRuleSpecContext p2)
+                else if (p.RuleIndex == ANTLRv4Parser.RULE_lexerRuleSpec)
                 {
-                    defs[n] = p2.lexerRuleBlock();
+                    for (int i = 0; i < p.ChildCount; ++i)
+                    {
+                        var c = p.GetChild(i) as ParserRuleContext;
+                        if (c != null && c.RuleIndex == ANTLRv4Parser.RULE_lexerRuleBlock)
+                        {
+                            defs[n] = c;
+                            break;
+                        }
+                    }
                 }
             }
 
