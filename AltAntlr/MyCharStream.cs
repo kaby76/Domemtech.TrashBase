@@ -8,7 +8,7 @@
     {
         public string Text { get; set; }
         public int Index => throw new NotImplementedException();
-        public int Size => throw new NotImplementedException();
+        public int Size => Text.Length;
         public string SourceName { get; set; }
         public void Consume()
         {
