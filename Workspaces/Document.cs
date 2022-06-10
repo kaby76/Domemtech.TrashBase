@@ -1,5 +1,6 @@
 ﻿namespace Workspaces
 {
+    using Antlr4.Runtime;
     using Antlr4.Runtime.Tree;
     using System;
     using System.Collections.Generic;
@@ -93,6 +94,16 @@
         }
 
         public IParseTree ParseTree
+        {
+            get; set;
+        }
+
+        public Parser Parser
+        {
+            get; set;
+        }
+
+        public Lexer Lexer
         {
             get; set;
         }

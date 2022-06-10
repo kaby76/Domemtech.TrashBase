@@ -5,6 +5,8 @@ using System.Linq;
 using Workspaces;
 using LanguageServer;
 using System.IO;
+using org.eclipse.wst.xml.xpath2.processor.util;
+using Antlr4.Runtime.Tree;
 
 namespace ConsoleApp1
 {
@@ -129,25 +131,75 @@ namespace ConsoleApp1
 
         static void Main(string[] args)
         {
-            //            Document doc1 = CheckStringDoc(@"
-            //grammar t1;
-            //a : 'b' b | 'c' c | 'd' d | 'd' a | ('b' | 'c') ;
-            //b : 'b' | 'c' b? ;
-            //c : 'b' | 'c' | 'd' | c 'd' ;
-            //d : 'b' | d? 'c' ;
-            //");
-            Document doc3 = CheckDoc(@"c:/users/kenne/documents/github/grammars-upstream/antlr/antlr4/LexBasic.g4");
-            Document doc2 = CheckDoc(@"c:/users/kenne/documents/github/grammars-upstream/antlr/antlr4/ANTLRv4Lexer.g4");
-            Document doc1 = CheckDoc(@"c:/users/kenne/documents/github/grammars-upstream/antlr/antlr4/ANTLRv4Parser.g4");
-            new LanguageServer.Module().Compile(Workspaces.Workspace.Instance);
-            var enumeration = new LanguageServer.EnumerateDerivation(doc1, doc2, "grammarSpec");
-            enumeration.Enumerate();
-            return;
-
-
-            Workspace _workspace = new Workspace();
             {
-                Document document = Document.CreateStringDocument(@"
+                Document doc1 = CheckStringDoc(@"
+                grammar test;
+                a : b* EOF;
+                B : 'b';
+                C : 'c';
+                c : C ;
+                b : B c* ;
+                WS : [ \t\n\r]+ -> skip;
+                ");
+                new LanguageServer.Module().Compile(Workspaces.Workspace.Instance);
+                var tree = doc1.ParseTree;
+                var parser = doc1.Parser;
+                var lexer = doc1.Lexer;
+                org.eclipse.wst.xml.xpath2.processor.Engine engine = new org.eclipse.wst.xml.xpath2.processor.Engine();
+                var ate = new AntlrTreeEditing.AntlrDOM.ConvertToDOM();
+                using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext = ate.Try(tree, parser))
+                {
+                    var first = engine.parseExpression(
+                        "(//ruleSpec)[1]",
+                        new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
+                        .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree
+                        ).First();
+                    var nodes = engine.parseExpression(
+                        "//ruleSpec[parserRuleSpec]",
+                            new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
+                        .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree
+                            ).ToList();
+                    // HACK FIX BELOW GetChild(---> 0)
+                    var sorted = nodes.OrderBy(x => x.GetChild(0).GetText()).ToList();
+                    sorted.Reverse();
+                    var tb = new Dictionary<TerminalNodeImpl, string>();
+                    foreach (var node in sorted)
+                    {
+                        if (node == first) continue;
+                        TreeEdits.MoveBefore(node, first);
+                        first = node;
+                    }
+                    // Output the tree.
+                    System.Console.Error.WriteLine(TreeOutput.OutputTree(
+                        tree,
+                        lexer,
+                        parser,
+                        null).ToString());
+                    //TreeEdits.MoveBefore()
+                    return;
+                }
+            }
+
+            {
+                //            Document doc1 = CheckStringDoc(@"
+                //grammar t1;
+                //a : 'b' b | 'c' c | 'd' d | 'd' a | ('b' | 'c') ;
+                //b : 'b' | 'c' b? ;
+                //c : 'b' | 'c' | 'd' | c 'd' ;
+                //d : 'b' | d? 'c' ;
+                //");
+                Document doc3 = CheckDoc(@"c:/users/kenne/documents/github/grammars-upstream/antlr/antlr4/LexBasic.g4");
+                Document doc2 = CheckDoc(@"c:/users/kenne/documents/github/grammars-upstream/antlr/antlr4/ANTLRv4Lexer.g4");
+                Document doc1 = CheckDoc(@"c:/users/kenne/documents/github/grammars-upstream/antlr/antlr4/ANTLRv4Parser.g4");
+                new LanguageServer.Module().Compile(Workspaces.Workspace.Instance);
+                var enumeration = new LanguageServer.EnumerateDerivation(doc1, doc2, "grammarSpec");
+                enumeration.Enumerate();
+                return;
+            }
+            {
+                Workspace _workspace = new Workspace();
+                {
+                    Document document = Document.CreateStringDocument(@"
 grammar t1;
 a : 'b' | 'c' | 'd' | 'd' a ;
 // a : 'd'* ( 'b' | 'c' | 'd' ) ; << Should get this.
@@ -158,22 +210,23 @@ c : 'b' | 'c' | 'd' | c 'd' ;
 d : 'b' | d? 'c' ;
 //
 ");
-                _ = ParsingResultsFactory.Create(document);
-                var workspace = document.Workspace;
-                _ = new LanguageServer.Module().Compile(workspace);
-                Project project = _workspace.FindProject("Misc");
-                if (project == null)
-                {
-                    project = new Project("Misc", "Misc", "Misc");
-                    _workspace.AddChild(project);
+                    _ = ParsingResultsFactory.Create(document);
+                    var workspace = document.Workspace;
+                    _ = new LanguageServer.Module().Compile(workspace);
+                    Project project = _workspace.FindProject("Misc");
+                    if (project == null)
+                    {
+                        project = new Project("Misc", "Misc", "Misc");
+                        _workspace.AddChild(project);
+                    }
+                    project.AddDocument(document);
+                    var pr = LanguageServer.ParsingResultsFactory.Create(document);
+                    if (document.ParseTree == null)
+                    {
+                        new LanguageServer.Module().Compile(_workspace);
+                    }
+                    var result = LanguageServer.Transform.ConvertRecursionToKleeneOperator(document);
                 }
-                project.AddDocument(document);
-                var pr = LanguageServer.ParsingResultsFactory.Create(document);
-                if (document.ParseTree == null)
-                {
-                    new LanguageServer.Module().Compile(_workspace);
-                }
-                var result = LanguageServer.Transform.ConvertRecursionToKleeneOperator(document);
             }
         }
     }

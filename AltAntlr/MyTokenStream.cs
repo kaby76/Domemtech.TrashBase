@@ -9,7 +9,7 @@
     public class MyTokenStream : BufferedTokenStream, ITokenStream
     {
         public ITokenSource _tokenSource;
-        protected new internal List<IToken> tokens;
+        protected new internal List<IToken> _tokens;
         protected internal int n;
         protected new internal int p = 0;
         protected internal int numMarkers = 0;
@@ -36,7 +36,7 @@
         public MyTokenStream()
             : base(new FuckYouAntlr())
         {
-            this.tokens = new List<IToken>();
+            this._tokens = new List<IToken>();
             n = 0;
             this._tokenSource = null;
         }
@@ -45,14 +45,14 @@
             : base(new FuckYouAntlr())
         {
             Text = t;
-            this.tokens = new List<IToken>();
+            this._tokens = new List<IToken>();
             n = 0;
             this._tokenSource = null;
         }
 
         public override IList<IToken> GetTokens()
         {
-            return tokens;
+            return _tokens;
         }
 
         public override IToken Get(int i)
@@ -62,7 +62,7 @@
             {
                 throw new ArgumentOutOfRangeException("get(" + i + ") outside buffer: " + bufferStartIndex + ".." + (bufferStartIndex + n));
             }
-            return tokens[i - bufferStartIndex];
+            return _tokens[i - bufferStartIndex];
         }
 
         public override IToken LT(int i)
@@ -79,10 +79,10 @@
             }
             if (index >= n)
             {
-                System.Diagnostics.Debug.Assert(n > 0 && tokens[n - 1].Type == TokenConstants.EOF);
-                return tokens[n - 1];
+                System.Diagnostics.Debug.Assert(n > 0 && _tokens[n - 1].Type == TokenConstants.EOF);
+                return _tokens[n - 1];
             }
-            return tokens[index];
+            return _tokens[index];
         }
 
         public override int LA(int i)
@@ -127,7 +127,7 @@
                 throw new InvalidOperationException("cannot consume EOF");
             }
             // buf always has at least tokens[p==0] in this method due to ctor
-            lastToken = tokens[p];
+            lastToken = _tokens[p];
             // track last token for LT(-1)
             //// if we're at last token and no markers, opportunity to flush buffer
             //if (p == n - 1 && numMarkers == 0)
@@ -158,7 +158,7 @@
             {
                 ((IWritableToken)t).TokenIndex = GetBufferStartIndex() + n;
             }
-            tokens.Add(t);
+            _tokens.Add(t);
             n++;
         }
 
@@ -238,7 +238,7 @@
             }
             else
             {
-                lastToken = tokens[p - 1];
+                lastToken = _tokens[p - 1];
             }
         }
 
@@ -246,7 +246,7 @@
         {
             get
             {
-                return tokens.Count;
+                return _tokens.Count;
             }
         }
 
@@ -264,7 +264,7 @@
         public override string GetText(Interval interval)
         {
             int bufferStartIndex = GetBufferStartIndex();
-            int bufferStopIndex = bufferStartIndex + tokens.Count - 1;
+            int bufferStopIndex = bufferStartIndex + _tokens.Count - 1;
             int start = interval.a;
             int stop = interval.b;
             if (start < bufferStartIndex || stop > bufferStopIndex)
@@ -276,7 +276,7 @@
             StringBuilder buf = new StringBuilder();
             for (int i = a; i <= b; i++)
             {
-                IToken t = tokens[i];
+                IToken t = _tokens[i];
                 buf.Append(t.Text);
             }
             return buf.ToString();
@@ -289,9 +289,9 @@
 
         public override IList<IToken> GetHiddenTokensToLeft(int tokenIndex, int channel)
         {
-            if (tokenIndex < 0 || tokenIndex >= tokens.Count)
+            if (tokenIndex < 0 || tokenIndex >= _tokens.Count)
             {
-                throw new ArgumentOutOfRangeException(tokenIndex + " not in 0.." + (tokens.Count - 1));
+                throw new ArgumentOutOfRangeException(tokenIndex + " not in 0.." + (_tokens.Count - 1));
             }
             if (tokenIndex == 0)
             {
@@ -319,7 +319,7 @@
             }
             while (i >= 0)
             {
-                IToken token = tokens[i];
+                IToken token = _tokens[i];
                 if (token.Type == TokenConstants.EOF || token.Channel == channel)
                 {
                     return i;
@@ -334,7 +334,7 @@
             IList<IToken> hidden = new List<IToken>();
             for (int i = from; i <= to; i++)
             {
-                IToken t = tokens[i];
+                IToken t = _tokens[i];
                 if (channel == -1)
                 {
                     if (t.Channel != Lexer.DefaultTokenChannel)
@@ -359,8 +359,52 @@
 
         public void Delete()
         {
-            tokens.RemoveAt(currentTokenIndex);
+            _tokens.RemoveAt(currentTokenIndex);
             n--;
+        }
+
+        public void Move(int number, int from, int to)
+        {
+            // Move token at position "from" to position "to", in-place modified.
+            if (from < to)
+            {
+                // Slide "number" of tokens "from + 1" to "from".
+                // Then move token at "from" to "number - 1".
+                var ft = this._tokens[from];
+                var tt = this._tokens[to]; // Side effect of making sure buffer full.
+                int bufferStartIndex = GetBufferStartIndex();
+                for (int j = 0; j < number; ++j, ++j)
+                {
+                    for (int i = from + 1; i < to; ++i)
+                    {
+                        _tokens[i - 1 - bufferStartIndex] = _tokens[i - bufferStartIndex];
+                    }
+                    _tokens[number - 1 - bufferStartIndex] = ft;
+                }
+            } else
+            {
+                int bufferStartIndex = GetBufferStartIndex();
+                for (int j = 0; j < number; ++j)
+                {
+                    var ft = this._tokens[from];
+                    var tt = this._tokens[to]; // Side effect of making sure buffer full.
+                    for (int i = from; i >= to; --i)
+                    {
+                        _tokens[i - bufferStartIndex] = _tokens[i - 1 - bufferStartIndex];
+                    }
+                    _tokens[to - bufferStartIndex] = ft;
+                    from++;
+                    to++;
+                }
+            }
+            for (int current = 0, i = 0; i < this.Size; ++i)
+            {
+                var t = this._tokens[i] as AltAntlr.MyToken;
+                t.TokenIndex = i;
+                t.StartIndex = current;
+                t.StopIndex = current + t.Text.Length - 1;
+                current = t.StopIndex + 1;
+            }
         }
     }
 }

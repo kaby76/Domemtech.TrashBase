@@ -340,6 +340,8 @@
             gd.Parse(this, bail);
 
             document.ParseTree = ParseTree;
+            document.Parser = gd.Parser;
+            document.Lexer = gd.Lexer;
             AllNodes = DFSVisitor.DFS(ParseTree as ParserRuleContext);
             Comments = gd.ExtractComments(code);
             Defs = new Dictionary<TerminalNodeImpl, int>();

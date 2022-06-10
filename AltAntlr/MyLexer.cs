@@ -77,5 +77,8 @@
         public MyLexer(ICharStream input, TextWriter output, TextWriter errorOutput) : base(input, output, errorOutput)
         {
         }
+
+        MyTokenStream _token_stream;
+        public MyTokenStream TokenStream { get { return _token_stream; } set { _token_stream = value; } }
     }
 }
