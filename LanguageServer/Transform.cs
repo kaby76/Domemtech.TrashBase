@@ -291,31 +291,15 @@
                     Antlr4.Runtime.IToken start_tok = pd_parser.TokStream.Get(start);
                     int start_ind = start_tok.StartIndex;
                     rules[i].start_index = start_ind;
-                    rules[i].end_index = end_ind;
                 }
                 for (int i = 0; i < rules.Count; ++i)
                 {
                     if (i > 0)
                     {
-                        rules[i].start_index = rules[i - 1].end_index;
+                        rules[i-1].end_index = rules[i].start_index-1;
                     }
                 }
-                for (int i = 0; i < rules.Count; ++i)
-                {
-                    for (int j = rules[i].start_index; j < rules[i].end_index; ++j)
-                    {
-                        if (old_code[j] == '\r')
-                        {
-                            if (j + 1 < rules[i].end_index && old_code[j + 1] == '\n')
-                            {
-                                ;
-                            }
-                            else
-                            {
-                            }
-                        }
-                    }
-                }
+                rules[rules.Count-1].end_index = old_code.Length-1;
             }
 
             public void FindModePartitions()
@@ -1186,12 +1170,12 @@
                     // Partition rule symbols.
                     if (r.is_parser_rule)
                     {
-                        string n2 = old_code.Substring(r.start_index, r.end_index - r.start_index);
+                        string n2 = old_code.Substring(r.start_index, r.end_index - r.start_index + 1);
                         sb_parser.Append(n2);
                     }
                     else
                     {
-                        string n2 = old_code.Substring(r.start_index, r.end_index - r.start_index);
+                        string n2 = old_code.Substring(r.start_index, r.end_index - r.start_index + 1);
                         sb_lexer.Append(n2);
                     }
                     end = r.end_index + 1;
