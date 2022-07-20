@@ -526,6 +526,104 @@
             return node_to_insert;
         }
 
+        public static void InsertBeforeInStreams(AltAntlr.MyTokenStream tokstream, IParseTree node, AltAntlr.MyTerminalNodeImpl to_insert)
+        {
+            TerminalNodeImpl leaf = TreeEdits.Frontier(node).First();
+            // 'node' is either a terminal node or an internal node.
+            // Payload means different things for the two.
+            AltAntlr.MyCharStream cs;
+            AltAntlr.MyToken t;
+            AltAntlr.MyLexer l;
+            // Gather all information before modifying the token and char streams.
+            if (node is TerminalNodeImpl)
+            {
+                t = node.Payload as AltAntlr.MyToken;
+                cs = t.InputStream as AltAntlr.MyCharStream;
+                l = t.TokenSource as AltAntlr.MyLexer;
+                var token_source = t.TokenSource;
+            }
+            else
+            {
+                var lmf = TreeEdits.LeftMostToken(node);
+                t = lmf.Payload as AltAntlr.MyToken;
+                cs = t.InputStream as AltAntlr.MyCharStream;
+                l = t.TokenSource as AltAntlr.MyLexer;
+                var token_source = t.TokenSource;
+            }
+            var arbitrary_string = to_insert.Payload.Text;
+            var old_buffer = cs.Text;
+            var index = AltAntlr.Util.GetIndex(t.Line, t.Column, old_buffer);
+            var add = arbitrary_string.Length;
+            var new_buffer = old_buffer.Insert(index, arbitrary_string);
+            var start = leaf.Payload.TokenIndex;
+            Dictionary<int, int> old_indices = new Dictionary<int, int>();
+            var i = start;
+            tokstream.Seek(i);
+            for (; ; )
+            {
+                if (i >= tokstream.Size) break;
+                var tt = tokstream.Get(i);
+                if (tt.Type == -1) break;
+                var tok = tt as AltAntlr.MyToken;
+                var line = tok.Line;
+                var col = tok.Column;
+                var i2 = AltAntlr.Util.GetIndex(line, col, old_buffer);
+                old_indices[i] = i2;
+                ++i;
+            }
+            i = start;
+            tokstream.Seek(i);
+            cs.Text = new_buffer;
+            tokstream.Text = new_buffer;
+            for (; ; )
+            {
+                if (i >= tokstream.Size) break;
+                var tt = tokstream.Get(i);
+                if (tt.Type == -1) break;
+                var tok = tt as AltAntlr.MyToken;
+                var new_index = old_indices[i] + add;
+                var (line, col) = AltAntlr.Util.GetLineColumn(new_index, new_buffer);
+                tok.Line = line;
+                tok.Column = col;
+                tok.StartIndex += add;
+                tok.StopIndex += add;
+                ++i;
+            }
+
+            // Now raw insert token in stream.
+            i = start;
+            tokstream.Insert(i, to_insert.Payload);
+            var to_insert_tok = to_insert.Payload as AltAntlr.MyToken;
+            to_insert.Start = i;
+            to_insert.Stop = i;
+            to_insert_tok.InputStream = cs;
+            to_insert_tok.TokenSource = l;
+            to_insert_tok.StartIndex = index;
+            to_insert_tok.StopIndex = index + add - 1;
+            to_insert_tok.TokenIndex = i;
+            to_insert_tok.Line = t.Line;
+            to_insert_tok.Column = t.Column;
+
+            // Update token stream indices.
+            i = start + 1;
+            for (; ; )
+            {
+                if (i >= tokstream.Size) break;
+                var tt = tokstream.Get(i);
+                if (tt.Type == -1) break;
+                var tok = tt as AltAntlr.MyToken;
+                tok.TokenIndex = i;
+                ++i;
+            }
+            InsertBefore(node, to_insert);
+
+            // Now update token start/stop index in tree leaves.
+            var root = node;
+            for (; root.Parent != null; root = root.Parent) ;
+            Reset(root);
+        }
+
+
         private static void Reset(IParseTree tree)
         {
             if (tree is AltAntlr.MyTerminalNodeImpl l)

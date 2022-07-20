@@ -53,6 +53,7 @@
             get;
             set;
         }
+        public string Encoding { get; set; }
         public string FullPath { get; private set; }
         public int[] Indices { get; set; }
         public string ParseAs { get; set; }
@@ -62,9 +63,10 @@
             set;
         }
 
-        public Document(string ffn)
+        public Document(string ffn, string encoding = "utf8")
         {
             FullPath = Util.GetProperFilePathCapitalization(ffn);
+            Encoding = encoding;
             Changed = false;
         }
 

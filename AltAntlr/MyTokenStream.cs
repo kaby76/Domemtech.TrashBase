@@ -366,6 +366,7 @@
         public void Move(int number, int from, int to)
         {
             // Move token at position "from" to position "to", in-place modified.
+            if (from == -1 || to == -1) return;
             if (from < to)
             {
                 // Slide "number" of tokens "from + 1" to "from".
@@ -405,6 +406,12 @@
                 t.StopIndex = current + t.Text.Length - 1;
                 current = t.StopIndex + 1;
             }
+        }
+
+        public void Insert(int i, IToken payload)
+        {
+            this._tokens.Insert(i, payload);
+            n++;
         }
     }
 }
