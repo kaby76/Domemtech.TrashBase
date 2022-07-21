@@ -636,14 +636,22 @@
             else if (tree is AltAntlr.MyParserRuleContext p)
             {
                 var res = p.SourceInterval;
-                int min = int.MaxValue;
-                int max = int.MinValue;
-                for (int i = 0; i < tree.ChildCount; ++i)
+                if (p.ChildCount > 0)
                 {
-                    var c = tree.GetChild(i);
-                    Reset(c);
-                    min = Math.Min(min, c.SourceInterval.a);
-                    max = Math.Max(max, c.SourceInterval.b);
+                    int min = int.MaxValue;
+                    int max = int.MinValue;
+                    for (int i = 0; i < tree.ChildCount; ++i)
+                    {
+                        var c = tree.GetChild(i);
+                        Reset(c);
+                        min = Math.Min(min, c.SourceInterval.a);
+                        max = Math.Max(max, c.SourceInterval.b);
+                    }
+                    res = new Antlr4.Runtime.Misc.Interval(min, max);
+                }
+                else
+                {
+                    res = new Antlr4.Runtime.Misc.Interval(int.MaxValue, -1);
                 }
                 p._sourceInterval = res;
             }
