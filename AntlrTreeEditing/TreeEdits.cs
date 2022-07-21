@@ -1016,6 +1016,7 @@
         {
             if (node == null) return;
             if (to == null) return;
+            if (node == to) return;
             IParseTree parent_from = node.Parent;
             var ctx_parent_from = parent_from as ParserRuleContext;
             if (ctx_parent_from == null)
@@ -1063,7 +1064,8 @@
             var old_buffer = cs.Text;
             var leaves_of_node = TreeEdits.Frontier(node);
             var leftmost_leaf_of_node = leaves_of_node.First() as AltAntlr.MyTerminalNodeImpl;
-            var leftmost_token_of_node = leftmost_leaf_of_node.Payload as AltAntlr.MyToken;
+            var leftmost_token_to_move = leftmost_leaf_of_node.Payload as AltAntlr.MyToken;
+            var leftmost_token_to_move_tokenindex = leftmost_token_to_move.TokenIndex;
             var rightmost_leaf_of_node = leaves_of_node.Last() as AltAntlr.MyTerminalNodeImpl;
             var last_token_of_node = rightmost_leaf_of_node.Payload as AltAntlr.MyToken;
             int token_index = last_token_of_node.TokenIndex + 1;
@@ -1073,29 +1075,36 @@
                 if (token_index == 0) break;
                 var tt = tokstream.Get(token_index);
                 var tok = tt as AltAntlr.MyToken;
+                // We're going to try to move everything after the last token
+                // that is intertree junk. Just look for the first token
+                // that is on the default channel and backup.
                 if (tok.Channel == Lexer.DefaultTokenChannel) break;
                 token_index++;
             }
-            var just_after_token = tokstream.Get(--token_index);
-            var s_node = leftmost_token_of_node.StartIndex; // Char stream index
-            var e_node = just_after_token.StopIndex; // Char stream index
-            var char_length_node = 1 + e_node - s_node;
-            var str_node = old_buffer.Substring(s_node, char_length_node);
-
+            --token_index; // Backup to end of all text to move.
+                           // Two cases: no additional tokens after the subtree to move,
+                           // vs some intertree/off-channel tokens.
+            IToken rightmost_token_to_move;
+            int end_char_index_to_move; // Char stream index
+            int rightmost_token_to_move_tokenindex;
+            int start_char_index_to_move; // Char stream index
+            rightmost_token_to_move = tokstream.Get(token_index);
+            end_char_index_to_move = rightmost_token_to_move.StopIndex; // Char stream index
+            rightmost_token_to_move_tokenindex = rightmost_token_to_move.TokenIndex;
+            start_char_index_to_move = leftmost_token_to_move.StartIndex; // Char stream index
+            int char_length_to_move = 1 + end_char_index_to_move - start_char_index_to_move;
+            var string_to_move = old_buffer.Substring(start_char_index_to_move, char_length_to_move);
             var leaves_of_to = TreeEdits.Frontier(to);
             var leftmost_leaf_of_to = leaves_of_to.First() as AltAntlr.MyTerminalNodeImpl;
             var leftmost_token_of_to = leftmost_leaf_of_to.Payload as AltAntlr.MyToken;
             var rightmost_leaf_of_to = leaves_of_to.Last() as AltAntlr.MyTerminalNodeImpl;
             var last_token_of_to = rightmost_leaf_of_to.Payload as AltAntlr.MyToken;
             var s_to = leftmost_token_of_to.StartIndex; // Char stream index
-            var e_to = last_token_of_to.StopIndex; // Char stream index
-            int char_length_to = 1 + e_to - s_to;
-            int adjusted_s_to = s_to
-                - (s_to > e_node ? char_length_node : 0);
-
-            var new_buffer = old_buffer.Remove(s_node, char_length_node);
-            new_buffer = new_buffer.Insert(adjusted_s_to, str_node);
-
+            //var e_to = last_token_of_to.StopIndex; // Char stream index
+            //int char_length_to = 1 + e_to - s_to;
+            int adjusted_s_to = s_to - (s_to > end_char_index_to_move ? char_length_to_move : 0);
+            var new_buffer = old_buffer.Remove(start_char_index_to_move, char_length_to_move);
+            new_buffer = new_buffer.Insert(adjusted_s_to, string_to_move);
             // Gather information before moving.
             var start = 0;
             Dictionary<int, int> old_indices = new Dictionary<int, int>();
@@ -1118,8 +1127,8 @@
             i = start;
             tokstream.Seek(i);
             tokstream.Move(
-                1 + just_after_token.TokenIndex - leftmost_token_of_node.TokenIndex,
-                leftmost_token_of_node.TokenIndex,
+                1 + rightmost_token_to_move_tokenindex - leftmost_token_to_move_tokenindex,
+                leftmost_token_to_move_tokenindex,
                 leftmost_token_of_to.TokenIndex);
 
             cs.Text = new_buffer;

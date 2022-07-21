@@ -31,27 +31,44 @@
             // the name. Saves big time on output!
             if (tree as TerminalNodeImpl != null)
             {
-                TerminalNodeImpl tok = tree as TerminalNodeImpl;
-                Interval interval = tok.SourceInterval;
+                TerminalNodeImpl leaf = tree as TerminalNodeImpl;
                 IList<IToken> inter = null;
-                if (tok.Symbol.TokenIndex >= 0)
-                    inter = stream?.GetHiddenTokensToLeft(tok.Symbol.TokenIndex);
+                if (leaf.Symbol.TokenIndex >= 0)
+                    inter = stream?.GetHiddenTokensToLeft(leaf.Symbol.TokenIndex);
                 if (inter != null)
                     foreach (var t in inter)
                     {
-                        var ty = tok.Symbol.Type;
-                        var name = lexer.Vocabulary.GetSymbolicName(ty);
                         StartLine(sb, level);
-                        sb.AppendLine("( " + name + " text=" + PerformEscapes(t.Text) + " " + lexer.ChannelNames[t.Channel]);
+                        sb.AppendLine(
+                            "( interleaf"
+                                + " text:" + PerformEscapes(t.Text)
+                                + " chnl:" + lexer.ChannelNames[t.Channel]
+                                + " l:" + t.Line
+                                + " c:" + t.Column
+                                + " si:" + t.StartIndex
+                                + " ei:" + t.StopIndex
+                                + " ti:" + t.TokenIndex
+                                );
                     }
                 {
-                    var ty = tok.Symbol.Type;
+                    var ty = leaf.Symbol.Type;
+                    var t = leaf.Symbol;
                     var name = lexer.Vocabulary.GetSymbolicName(ty);
                     StartLine(sb, level);
-                    sb.AppendLine("( " + name  + " i=" + tree.SourceInterval.a
-                        + " txt=" + PerformEscapes(tree.GetText())
-                        + " tt=" + tok.Symbol.Type
-                        + " " + lexer.ChannelNames[tok.Symbol.Channel]);
+                    sb.AppendLine(
+                        "( " + name
+                        + " int:" + tree.SourceInterval
+                        + " text:" + PerformEscapes(leaf.GetText())
+                        + " tt:" + leaf.Symbol.Type
+                        + " chnl:" + lexer.ChannelNames[leaf.Symbol.Channel]
+                        + " text:" + PerformEscapes(t.Text)
+                        + " chnl:" + lexer.ChannelNames[t.Channel]
+                        + " l:" + t.Line
+                        + " c:" + t.Column
+                        + " si:" + t.StartIndex
+                        + " ei:" + t.StopIndex
+                        + " ti:" + t.TokenIndex
+                        );
                 }
             }
             else
@@ -60,7 +77,10 @@
 		        var ri = x.RuleIndex;
                 var name = parser.RuleNames.Length <= ri ? "unknown" : parser.RuleNames[ri];
                 StartLine(sb, level);
-                sb.Append("( " + name);
+                sb.Append(
+                    "( " + name
+                    + " int:" + tree.SourceInterval
+                    );
                 sb.AppendLine();
             }
             for (int i = 0; i < tree.ChildCount; ++i)

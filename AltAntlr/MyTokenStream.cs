@@ -5,6 +5,7 @@
     using System.Text;
     using Antlr4.Runtime;
     using Antlr4.Runtime.Misc;
+    using System.Linq;
 
     public class MyTokenStream : BufferedTokenStream, ITokenStream
     {
@@ -365,38 +366,60 @@
 
         public void Move(int number, int from, int to)
         {
+            // Move "number" of tokens from "from" to "to" indices.
+            // Note, overlap is possible.
             // Move token at position "from" to position "to", in-place modified.
             if (from == -1 || to == -1) return;
             if (from < to)
             {
-                // Slide "number" of tokens "from + 1" to "from".
-                // Then move token at "from" to "number - 1".
-                var ft = this._tokens[from];
-                var tt = this._tokens[to]; // Side effect of making sure buffer full.
-                int bufferStartIndex = GetBufferStartIndex();
-                for (int j = 0; j < number; ++j, ++j)
-                {
-                    for (int i = from + 1; i < to; ++i)
-                    {
-                        _tokens[i - 1 - bufferStartIndex] = _tokens[i - bufferStartIndex];
-                    }
-                    _tokens[number - 1 - bufferStartIndex] = ft;
-                }
-            } else
+                // Copy to temp array.
+                // 0          2        8              10     20
+                // |--before--|--from--|--after from--|--to--|
+                // |--before--|--after from--|--from--|--to--|
+                var temp_array = this._tokens.ToArray();
+                var result = new IToken[this._tokens.Count];
+                int s = 0;
+                int t = 0;
+                int l = from;
+                Array.Copy(temp_array, s, result, t, l);
+                s = from + number;
+                t = from;
+                l = to - from - number;
+                Array.Copy(temp_array, s, result, t, l);
+                s = from;
+                t = to - number;
+                l = number;
+                Array.Copy(temp_array, s, result, t, l);
+                s = to;
+                t = to;
+                l = temp_array.Length - to;
+                Array.Copy(temp_array, s, result, t, l);
+                for (int i = 0; i < result.Length; i++) _tokens[i] = result[i];
+            } else if (from > to)
             {
-                int bufferStartIndex = GetBufferStartIndex();
-                for (int j = 0; j < number; ++j)
-                {
-                    var ft = this._tokens[from];
-                    var tt = this._tokens[to]; // Side effect of making sure buffer full.
-                    for (int i = from; i >= to; --i)
-                    {
-                        _tokens[i - bufferStartIndex] = _tokens[i - 1 - bufferStartIndex];
-                    }
-                    _tokens[to - bufferStartIndex] = ft;
-                    from++;
-                    to++;
-                }
+                // Copy to temp array.
+                // 0          2      8        10             20
+                // |--before--|--to--|--from--|--after from--|
+                // |--before--|--from--|--to--|--after from--|
+                var temp_array = this._tokens.ToArray();
+                var result = new IToken[this._tokens.Count];
+                int s = 0;
+                int t = 0;
+                int l = to;
+                Array.Copy(temp_array, s, result, t, l);
+                s = from;
+                t = to;
+                l = number;
+                Array.Copy(temp_array, s, result, t, l);
+                s = to;
+                t = to + number;
+                l = from - to;
+                Array.Copy(temp_array, s, result, t, l);
+                s = from + number;
+                t = from + number;
+                l = temp_array.Length - (from + number);
+                Array.Copy(temp_array, s, result, t, l);
+                for (int i = 0; i < result.Length; i++) _tokens[i] = result[i];
             }
             for (int current = 0, i = 0; i < this.Size; ++i)
             {
