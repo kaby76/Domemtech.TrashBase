@@ -21,5 +21,7 @@
         {
             get { return _sourceInterval; }
         }
+
+        public ICharStream InputStream { get; set; }
     }
 }

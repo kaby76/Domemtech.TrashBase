@@ -39,7 +39,7 @@
                     foreach (var t in inter)
                     {
                         StartLine(sb, level);
-                        sb.AppendLine(
+                        sb.Append(
                             "( interleaf"
                                 + " text:" + PerformEscapes(t.Text)
                                 + " chnl:" + lexer.ChannelNames[t.Channel]
@@ -49,13 +49,21 @@
                                 + " ei:" + t.StopIndex
                                 + " ti:" + t.TokenIndex
                                 );
+                        if (lexer is AltAntlr.MyLexer mylexer)
+                        {
+                            var ss = mylexer._inputstream;
+                            var s = ss as AltAntlr.MyCharStream;
+                            var st = s.Text.Substring(t.StartIndex, t.StopIndex - t.StartIndex + 1);
+                            sb.Append(" tstext:" + PerformEscapes(st));
+                        }
+                        sb.AppendLine();
                     }
                 {
                     var ty = leaf.Symbol.Type;
                     var t = leaf.Symbol;
                     var name = lexer.Vocabulary.GetSymbolicName(ty);
                     StartLine(sb, level);
-                    sb.AppendLine(
+                    sb.Append(
                         "( " + name
                         + " int:" + tree.SourceInterval
                         + " text:" + PerformEscapes(leaf.GetText())
@@ -69,6 +77,14 @@
                         + " ei:" + t.StopIndex
                         + " ti:" + t.TokenIndex
                         );
+                    if (lexer is AltAntlr.MyLexer mylexer)
+                    {
+                        var ss = mylexer._inputstream;
+                        var s = ss as AltAntlr.MyCharStream;
+                        var st = s.Text.Substring(t.StartIndex, t.StopIndex - t.StartIndex + 1);
+                        sb.Append(" tstext:" + PerformEscapes(st));
+                    }
+                    sb.AppendLine();
                 }
             }
             else

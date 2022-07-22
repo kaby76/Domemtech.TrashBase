@@ -24,5 +24,7 @@
         /// Stop token stream index (not char stream index).
         /// </summary>
         public int Stop { get; set; }
+
+        public ICharStream InputStream { get; set; }
     }
 }

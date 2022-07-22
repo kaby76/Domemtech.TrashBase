@@ -131,54 +131,6 @@ namespace ConsoleApp1
 
         static void Main(string[] args)
         {
-            {
-                Document doc1 = CheckStringDoc(@"
-                grammar test;
-                a : b* EOF;
-                B : 'b';
-                C : 'c';
-                c : C ;
-                b : B c* ;
-                WS : [ \t\n\r]+ -> skip;
-                ");
-                new LanguageServer.Module().Compile(Workspaces.Workspace.Instance);
-                var tree = doc1.ParseTree;
-                var parser = doc1.Parser;
-                var lexer = doc1.Lexer;
-                org.eclipse.wst.xml.xpath2.processor.Engine engine = new org.eclipse.wst.xml.xpath2.processor.Engine();
-                var ate = new AntlrTreeEditing.AntlrDOM.ConvertToDOM();
-                using (AntlrTreeEditing.AntlrDOM.AntlrDynamicContext dynamicContext = ate.Try(tree, parser))
-                {
-                    var first = engine.parseExpression(
-                        "(//ruleSpec)[1]",
-                        new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
-                        .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree
-                        ).First();
-                    var nodes = engine.parseExpression(
-                        "//ruleSpec[parserRuleSpec]",
-                            new StaticContextBuilder()).evaluate(dynamicContext, new object[] { dynamicContext.Document })
-                        .Select(x => (x.NativeValue as AntlrTreeEditing.AntlrDOM.AntlrElement).AntlrIParseTree
-                            ).ToList();
-                    // HACK FIX BELOW GetChild(---> 0)
-                    var sorted = nodes.OrderBy(x => x.GetChild(0).GetText()).ToList();
-                    sorted.Reverse();
-                    var tb = new Dictionary<TerminalNodeImpl, string>();
-                    foreach (var node in sorted)
-                    {
-                        if (node == first) continue;
-                        TreeEdits.MoveBefore(node, first);
-                        first = node;
-                    }
-                    // Output the tree.
-                    System.Console.Error.WriteLine(TreeOutput.OutputTree(
-                        tree,
-                        lexer,
-                        parser,
-                        null).ToString());
-                    //TreeEdits.MoveBefore()
-                    return;
-                }
-            }
 
             {
                 //            Document doc1 = CheckStringDoc(@"

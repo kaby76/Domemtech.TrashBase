@@ -166,6 +166,8 @@
                 t2 = lmf.Payload as AltAntlr.MyToken;
                 cs = t2.InputStream as AltAntlr.MyCharStream;
             }
+            var root = node;
+            for (; root.Parent != null; root = root.Parent) ;
             AltAntlr.MyCharStream ts = null;
             var leaves = TreeEdits.Frontier(node);
             var first = leaves.First() as AltAntlr.MyTerminalNodeImpl;
@@ -232,7 +234,7 @@
             }
 
             // Adjust intervals up the tree.
-            Reset(node);
+            Reset(root);
         }
 
         public static IEnumerable<IParseTree> FindTopDown(IParseTree tree, Fun find)
@@ -280,8 +282,6 @@
             }
         }
 
-        // Insert the string as a token, with the expectation that the entire tree
-        // will be printed and re-parsed in the target language.
         public static TerminalNodeImpl InsertBefore(IParseTree node, string arbitrary_string)
         {
             var token = new CommonToken(0) { Line = -1, Column = -1, Text = arbitrary_string };
@@ -423,8 +423,6 @@
             }
         }
 
-        // Insert the string as a token, with the expectation that the entire tree
-        // will be printed and re-parsed in the target language.
         public static TerminalNodeImpl InsertAfter(IParseTree node, string arbitrary_string)
         {
             var token = new CommonToken(0) { Line = -1, Column = -1, Text = arbitrary_string };
@@ -1020,7 +1018,12 @@
             }
         }
 
-        public static void MoveBefore(IParseTree node, IParseTree to)
+        private static void MoveBefore(IParseTree from, IParseTree to)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static void MoveBeforeInStreams(AltAntlr.MyTokenStream tokstream, IParseTree node, IParseTree to)
         {
             if (node == null) return;
             if (to == null) return;
@@ -1052,19 +1055,8 @@
             
             // Gather information about char and token streams.
             AltAntlr.MyCharStream cs;
-            AltAntlr.MyTokenStream tokstream;
             // Gather all information before modifying the token and char streams.
-            AltAntlr.MyToken tk;
-            if(node is TerminalNodeImpl)
-            {
-                tk = node.Payload as AltAntlr.MyToken;
-            }
-            else
-            {
-                var lmf = TreeEdits.LeftMostToken(node);
-                tk = lmf.Payload as AltAntlr.MyToken;
-            }
-            var mylexer = tk.TokenSource as AltAntlr.MyLexer;
+            var mylexer = tokstream.TokenSource as AltAntlr.MyLexer;
             tokstream = mylexer.TokenStream;
             cs = mylexer.InputStream as AltAntlr.MyCharStream;
 
@@ -1204,8 +1196,6 @@
             Reset(node);
         }
 
-        // Insert the string as a token, with the expectation that the entire tree
-        // will be printed and re-parsed in the target language.
         public static TerminalNodeImpl Replace(IParseTree node, string arbitrary_string)
         {
             var token = new CommonToken(0) { Line = -1, Column = -1, Text = arbitrary_string };
