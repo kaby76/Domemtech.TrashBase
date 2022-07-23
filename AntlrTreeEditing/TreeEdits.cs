@@ -202,6 +202,7 @@
             i = start;
             tokstream.Seek(i);
             ts.Text = new_buffer;
+            cs.Text = new_buffer;
             tokstream.Text = new_buffer;
             for (; ; )
             {
@@ -1125,14 +1126,14 @@
 
             // Move tokens in the token stream.
             i = start;
+            cs.Text = new_buffer;
+            tokstream.Text = new_buffer;
             tokstream.Seek(i);
             tokstream.Move(
                 1 + rightmost_token_to_move_tokenindex - leftmost_token_to_move_tokenindex,
                 leftmost_token_to_move_tokenindex,
                 leftmost_token_of_to.TokenIndex);
 
-            cs.Text = new_buffer;
-            tokstream.Text = new_buffer;
             for (; ; )
             {
                 if (i >= tokstream.Size) break;

@@ -364,70 +364,155 @@
             n--;
         }
 
+        struct Data
+        {
+            public int index;
+            public int start;
+            public int end;
+        }
         public void Move(int number, int from, int to)
         {
             // Move "number" of tokens from "from" to "to" indices.
             // Note, overlap is possible.
             // Move token at position "from" to position "to", in-place modified.
-            if (from == -1 || to == -1) return;
+            if (from == -1 || to == -1 || from == to) return;
+            var lexer = this._tokenSource as MyLexer;
+            var charstream = lexer._inputstream as MyCharStream;
+            var original = new Dictionary<IToken, Data>();
+            var end = this._tokens.Count;
+            for (int i = 0; i < this._tokens.Count; i++)
+            {
+                var token = this._tokens[i] as MyToken;
+                original[token] = new Data { index = i, start = token.StartIndex, end = token.StopIndex };
+            }
             if (from < to)
             {
                 // Copy to temp array.
-                // 0          2        8              10     20
-                // |--before--|--from--|--after from--|--to--|
-                // |--before--|--after from--|--from--|--to--|
+                // before_from = 0
+                //    from = 2
+                //           after_from = 8
+                //              to = 10
+                //                         end = 20
+                // 0  2      8  10         20
+                // |aa|bbbbbb|cc|dddddddddd|
+                // |aa|cc|bbbbbb|dddddddddd|
                 var temp_array = this._tokens.ToArray();
                 var result = new IToken[this._tokens.Count];
+                var after_from = from + number;
+                var from_char_start = this._tokens[from].StartIndex;
+                var after_from_char_start = this._tokens[after_from].StartIndex;
+                var to_char_start = this._tokens[to].StartIndex;
+                var aa_len = from;
+                var bb_len = after_from - from; // number?
+                var cc_len = to - after_from;
+                var dd_len = end - to;
+                var aa_char_len = from_char_start;
+                var bb_char_len = after_from_char_start - from_char_start;
+                var cc_char_len = to_char_start - after_from_char_start;
+                var dd_char_len = charstream.Text.Length - to_char_start;
                 int s = 0;
                 int t = 0;
-                int l = from;
-                Array.Copy(temp_array, s, result, t, l);
+                int l = aa_len;
+                Array.Copy(temp_array, s, result, t, l); // aa
                 s = from + number;
                 t = from;
-                l = to - from - number;
-                Array.Copy(temp_array, s, result, t, l);
+                l = cc_len;
+                Array.Copy(temp_array, s, result, t, l); // cc
                 s = from;
                 t = to - number;
-                l = number;
-                Array.Copy(temp_array, s, result, t, l);
+                l = bb_len;
+                Array.Copy(temp_array, s, result, t, l); // bbbbbb
                 s = to;
                 t = to;
-                l = temp_array.Length - to;
-                Array.Copy(temp_array, s, result, t, l);
+                l = dd_len;
+                Array.Copy(temp_array, s, result, t, l); // dddddddddd
                 for (int i = 0; i < result.Length; i++) _tokens[i] = result[i];
-            } else if (from > to)
+                for (int i = 0; i < this.Size; ++i)
+                {
+                    var c = this._tokens[i] as AltAntlr.MyToken;
+                    c.TokenIndex = i;
+                    if (i < from) ; // aa
+                    else if (i >= from && i < from + cc_len) // cc
+                    {
+                        c.StartIndex = c.StartIndex - after_from_char_start + from_char_start;
+                        c.StopIndex = c.StopIndex - after_from_char_start + from_char_start;
+                    }
+                    else if (i >= from + cc_len && i < to) // bbbbbb
+                    {
+                        c.StartIndex = c.StartIndex + cc_char_len;
+                        c.StopIndex = c.StopIndex + cc_char_len;
+                    }
+                    else ;
+                }
+            }
+            else if (from > to)
             {
                 // Copy to temp array.
-                // 0          2      8        10             20
-                // |--before--|--to--|--from--|--after from--|
-                // |--before--|--from--|--to--|--after from--|
+                // before_to = 0
+                //    to = 2
+                //             from = 10
+                //                        after_from = 20
+                //                            end = 23
+                // 0  2        10         20  23
+                // |aa|bbbbbbbb|cccccccccc|ddd|
+                // |aa|cccccccccc|bbbbbbbb|ddd|
                 var temp_array = this._tokens.ToArray();
                 var result = new IToken[this._tokens.Count];
+                var to_char_start = this._tokens[to].StartIndex;
+                var from_char_start = this._tokens[from].StartIndex;
+                var after_from = from + number;
+                var after_from_char_start = this._tokens[after_from].StartIndex;
+                var aa_char_len = to_char_start;
+                var bb_char_len = from_char_start - to_char_start;
+                var cc_char_len = after_from_char_start - from_char_start;
+                var dd_char_len = charstream.Text.Length - after_from_char_start;
+                var aa_len = to;
+                var bb_len = from - to;
+                var cc_len = after_from - from; // number?
+                var dd_len = end - after_from;
                 int s = 0;
                 int t = 0;
-                int l = to;
-                Array.Copy(temp_array, s, result, t, l);
+                int l = aa_len;
+                Array.Copy(temp_array, s, result, t, l); // aa
                 s = from;
                 t = to;
-                l = number;
-                Array.Copy(temp_array, s, result, t, l);
+                l = cc_len;
+                Array.Copy(temp_array, s, result, t, l); // cccccccccc
                 s = to;
-                t = to + number;
-                l = from - to;
-                Array.Copy(temp_array, s, result, t, l);
-                s = from + number;
-                t = from + number;
-                l = temp_array.Length - (from + number);
-                Array.Copy(temp_array, s, result, t, l);
+                t = to + cc_len;
+                l = bb_len;
+                Array.Copy(temp_array, s, result, t, l); // bbbbbbbb
+                s = after_from;
+                t = after_from;
+                l = dd_len;
+                Array.Copy(temp_array, s, result, t, l); // ddd
                 for (int i = 0; i < result.Length; i++) _tokens[i] = result[i];
+                for (int i = 0; i < this.Size; ++i)
+                {
+                    var c = this._tokens[i] as AltAntlr.MyToken;
+                    c.TokenIndex = i;
+                    if (i < to) ; // aa
+                    else if (i >= to && i < to + cc_len) // cccccccccc
+                    {
+                        c.StartIndex = c.StartIndex - from_char_start + to_char_start;
+                        c.StopIndex = c.StopIndex - from_char_start + to_char_start;
+                    }
+                    else if (i >= to + cc_len && i < after_from) // bbbbbbbb
+                    {
+                        c.StartIndex = c.StartIndex + cc_char_len;
+                        c.StopIndex = c.StopIndex + cc_char_len;
+                    }
+                    else ;
+                }
             }
-            for (int current = 0, i = 0; i < this.Size; ++i)
+            else;
+            // Compare text of token with input.
+            for (int i = 0; i < this.Size; ++i)
             {
-                var t = this._tokens[i] as AltAntlr.MyToken;
-                t.TokenIndex = i;
-                t.StartIndex = current;
-                t.StopIndex = current + t.Text.Length - 1;
-                current = t.StopIndex + 1;
+                var c = this._tokens[i] as AltAntlr.MyToken;
+                var text1 = c.Text;
+                var text2 = charstream.Text.Substring(c.StartIndex, c.StopIndex - c.StartIndex + 1);
+                if (text1 != text2) throw new Exception("mismatch after move.");
             }
         }
 
