@@ -304,27 +304,37 @@
             return leaf;
         }
 
-        public static void InsertBeforeInStreams(AltAntlr.MyTokenStream tokstream, IParseTree node, string arbitrary_string)
+        public static void InsertBeforeInStreams(IParseTree node, string arbitrary_string)
         {
             TerminalNodeImpl leaf = TreeEdits.Frontier(node).First();
             // 'node' is either a terminal node or an internal node.
             // Payload means different things for the two.
-            AltAntlr.MyCharStream cs;
-            AltAntlr.MyToken t;
+            AltAntlr.MyToken token;
+            AltAntlr.MyCharStream charstream;
+            AltAntlr.MyLexer lexer;
+            AltAntlr.MyParser parser;
+            AltAntlr.MyTokenStream tokstream;
             // Gather all information before modifying the token and char streams.
-            if (node is TerminalNodeImpl)
+            if (node is AltAntlr.MyTerminalNodeImpl myterminalnode)
             {
-                t = node.Payload as AltAntlr.MyToken;
-                cs = t.InputStream as AltAntlr.MyCharStream;
+                lexer = myterminalnode.Lexer;
+                parser = myterminalnode.Parser;
+                tokstream = myterminalnode.TokenStream;
+                token = myterminalnode.Payload as AltAntlr.MyToken;
+                charstream = myterminalnode.InputStream;
             }
-            else
+            else if (node is AltAntlr.MyParserRuleContext myinternalnode)
             {
-                var lmf = TreeEdits.LeftMostToken(node);
-                t = lmf.Payload as AltAntlr.MyToken;
-                cs = t.InputStream as AltAntlr.MyCharStream;
+                lexer = myinternalnode.Lexer;
+                parser = myinternalnode.Parser;
+                tokstream = myinternalnode.TokenStream;
+                var lmf = TreeEdits.LeftMostToken(node) as AltAntlr.MyTerminalNodeImpl;
+                token = lmf.Payload as AltAntlr.MyToken;
+                charstream = myinternalnode.InputStream;
             }
-            var old_buffer = cs.Text;
-            var index = AltAntlr.Util.GetIndex(t.Line, t.Column, old_buffer);
+            else throw new Exception("Tree editing must be on AltAntlr tree.");
+            var old_buffer = charstream.Text;
+            var index = AltAntlr.Util.GetIndex(token.Line, token.Column, old_buffer);
             var add = arbitrary_string.Length;
             var new_buffer = old_buffer.Insert(index, arbitrary_string);
             var start = leaf.Payload.TokenIndex;
@@ -345,7 +355,7 @@
             }
             i = start;
             tokstream.Seek(i);
-            cs.Text = new_buffer;
+            charstream.Text = new_buffer;
             tokstream.Text = new_buffer;
             for (; ; )
             {
@@ -363,28 +373,38 @@
             }
         }
 
-        public static void InsertAfterInStreams(AltAntlr.MyTokenStream tokstream, IParseTree node, string arbitrary_string)
+        public static void InsertAfterInStreams(IParseTree node, string arbitrary_string)
         {
             TerminalNodeImpl leaf = TreeEdits.Frontier(node).First();
             // 'node' is either a terminal node or an internal node.
             // Payload means different things for the two.
-            AltAntlr.MyCharStream cs;
-            AltAntlr.MyToken t;
+            AltAntlr.MyToken token;
+            AltAntlr.MyCharStream charstream;
+            AltAntlr.MyLexer lexer;
+            AltAntlr.MyParser parser;
+            AltAntlr.MyTokenStream tokstream;
             // Gather all information before modifying the token and char streams.
-            if (node is TerminalNodeImpl)
+            if (node is AltAntlr.MyTerminalNodeImpl myterminalnode)
             {
-                t = node.Payload as AltAntlr.MyToken;
-                cs = t.InputStream as AltAntlr.MyCharStream;
+                lexer = myterminalnode.Lexer;
+                parser = myterminalnode.Parser;
+                tokstream = myterminalnode.TokenStream;
+                token = myterminalnode.Payload as AltAntlr.MyToken;
+                charstream = myterminalnode.InputStream;
             }
-            else
+            else if (node is AltAntlr.MyParserRuleContext myinternalnode)
             {
-                var lmf = TreeEdits.LeftMostToken(node);
-                t = lmf.Payload as AltAntlr.MyToken;
-                cs = t.InputStream as AltAntlr.MyCharStream;
+                lexer = myinternalnode.Lexer;
+                parser = myinternalnode.Parser;
+                tokstream = myinternalnode.TokenStream;
+                var lmf = TreeEdits.LeftMostToken(node) as AltAntlr.MyTerminalNodeImpl;
+                token = lmf.Payload as AltAntlr.MyToken;
+                charstream = myinternalnode.InputStream;
             }
-            var old_buffer = cs.Text;
-            var index = AltAntlr.Util.GetIndex(t.Line, t.Column, old_buffer);
-            index += t.Text.Length;
+            else throw new Exception("Tree editing must be on AltAntlr tree.");
+            var old_buffer = charstream.Text;
+            var index = AltAntlr.Util.GetIndex(token.Line, token.Column, old_buffer);
+            index += token.Text.Length;
             var add = arbitrary_string.Length;
             var new_buffer = old_buffer.Insert(index, arbitrary_string);
             var start = leaf.Payload.TokenIndex;
@@ -406,7 +426,7 @@
             }
             i = start;
             tokstream.Seek(i);
-            cs.Text = new_buffer;
+            charstream.Text = new_buffer;
             tokstream.Text = new_buffer;
             for (; ; )
             {
@@ -525,33 +545,38 @@
             return node_to_insert;
         }
 
-        public static void InsertBeforeInStreams(AltAntlr.MyTokenStream tokstream, IParseTree node, AltAntlr.MyTerminalNodeImpl to_insert)
+        public static void InsertBeforeInStreams(IParseTree node, AltAntlr.MyTerminalNodeImpl to_insert)
         {
             TerminalNodeImpl leaf = TreeEdits.Frontier(node).First();
             // 'node' is either a terminal node or an internal node.
             // Payload means different things for the two.
-            AltAntlr.MyCharStream cs;
-            AltAntlr.MyToken t;
-            AltAntlr.MyLexer l;
+            AltAntlr.MyToken token;
+            AltAntlr.MyCharStream charstream;
+            AltAntlr.MyLexer lexer;
+            AltAntlr.MyParser parser;
+            AltAntlr.MyTokenStream tokstream = null;
             // Gather all information before modifying the token and char streams.
-            if (node is TerminalNodeImpl)
+            if (node is AltAntlr.MyTerminalNodeImpl myterminalnode)
             {
-                t = node.Payload as AltAntlr.MyToken;
-                cs = t.InputStream as AltAntlr.MyCharStream;
-                l = t.TokenSource as AltAntlr.MyLexer;
-                var token_source = t.TokenSource;
+                lexer = myterminalnode.Lexer;
+                parser = myterminalnode.Parser;
+                tokstream = myterminalnode.TokenStream;
+                token = myterminalnode.Payload as AltAntlr.MyToken;
+                charstream = myterminalnode.InputStream;
             }
-            else
+            else if (node is AltAntlr.MyParserRuleContext myinternalnode)
             {
-                var lmf = TreeEdits.LeftMostToken(node);
-                t = lmf.Payload as AltAntlr.MyToken;
-                cs = t.InputStream as AltAntlr.MyCharStream;
-                l = t.TokenSource as AltAntlr.MyLexer;
-                var token_source = t.TokenSource;
+                lexer = myinternalnode.Lexer;
+                parser = myinternalnode.Parser;
+                tokstream = myinternalnode.TokenStream;
+                var lmf = TreeEdits.LeftMostToken(node) as AltAntlr.MyTerminalNodeImpl;
+                token = lmf.Payload as AltAntlr.MyToken;
+                charstream = myinternalnode.InputStream;
             }
+            else throw new Exception("Tree editing must be on AltAntlr tree.");
             var arbitrary_string = to_insert.Payload.Text;
-            var old_buffer = cs.Text;
-            var index = AltAntlr.Util.GetIndex(t.Line, t.Column, old_buffer);
+            var old_buffer = charstream.Text;
+            var index = AltAntlr.Util.GetIndex(token.Line, token.Column, old_buffer);
             var add = arbitrary_string.Length;
             var new_buffer = old_buffer.Insert(index, arbitrary_string);
             var start = leaf.Payload.TokenIndex;
@@ -572,7 +597,7 @@
             }
             i = start;
             tokstream.Seek(i);
-            cs.Text = new_buffer;
+            charstream.Text = new_buffer;
             tokstream.Text = new_buffer;
             for (; ; )
             {
@@ -595,13 +620,13 @@
             var to_insert_tok = to_insert.Payload as AltAntlr.MyToken;
             to_insert.Start = i;
             to_insert.Stop = i;
-            to_insert_tok.InputStream = cs;
-            to_insert_tok.TokenSource = l;
+            to_insert_tok.InputStream = charstream;
+            to_insert_tok.TokenSource = lexer;
             to_insert_tok.StartIndex = index;
             to_insert_tok.StopIndex = index + add - 1;
             to_insert_tok.TokenIndex = i;
-            to_insert_tok.Line = t.Line;
-            to_insert_tok.Column = t.Column;
+            to_insert_tok.Line = token.Line;
+            to_insert_tok.Column = token.Column;
 
             // Update token stream indices.
             i = start + 1;
@@ -1024,11 +1049,35 @@
             throw new NotImplementedException();
         }
 
-        public static void MoveBeforeInStreams(AltAntlr.MyTokenStream tokstream, IParseTree node, IParseTree to)
+        public static void MoveBeforeInStreams(IParseTree node, IParseTree to)
         {
             if (node == null) return;
             if (to == null) return;
             if (node == to) return;
+            AltAntlr.MyToken token;
+            AltAntlr.MyCharStream charstream;
+            AltAntlr.MyLexer lexer;
+            AltAntlr.MyParser parser;
+            AltAntlr.MyTokenStream tokstream;
+            if (node is AltAntlr.MyTerminalNodeImpl myterminalnode)
+            {
+                lexer = myterminalnode.Lexer;
+                parser = myterminalnode.Parser;
+                tokstream = myterminalnode.TokenStream;
+                token = myterminalnode.Payload as AltAntlr.MyToken;
+                charstream = myterminalnode.InputStream;
+            }
+            else if (node is AltAntlr.MyParserRuleContext myinternalnode)
+            {
+                lexer = myinternalnode.Lexer;
+                parser = myinternalnode.Parser;
+                tokstream = myinternalnode.TokenStream;
+                var lmf = TreeEdits.LeftMostToken(node) as AltAntlr.MyTerminalNodeImpl;
+                token = lmf.Payload as AltAntlr.MyToken;
+                charstream = myinternalnode.InputStream;
+            }
+            else throw new Exception("Tree editing must be on AltAntlr tree.");
+
             IParseTree parent_from = node.Parent;
             var ctx_parent_from = parent_from as ParserRuleContext;
             if (ctx_parent_from == null)
@@ -1236,7 +1285,7 @@
 
         public static void Replace(AltAntlr.MyTokenStream tokstream, IParseTree node, string arbitrary_string)
         {
-            InsertBeforeInStreams(tokstream, node, arbitrary_string);
+            InsertBeforeInStreams(node, arbitrary_string);
             Delete(tokstream, node);
         }
 

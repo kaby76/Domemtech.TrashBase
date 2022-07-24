@@ -22,6 +22,9 @@
             get { return _sourceInterval; }
         }
 
-        public ICharStream InputStream { get; set; }
+        public MyCharStream InputStream { get; set; }
+        public MyLexer Lexer { get; set; }
+        public MyParser Parser { get; set; }
+        public MyTokenStream TokenStream { get; set; }
     }
 }
