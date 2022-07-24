@@ -169,7 +169,7 @@
             var root = node;
             for (; root.Parent != null; root = root.Parent) ;
             AltAntlr.MyCharStream ts = null;
-            var leaves = TreeEdits.Frontier(node);
+            var leaves = TreeEdits.Frontier(node).ToList();
             var first = leaves.First() as AltAntlr.MyTerminalNodeImpl;
             var first_token = first.Payload as AltAntlr.MyToken;
             var last = leaves.Last() as AltAntlr.MyTerminalNodeImpl;
@@ -304,72 +304,6 @@
             return leaf;
         }
 
-        public static void nsertBeforeInStreams(IParseTree node, string arbitrary_string)
-        {
-            TerminalNodeImpl leaf = TreeEdits.Frontier(node).First();
-            // 'node' is either a terminal node or an internal node.
-            // Payload means different things for the two.
-            AltAntlr.MyToken token;
-            AltAntlr.MyCharStream charstream;
-            AltAntlr.MyLexer lexer;
-            AltAntlr.MyParser parser;
-            AltAntlr.MyTokenStream tokstream;
-            // Gather all information before modifying the token and char streams.
-            if (node is AltAntlr.MyTerminalNodeImpl myterminalnode)
-            {
-                lexer = myterminalnode.Lexer;
-                parser = myterminalnode.Parser;
-                tokstream = myterminalnode.TokenStream;
-                token = myterminalnode.Payload as AltAntlr.MyToken;
-                charstream = myterminalnode.InputStream;
-            }
-            else if (node is AltAntlr.MyParserRuleContext myinternalnode)
-            {
-                lexer = myinternalnode.Lexer;
-                parser = myinternalnode.Parser;
-                tokstream = myinternalnode.TokenStream;
-                var lmf = TreeEdits.LeftMostToken(node) as AltAntlr.MyTerminalNodeImpl;
-                token = lmf.Payload as AltAntlr.MyToken;
-                charstream = myinternalnode.InputStream;
-            }
-            else throw new Exception("Tree editing must be on AltAntlr tree.");
-            var old_buffer = charstream.Text;
-            var index = AltAntlr.Util.GetIndex(token.Line, token.Column, old_buffer);
-            var add = arbitrary_string.Length;
-            var new_buffer = old_buffer.Insert(index, arbitrary_string);
-            var start = leaf.Payload.TokenIndex;
-            var start_charstream = token.StartIndex;
-            Dictionary<int, int> old_indices = new Dictionary<int, int>();
-            charstream.Text = new_buffer;
-            tokstream.Text = new_buffer;
-            for (int i = 0; i < tokstream.Size; ++i)
-            {
-                tokstream.Seek(i);
-                var tt = tokstream.Get(i);
-                var tok = tt as AltAntlr.MyToken;
-                if (tok.StartIndex < start_charstream) continue;
-                tok.StartIndex += add;
-                tok.StopIndex += add;
-                var (line, col) = AltAntlr.Util.GetLineColumn(tok.StartIndex, new_buffer);
-                tok.Line = line;
-                tok.Column = col;
-                tok.TokenIndex = i;
-                if (tt.Type == -1) break;
-            }
-            // Compare text of token with input.
-            for (int i = 0; i < tokstream.Size; ++i)
-            {
-                tokstream.Seek(i);
-                var tt = tokstream.Get(i);
-                if (tt.Type == -1) break;
-                var tok = tt as AltAntlr.MyToken;
-                var text1 = tt.Text;
-                var text2 = charstream.Text.Substring(tt.StartIndex, tt.StopIndex - tt.StartIndex + 1);
-                if (text1 != text2) throw new Exception("mismatch after insert.");
-                if (tok.Text != text2) throw new Exception("mismatch after insert.");
-            }
-        }
-
         public static void InsertAfterInStreams(IParseTree node, string arbitrary_string)
         {
             TerminalNodeImpl leaf = TreeEdits.Frontier(node).First();
@@ -409,34 +343,20 @@
             Dictionary<int, int> old_indices = new Dictionary<int, int>();
             var i = start;
             tokstream.Seek(i);
-            for (; ; )
-            {
-                if (i >= tokstream.Size) break;
-                var tt = tokstream.Get(i);
-                if (tt.Type == -1) break;
-                var tok = tt as AltAntlr.MyToken;
-                var line = tok.Line;
-                var col = tok.Column;
-                var i2 = AltAntlr.Util.GetIndex(line, col, old_buffer);
-                old_indices[i] = i2;
-                ++i;
-            }
-            i = start;
-            tokstream.Seek(i);
             charstream.Text = new_buffer;
             tokstream.Text = new_buffer;
             for (; ; )
             {
                 if (i >= tokstream.Size) break;
                 var tt = tokstream.Get(i);
-                if (tt.Type == -1) break;
                 var tok = tt as AltAntlr.MyToken;
-                var new_index = old_indices[i] + add;
-                var (line, col) = AltAntlr.Util.GetLineColumn(new_index, new_buffer);
-                tok.Line = line;
-                tok.Column = col;
+                tok.TokenIndex = i;
                 tok.StartIndex += add;
                 tok.StopIndex += add;
+                var (line, col) = AltAntlr.Util.GetLineColumn(tok.StartIndex, new_buffer);
+                tok.Line = line;
+                tok.Column = col;
+                if (tt.Type == -1) break;
                 ++i;
             }
         }
@@ -673,6 +593,7 @@
                 var (line, col) = AltAntlr.Util.GetLineColumn(tok.StartIndex, new_buffer);
                 tok.Line = line;
                 tok.Column = col;
+                tok.TokenIndex = i;
                 if (tt.Type == -1)
                 {
                     break;
@@ -733,7 +654,7 @@
         private static void Adjust(IParseTree tree)
         {
             Reset(tree);
-            var leaves = TreeEdits.Frontier(tree);
+            var leaves = TreeEdits.Frontier(tree).ToList();
             Stack<IParseTree> stack = new Stack<IParseTree>();
             foreach (var leaf in leaves) stack.Push(leaf);
             while (stack.Count > 0)
@@ -1161,7 +1082,7 @@
 
             // Get section of char stream that needs to be moved.
             var old_buffer = cs.Text;
-            var leaves_of_node = TreeEdits.Frontier(node);
+            var leaves_of_node = TreeEdits.Frontier(node).ToList();
             var leftmost_leaf_of_node = leaves_of_node.First() as AltAntlr.MyTerminalNodeImpl;
             var leftmost_token_to_move = leftmost_leaf_of_node.Payload as AltAntlr.MyToken;
             var leftmost_token_to_move_tokenindex = leftmost_token_to_move.TokenIndex;
@@ -1194,7 +1115,7 @@
             if (end_char_index_to_move < start_char_index_to_move) throw new Exception("messed up.");
             int char_length_to_move = 1 + end_char_index_to_move - start_char_index_to_move;
             var string_to_move = old_buffer.Substring(start_char_index_to_move, char_length_to_move);
-            var leaves_of_to = TreeEdits.Frontier(to);
+            var leaves_of_to = TreeEdits.Frontier(to).ToList();
             var leftmost_leaf_of_to = leaves_of_to.First() as AltAntlr.MyTerminalNodeImpl;
             var leftmost_token_of_to = leftmost_leaf_of_to.Payload as AltAntlr.MyToken;
             var rightmost_leaf_of_to = leaves_of_to.Last() as AltAntlr.MyTerminalNodeImpl;
