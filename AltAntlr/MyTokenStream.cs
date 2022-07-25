@@ -461,7 +461,15 @@
                 var to_char_start = this._tokens[to].StartIndex;
                 var from_char_start = this._tokens[from].StartIndex;
                 var after_from = from + number;
-                var after_from_char_start = this._tokens[after_from].StartIndex;
+                var after_from_char_start = 0;
+                if (after_from >= this._tokens.Count)
+                {
+                    after_from_char_start = charstream.Text.Length;
+                }
+                else
+                {
+                    after_from_char_start = this._tokens[after_from].StartIndex;
+                }
                 var aa_char_len = to_char_start;
                 var bb_char_len = from_char_start - to_char_start;
                 var cc_char_len = after_from_char_start - from_char_start;
