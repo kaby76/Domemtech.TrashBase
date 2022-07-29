@@ -7,7 +7,7 @@ build:
 	bash setup.sh
 
 publish:
-	dotnet nuget push Domemtech.TrashBase.4.3.0.nupkg --api-key ${trashkey} --source https://api.nuget.org/v3/index.json
+	dotnet nuget push Domemtech.TrashBase.4.4.0.nupkg --api-key ${trashkey} --source https://api.nuget.org/v3/index.json
 
 clean:
 	rm -rf */obj */bin
