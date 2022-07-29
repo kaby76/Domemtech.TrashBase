@@ -461,6 +461,7 @@
             }
             return node_to_insert;
         }
+
         public static void InsertBeforeInStreams(IParseTree node, string str)
         {
             AltAntlr.MyToken token;
@@ -616,7 +617,6 @@
             for (; root.Parent != null; root = root.Parent) ;
             Reset(root);
         }
-
 
         private static void Reset(IParseTree tree)
         {
@@ -1011,6 +1011,141 @@
             foreach (var from in from_list)
             {
                 MoveBefore(from, to);
+            }
+        }
+
+
+        public static void NukeTokensSurrounding(IParseTree node)
+        {
+            if (node == null) return;
+            AltAntlr.MyToken token;
+            AltAntlr.MyCharStream charstream;
+            AltAntlr.MyLexer lexer;
+            AltAntlr.MyParser parser;
+            AltAntlr.MyTokenStream tokstream;
+            if (node is AltAntlr.MyTerminalNodeImpl myterminalnode)
+            {
+                lexer = myterminalnode.Lexer;
+                parser = myterminalnode.Parser;
+                tokstream = myterminalnode.TokenStream;
+                token = myterminalnode.Payload as AltAntlr.MyToken;
+                charstream = myterminalnode.InputStream;
+            }
+            else if (node is AltAntlr.MyParserRuleContext myinternalnode)
+            {
+                lexer = myinternalnode.Lexer;
+                parser = myinternalnode.Parser;
+                tokstream = myinternalnode.TokenStream;
+                var lmf = TreeEdits.LeftMostToken(node) as AltAntlr.MyTerminalNodeImpl;
+                token = lmf.Payload as AltAntlr.MyToken;
+                charstream = myinternalnode.InputStream;
+            }
+            else throw new Exception("Tree editing must be on AltAntlr tree.");
+            IParseTree parent_from = node.Parent;
+            var is_root = parent_from == null;
+            var old_buffer = charstream.Text;
+            var leaves_of_node = TreeEdits.Frontier(node).ToList();
+            var leftmost_leaf_of_node = leaves_of_node.First() as AltAntlr.MyTerminalNodeImpl;
+            var leftmost_token_of_node = leftmost_leaf_of_node.Payload as AltAntlr.MyToken;
+            var leftmost_token_of_node_tokenindex = leftmost_token_of_node.TokenIndex;
+            var rightmost_leaf_of_node = leaves_of_node.Last() as AltAntlr.MyTerminalNodeImpl;
+            var rightmost_token_of_node = rightmost_leaf_of_node.Payload as AltAntlr.MyToken;
+            var rightmost_token_of_node_tokenindex = rightmost_token_of_node.TokenIndex;
+            int token_index = rightmost_token_of_node_tokenindex + 1;
+            for (; ; )
+            {
+                if (token_index >= tokstream.Size) break;
+                if (token_index < 0) break;
+                var tt = tokstream.Get(token_index);
+                var tok = tt as AltAntlr.MyToken;
+                if (tok.Type == TokenConstants.EOF) break;
+                if (tok.Channel == Lexer.DefaultTokenChannel) break;
+                token_index++;
+            }
+            --token_index;
+            var new_buffer = charstream.Text;
+            for (int i = token_index; i > rightmost_token_of_node_tokenindex; --i)
+            {
+                tokstream.Seek(i);
+                var tt = tokstream.Get(i);
+                var tok = tt as AltAntlr.MyToken;
+                var chars_to_delete_right = tok.StopIndex - tok.StartIndex + 1;
+                tokstream.Seek(i);
+                tokstream.Delete();
+                new_buffer = new_buffer.Remove(rightmost_token_of_node.StopIndex + 1, chars_to_delete_right);
+                for (int j = i; j < tokstream.Size; ++j)
+                {
+                    var t2 = tokstream.Get(j);
+                    var tok2 = t2 as AltAntlr.MyToken;
+                    tok2.StartIndex -= chars_to_delete_right;
+                    tok2.StopIndex -= chars_to_delete_right;
+                    tok2.TokenIndex -= 1;
+                    if (tok2.Type == TokenConstants.EOF) break;
+                }
+            }
+            token_index = leftmost_token_of_node_tokenindex - 1;
+            for (; ; )
+            {
+                if (token_index >= tokstream.Size) break;
+                if (token_index < 0) break;
+                var tt = tokstream.Get(token_index);
+                var tok = tt as AltAntlr.MyToken;
+                if (tok.Type == TokenConstants.EOF) break;
+                if (tok.Channel == Lexer.DefaultTokenChannel) break;
+                token_index--;
+            }
+            ++token_index;
+            int diff = leftmost_token_of_node_tokenindex - token_index;
+            for (int i = 0; i < diff; ++i)
+            {
+                tokstream.Seek(token_index);
+                var tt = tokstream.Get(token_index);
+                var tok = tt as AltAntlr.MyToken;
+                var chars_to_delete_right = tok.StopIndex - tok.StartIndex + 1;
+                var start = tok.StartIndex;
+                tokstream.Seek(token_index);
+                tokstream.Delete();
+                new_buffer = new_buffer.Remove(start, chars_to_delete_right);
+                for (int j = i; j < tokstream.Size; ++j)
+                {
+                    var t2 = tokstream.Get(j);
+                    var tok2 = t2 as AltAntlr.MyToken;
+                    tok2.StartIndex -= chars_to_delete_right;
+                    tok2.StopIndex -= chars_to_delete_right;
+                    tok2.TokenIndex -= 1;
+                    if (tok2.Type == TokenConstants.EOF) break;
+                }
+            }
+            for (int i = 0; ; ++i)
+            {
+                if (i >= tokstream.Size) break;
+                var tt = tokstream.Get(i);
+                var tok = tt as AltAntlr.MyToken;
+                var new_index = tok.StartIndex;
+                if (new_index >= 0)
+                {
+                    var (line, col) = AltAntlr.Util.GetLineColumn(new_index, new_buffer);
+                    tok.Line = line;
+                    tok.Column = col;
+                }
+                if (tt.Type == TokenConstants.EOF) break;
+            }
+            charstream.Text = new_buffer;
+            tokstream.Text = new_buffer;
+            var root = node;
+            for (; root.Parent != null; root = root.Parent) ;
+            Reset(root);
+            // Compare text of token with input.
+            for (int i = 0; i < tokstream.Size; ++i)
+            {
+                tokstream.Seek(i);
+                var tt = tokstream.Get(i);
+                if (tt.Type == -1) break;
+                var tok = tt as AltAntlr.MyToken;
+                var text1 = tt.Text;
+                var text2 = charstream.Text.Substring(tt.StartIndex, tt.StopIndex - tt.StartIndex + 1);
+                if (text1 != text2) throw new Exception("mismatch after insert.");
+                if (tok.Text != text2) throw new Exception("mismatch after insert.");
             }
         }
 
