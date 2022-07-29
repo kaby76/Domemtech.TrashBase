@@ -1106,7 +1106,7 @@
                 tokstream.Seek(token_index);
                 tokstream.Delete();
                 new_buffer = new_buffer.Remove(start, chars_to_delete_right);
-                for (int j = i; j < tokstream.Size; ++j)
+                for (int j = token_index; j < tokstream.Size; ++j)
                 {
                     var t2 = tokstream.Get(j);
                     var tok2 = t2 as AltAntlr.MyToken;
@@ -1143,7 +1143,9 @@
                 if (tt.Type == -1) break;
                 var tok = tt as AltAntlr.MyToken;
                 var text1 = tt.Text;
-                var text2 = charstream.Text.Substring(tt.StartIndex, tt.StopIndex - tt.StartIndex + 1);
+                string text2;
+                if (tt.StopIndex - tt.StartIndex + 1 < 0) text2 = "";
+                else text2 = charstream.Text.Substring(tt.StartIndex, tt.StopIndex - tt.StartIndex + 1);
                 if (text1 != text2) throw new Exception("mismatch after insert.");
                 if (tok.Text != text2) throw new Exception("mismatch after insert.");
             }

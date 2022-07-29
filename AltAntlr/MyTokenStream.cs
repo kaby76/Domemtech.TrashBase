@@ -519,7 +519,9 @@
             {
                 var c = this._tokens[i] as AltAntlr.MyToken;
                 var text1 = c.Text;
-                var text2 = charstream.Text.Substring(c.StartIndex, c.StopIndex - c.StartIndex + 1);
+                string text2;
+                if (c.StopIndex - c.StartIndex + 1 < 0) text2 = "";
+                else text2 = charstream.Text.Substring(c.StartIndex, c.StopIndex - c.StartIndex + 1);
                 if (text1 != text2) throw new Exception("mismatch after move.");
             }
         }

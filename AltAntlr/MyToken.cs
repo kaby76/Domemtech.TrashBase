@@ -6,11 +6,13 @@
     {
         public string Text { get; set; }
         public int Type { get; set; }
-        public int Line { get; set; }
+        private int _line;
+        public int Line { get { return _line; } set { if (value < 0) throw new System.Exception(); _line = value; } }
         public int Column { get; set; }
         public int Channel { get; set; }
         public int TokenIndex { get; set; }
-        public int StartIndex { get; set; }
+        private int _startindex;
+        public int StartIndex { get { return _startindex; } set { if (value < 0) throw new System.Exception(); _startindex = value; } }
         public int StopIndex { get; set; }
         public ITokenSource TokenSource { get; set; }
         public ICharStream InputStream { get; set; }
