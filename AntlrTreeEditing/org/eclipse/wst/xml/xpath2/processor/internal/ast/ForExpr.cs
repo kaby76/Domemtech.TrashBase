@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
 
 /// <summary>
 ///*****************************************************************************
@@ -114,13 +115,19 @@ namespace org.eclipse.wst.xml.xpath2.processor.@internal.ast
 
         public override ICollection<XPathNode> GetAllChildren()
         {
-            throw new System.NotImplementedException();
+			var result = new List<XPathNode>();
+			foreach (var p in this._var_expr_pairs)
+            {
+                Expr e = p.expr();
+				result.Add(e);
+            }
+			return result;
         }
 
         public override string QuickInfo()
         {
-            throw new NotImplementedException();
-        }
+			return "_for " + String.Join(" ", this._var_expr_pairs.Select(t=>t.ToString())) + " " + this._return.QuickInfo();
+		}
     }
 
 }

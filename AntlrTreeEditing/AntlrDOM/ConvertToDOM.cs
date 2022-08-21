@@ -168,6 +168,30 @@
                     nl.Add(attr);
                     map.Add(attr);
                 }
+                {
+                    var attr = new AntlrAttr(null);
+                    var symbol = t.Symbol;
+                    var v = symbol.Line;
+                    attr.NodeType = NodeConstants.ATTRIBUTE_NODE;
+                    attr.Name = "Line";
+                    attr.LocalName = "Line";
+                    attr.Value = v.ToString();
+                    attr.ParentNode = result;
+                    nl.Add(attr);
+                    map.Add(attr);
+                }
+                {
+                    var attr = new AntlrAttr(null);
+                    var symbol = t.Symbol;
+                    var v = symbol.Column;
+                    attr.NodeType = NodeConstants.ATTRIBUTE_NODE;
+                    attr.Name = "Column";
+                    attr.LocalName = "Column";
+                    attr.Value = v.ToString();
+                    attr.ParentNode = result;
+                    nl.Add(attr);
+                    map.Add(attr);
+                }
                 return result;
             }
             else
@@ -270,6 +294,46 @@
                         attr.ParentNode = result;
                         nl.Add(attr);
                         map.Add(attr);
+                    }
+                }
+                {
+                    var attr = new AntlrAttr(null);
+                    var interval = t.SourceInterval;
+                    if (interval.a <= interval.b)
+                    {
+                        var n = t as AltAntlr.MyParserRuleContext;
+                        var s = n.TokenStream.Get(interval.a);
+                        if (s != null)
+                        {
+                            var v = s.Line;
+                            attr.NodeType = NodeConstants.ATTRIBUTE_NODE;
+                            attr.Name = "Line";
+                            attr.LocalName = "Line";
+                            attr.Value = v.ToString();
+                            attr.ParentNode = result;
+                            nl.Add(attr);
+                            map.Add(attr);
+                        }
+                    }
+                }
+                {
+                    var attr = new AntlrAttr(null);
+                    var interval = t.SourceInterval;
+                    if (interval.a <= interval.b)
+                    {
+                        var n = t as AltAntlr.MyParserRuleContext;
+                        var s = n.TokenStream.Get(interval.a);
+                        if (s != null)
+                        {
+                            var v = s.Column;
+                            attr.NodeType = NodeConstants.ATTRIBUTE_NODE;
+                            attr.Name = "Column";
+                            attr.LocalName = "Column";
+                            attr.Value = v.ToString();
+                            attr.ParentNode = result;
+                            nl.Add(attr);
+                            map.Add(attr);
+                        }
                     }
                 }
                 for (int i = 0; i < tree.ChildCount; ++i)
